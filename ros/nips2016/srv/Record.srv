@@ -1,5 +1,5 @@
 # Duration of the recording in seconds
-float32 duration
+std_msgs/Duration duration
 ---
 trajectory_msgs/JointTrajectory torso_demonstration
 nips2016/SensorialTrajectory sensorial_demonstration
