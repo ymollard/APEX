@@ -1,0 +1,12 @@
+uint8 SPACE_ANY=0
+uint8 SPACE_SOUND=1
+uint8 SPACE_LIGHT=2
+uint8 SPACE_BALL=3
+uint8 SPACE_JOYSTICK=4
+uint8 SPACE_HAND=5
+uint8 SPACE_ERGO=6
+
+# Sensorial space to explore, one constant SPACE_* of the above
+uint8 space_to_explore
+---
+trajectory_msgs/JointTrajectory torso_trajectory
