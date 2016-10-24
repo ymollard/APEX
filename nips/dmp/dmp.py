@@ -95,17 +95,6 @@ class DMPs(object):
         
         self.check_offset()
 
-        if not (self.timesteps == y_des.shape[1]):
-            # generate function to interpolate the desired trajectory
-            import scipy.interpolate
-            path = np.zeros((self.dmps, self.timesteps))
-            x = np.linspace(0, self.cs.run_time, y_des.shape[1])
-            for d in range(self.dmps):
-                path_gen = scipy.interpolate.interp1d(x, y_des[d])
-                for t in range(self.timesteps):  
-                    path[d, t] = path_gen(t * self.dt)
-            y_des = path
-
         # calculate velocity of y_des
         dy_des = np.diff(y_des) / self.dt
         # add zero to the beginning of every row
@@ -125,21 +114,6 @@ class DMPs(object):
 
         # efficiently generate weights to realize f_target
         self.gen_weights(f_target)
-
-        '''# plot the basis function activations
-        import matplotlib.pyplot as plt
-        plt.figure()
-        plt.subplot(211)
-        plt.plot(psi_track)
-        plt.title('psi_track')
-
-        # plot the desired forcing function vs approx
-        plt.subplot(212)
-        plt.plot(f_target[:,0])
-        plt.plot(np.sum(psi_track * self.w[0], axis=1))
-        plt.legend(['f_target', 'w*psi'])
-        plt.tight_layout()
-        plt.show()'''
 
         self.reset_state()
         return y_des
