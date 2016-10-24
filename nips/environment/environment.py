@@ -2,6 +2,7 @@ import numpy as np
 
 from explauto.utils import bounds_min_max
 from explauto.environment.environment import Environment
+from explauto.environment.context_environment import ContextEnvironment
 from nips.dmp.mydmp import MyDMP
 
 
@@ -69,3 +70,18 @@ class TestEnvironment(Environment):
         return list(self.hand + self.joystick + self.ergo + self.ball + self.light + self.sound)
     
 
+
+env_cls = TestEnvironment
+
+env_conf = dict(m_mins=[-1.]*32, 
+                m_maxs=[1.]*32, 
+                s_mins=[-1.]*110, 
+                s_maxs=[1.]*110)
+
+
+context_mode = dict(mode='mcs',
+                    context_n_dims=2,
+                    context_sensory_bounds=[[-1., -1.],[1., 1.]])
+
+
+environment = ContextEnvironment(env_cls, env_conf, context_mode)
