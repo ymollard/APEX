@@ -45,7 +45,14 @@ class Supervisor(object):
                   
         for mid in self.modules.keys():
             self.chosen_modules[mid] = 0  
-                
+    
+        self.space2mid = dict(s_hand="mid1", 
+                             s_joystick="mid2", 
+                             s_ergo="mid3", 
+                             s_ball="mid4", 
+                             s_light="mid5", 
+                             s_sound="mid6")
+        
     def choose_babbling_module(self, mode='prop'):
         interests = {}
         for mid in self.modules.keys():
@@ -111,8 +118,11 @@ class Supervisor(object):
         for mid in self.modules.keys():
             self.modules[mid].update_sm(self.modules[mid].get_m(ms), self.modules[mid].get_s(ms))
         
-    def produce(self, context):
-        mid = self.choose_babbling_module()
+    def produce(self, context, space=None):
+        if space is None:
+            mid = self.choose_babbling_module()
+        else:
+            mid = self.space2mid[space]
         self.mid_control = mid
         if self.modules[mid].context_mode is None:
             self.m = self.modules[mid].produce()
@@ -127,9 +137,14 @@ class Supervisor(object):
         self.m = self.modules[mid].inverse(s)
         return self.m
     
-    def perceive(self, s):
+    def perceive(self, s, m=None):
         s = self.sensory_primitive(s)
-        ms = self.set_ms(self.m, s)
-        self.update_sensorimotor_models(ms)
-        if self.mid_control is not None:
-            self.modules[self.mid_control].update_im(self.modules[self.mid_control].get_m(ms), self.modules[self.mid_control].get_s(ms))
+        if m is None:
+            ms = self.set_ms(self.m, s)
+            self.update_sensorimotor_models(ms)
+            if self.mid_control is not None:
+                self.modules[self.mid_control].update_im(self.modules[self.mid_control].get_m(ms), self.modules[self.mid_control].get_s(ms))
+        else:
+            ms = self.set_ms(m, s)
+            self.update_sensorimotor_models(ms)
+            
