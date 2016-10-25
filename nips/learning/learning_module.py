@@ -12,7 +12,7 @@ from interest_model import MiscRandomInterest, competence_dist
 
 
 class LearningModule(Agent):
-    def __init__(self, mid, m_space, s_space, env_conf):
+    def __init__(self, mid, m_space, s_space, env_conf, context_mode=None):
 
 
         explo_noise = 0.05
@@ -27,8 +27,9 @@ class LearningModule(Agent):
         
         self.mid = mid
         self.m_space = m_space
+        self.context_mode = context_mode
         self.s_space = s_space
-        self.motor_babbling_n_iter = 10
+        self.motor_babbling_n_iter = 0
         
         self.s = None
         self.last_interest = 0
@@ -46,7 +47,7 @@ class LearningModule(Agent):
         sm_cls, kwargs = (NonParametric, {'fwd': 'NN', 'inv': 'NN', 'sigma_explo_ratio':explo_noise})
         self.sm = sm_cls(self.conf, **kwargs)
         
-        Agent.__init__(self, self.conf, self.sm, self.im)
+        Agent.__init__(self, self.conf, self.sm, self.im, context_mode=self.context_mode)
         
         
     def motor_babbling(self, n=1): 
@@ -113,14 +114,14 @@ class LearningModule(Agent):
                 m = rand_bounds(self.conf.bounds[:, inf_dims], n)
         return m
             
-    def produce(self, n=1):
+    def produce(self, context=None):
         if self.t < self.motor_babbling_n_iter:
-            self.m = self.motor_babbling(n)
+            self.m = self.motor_babbling()
             self.s = np.zeros(len(self.s_space))
             self.x = np.zeros(len(self.expl_dims))
         else:
-            self.x = self.choose()
-            self.y = self.infer(self.expl_dims, self.inf_dims, self.x, n=n)
+            self.x = self.choose(context)
+            self.y = self.infer(self.expl_dims, self.inf_dims, self.x)
             #self.m, self.s = self.extract_ms(self.x, self.y)
             self.m, sg = self.y, self.x#self.extract_ms(self.x, self.y)
             #self.m = self.motor_primitive(self.m)
@@ -140,7 +141,6 @@ class LearningModule(Agent):
     def competence(self): return self.interest_model.competence()
     def interest(self): return self.interest_model.interest()
 
-    def perceive(self, m, s, has_control = True):
+    def perceive(self, m, s):
         self.update_sm(m, s)
-        if has_control:
-            self.last_interest = self.update_im(m, s)
+        self.last_interest = self.update_im(m, s)
