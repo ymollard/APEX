@@ -1,0 +1,5 @@
+# Duration of the recording in seconds
+std_msgs/Duration duration
+---
+trajectory_msgs/JointTrajectory torso_demonstration
+nips2016/SensorialTrajectory sensorial_demonstration
