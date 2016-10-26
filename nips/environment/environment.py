@@ -7,7 +7,7 @@ from nips.dmp.mydmp import MyDMP
 
 
 
-class TestEnvironment(Environment):
+class TestNCEnvironment(Environment):
     def __init__(self, m_mins, m_maxs, s_mins, s_maxs):
         
         Environment.__init__(self, m_mins, m_maxs, s_mins, s_maxs)
@@ -39,8 +39,11 @@ class TestEnvironment(Environment):
 
 
     def compute_dmp(self, m):
-        return bounds_min_max(self.motor_dmp.trajectory(np.array(m) * self.max_params), self.n_dmps * [-1.], self.n_dmps * [1.]) # DMP TO TUNE 
-
+        return bounds_min_max(self.motor_dmp.trajectory(np.array(m) * self.max_params), self.n_dmps * [-1.], self.n_dmps * [1.])
+        
+    def torsodemo2m(self, m_traj):
+        # m_traj is the trajectory of the 4 motors: must be shaped 25*4
+        return self.motor_dmp.imitate(m_traj) / self.max_params
 
     def compute_sensori_effect(self, m):
         
@@ -71,17 +74,17 @@ class TestEnvironment(Environment):
     
 
 
-env_cls = TestEnvironment
-
-env_conf = dict(m_mins=[-1.]*32, 
-                m_maxs=[1.]*32, 
-                s_mins=[-1.]*110, 
-                s_maxs=[1.]*110)
-
-
-context_mode = dict(mode='mcs',
-                    context_n_dims=2,
-                    context_sensory_bounds=[[-1., -1.],[1., 1.]])
-
-
-environment = ContextEnvironment(env_cls, env_conf, context_mode)
+class TestEnvironment(ContextEnvironment):
+    def __init__(self):
+        env_cls = TestNCEnvironment
+        env_conf = dict(m_mins=[-1.]*32, 
+                        m_maxs=[1.]*32, 
+                        s_mins=[-1.]*110, 
+                        s_maxs=[1.]*110)
+        context_mode = dict(mode='mcs',
+                            context_n_dims=2,
+                            context_sensory_bounds=[[-1., -1.],[1., 1.]])
+        
+        ContextEnvironment.__init__(self, env_cls, env_conf, context_mode)
+        
+    def torsodemo2m(self, m_traj): return self.env.torsodemo2m(m_traj)

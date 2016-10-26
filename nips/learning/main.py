@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 sys.path.append('../../')
-from nips.environment.environment import environment
+from nips.environment.environment import TestEnvironment
 from nips.learning.supervisor import Supervisor
 
 
@@ -15,10 +15,10 @@ class Learning(object):
         self.agent = Supervisor(self.environment)
         
         
-    def produce(self, space=None):
+    def produce(self, context, space=None):
+        # context is the rotation of the ergo and the ball: "context = environment.get_current_context()"
         if space is None:
             # Autonomous step
-            context = environment.get_current_context()
             return self.agent.produce(context)
         else:
             # Force space
@@ -26,19 +26,13 @@ class Learning(object):
             return self.agent.produce(context, space=space)
             
             
-    def perceive(self, s, m_traj=None):
-        if m_traj is None:
+    def perceive(self, s, m_demo=None):
+        if m_demo is None:
             # Perception of environment when m was produced
             self.agent.perceive(s)
         else:
-            # Demonstration of a torso arm trajectory
-            m = self.torsodemo2m(m_traj)
-            self.agent.perceive(s, m=m)
-        
-        
-    def torsodemo2m(self, m_traj):
-        # m_traj is the trajectory of the 4 motors: must be shaped 25*4
-        return self.environment.motor_dmp.imitate(m_traj)
+            # Demonstration of a torso arm trajectory converted to weights with "m_demo=environment.torsodemo2m(m_traj)"
+            self.agent.perceive(s, m=m_demo)
                 
 
     def plot(self):
@@ -52,10 +46,11 @@ class Learning(object):
         
         
 if __name__ == "__main__":
-    
+    environment = TestEnvironment()
     learning = Learning(environment)
     for i in range(10000):
-        m = learning.produce()
+        context = environment.get_current_context()
+        m = learning.produce(context)
         s = environment.update(m)
         learning.perceive(s)
     learning.plot()
