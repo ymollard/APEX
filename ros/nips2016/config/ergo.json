@@ -1,3 +1,4 @@
 {
-  "publish_rate": 10
+  "publish_rate": 30,
+  "speed": 6
 }

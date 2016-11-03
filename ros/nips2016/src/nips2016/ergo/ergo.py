@@ -2,12 +2,19 @@ import os
 import rospy
 import json
 import pygame
+import pygame.display
 from nips2016.srv import *
 from geometry_msgs.msg import PoseStamped
 from poppy.creatures import PoppyErgoJr
 from rospkg import RosPack
 from os.path import join
 
+os.environ["SDL_VIDEODRIVER"] = "dummy"
+try:
+    pygame.display.init()
+except pygame.error:
+    raise pygame.error("Can't connect to the console, from ssh enable -X forwarding")
+pygame.joystick.init()
 
 class Ergo(object):
     def __init__(self):
@@ -22,13 +29,9 @@ class Ergo(object):
         self.init_joystick()
 
     def init_joystick(self):
-        os.environ["SDL_VIDEODRIVER"] = "dummy"
-        pygame.init()
-        screen = pygame.display.set_mode((1, 1))
         while pygame.joystick.get_count() == 0 and not rospy.is_shutdown():
             rospy.loginfo("Ergo is waiting for a joystick...")
         if pygame.joystick.get_count() > 0:
-            pygame.joystick.init()
             self.joystick = pygame.joystick.Joystick(0)
             self.joystick.init()
             rospy.loginfo('Initialized Joystick: {}'.format(self.joystick.get_name()))
@@ -36,11 +39,12 @@ class Ergo(object):
     def go_to_start(self):
         for m, p in zip(self.ergo.motors, [0.0, -15.4, 35.34, -8.06, -15.69, 71.99]):
             m.goto_position(p, 1.)
+        rospy.sleep(1)
 
     def run(self, dummy=False):
         self.ergo = PoppyErgoJr(simulator='poppy-simu' if dummy else None, camera='dummy')
         self.ergo.compliant = False
-
+        self.go_to_start()
         while not rospy.is_shutdown():
             pygame.event.get()
             self.servo_robot()
@@ -51,7 +55,7 @@ class Ergo(object):
         if x <= 1 and x >= -1:
             p = self.ergo.motors[id].goal_position
             if -180 < p+x < 180 :
-                self.ergo.motors[id].goto_position(p + 2*x, 0.1)
+                self.ergo.motors[id].goto_position(p + self.params['speed']*x, 0.1)
 
     def servo_robot(self):
         x = self.joystick.get_axis(1)
