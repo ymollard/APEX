@@ -1,3 +1,4 @@
+import sys
 import os
 import rospy
 import json
@@ -25,13 +26,11 @@ class Ergo(object):
         self.eef_pub = rospy.Publisher('/nips2016/ergo/end_effector_pose', PoseStamped, queue_size=1)
         self.srv_reset = rospy.Service('/nips2016/ergo/reset', Reset, self._cb_reset)
         self.ergo = None
-        self.joystick = None
-        self.init_joystick()
 
-    def init_joystick(self):
-        while pygame.joystick.get_count() == 0 and not rospy.is_shutdown():
-            rospy.loginfo("Ergo is waiting for a joystick...")
-        if pygame.joystick.get_count() > 0:
+        if pygame.joystick.get_count() == 0:
+            rospy.logerr("Ergo: No joystick found, exiting")
+            sys.exit(0)
+        else:
             self.joystick = pygame.joystick.Joystick(0)
             self.joystick.init()
             rospy.loginfo('Initialized Joystick: {}'.format(self.joystick.get_name()))
