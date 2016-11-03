@@ -1,0 +1,73 @@
+import os
+import rospy
+import json
+import pygame
+from nips2016.srv import *
+from geometry_msgs.msg import PoseStamped
+from poppy.creatures import PoppyErgoJr
+from rospkg import RosPack
+from os.path import join
+
+
+class Ergo(object):
+    def __init__(self):
+        self.rospack = RosPack()
+        with open(join(self.rospack.get_path('nips2016'), 'config', 'ergo.json')) as f:
+            self.params = json.load(f)
+        self.rate = rospy.Rate(self.params['publish_rate'])
+        self.eef_pub = rospy.Publisher('/nips2016/ergo/end_effector_pose', PoseStamped, queue_size=1)
+        self.srv_reset = rospy.Service('/nips2016/ergo/reset', Reset, self._cb_reset)
+        self.ergo = None
+        self.joystick = None
+        self.init_joystick()
+
+    def init_joystick(self):
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+        pygame.init()
+        screen = pygame.display.set_mode((1, 1))
+        while pygame.joystick.get_count() == 0 and not rospy.is_shutdown():
+            rospy.loginfo("Ergo is waiting for a joystick...")
+        if pygame.joystick.get_count() > 0:
+            pygame.joystick.init()
+            self.joystick = pygame.joystick.Joystick(0)
+            self.joystick.init()
+            rospy.loginfo('Initialized Joystick: {}'.format(self.joystick.get_name()))
+
+    def go_to_start(self):
+        for m, p in zip(self.ergo.motors, [0.0, -15.4, 35.34, -8.06, -15.69, 71.99]):
+            m.goto_position(p, 1.)
+
+    def run(self, dummy=False):
+        self.ergo = PoppyErgoJr(simulator='poppy-simu' if dummy else None, camera='dummy')
+        self.ergo.compliant = False
+
+        while not rospy.is_shutdown():
+            pygame.event.get()
+            self.servo_robot()
+            self.publish_eef()
+            self.rate.sleep()
+
+    def servo_axis0(self, x, id):
+        if x <= 1 and x >= -1:
+            p = self.ergo.motors[id].goal_position
+            if -180 < p+x < 180 :
+                self.ergo.motors[id].goto_position(p + 2*x, 0.1)
+
+    def servo_robot(self):
+        x = self.joystick.get_axis(1)
+        y = self.joystick.get_axis(0)
+        self.servo_axis0(x, 0)
+        self.servo_axis0(y, 1)
+
+    def publish_eef(self):
+        pose = PoseStamped()
+        eef_pose = self.ergo.chain.end_effector
+        pose.header.stamp = rospy.Time.now()
+        pose.pose.position.x = eef_pose[0]
+        pose.pose.position.y = eef_pose[1]
+        pose.pose.position.z = eef_pose[2]
+        self.eef_pub.publish(pose)
+
+    def _cb_reset(self, request):
+        self.go_to_start()
+        return ResetResponse()
