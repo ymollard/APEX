@@ -50,10 +50,11 @@ catkin_python_setup()
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  ErgoState.msg 
+  CircularState.msg 
   ErgoTrajectory.msg
   SensorialState.msg
   SensorialTrajectory.msg
+  Sound.msg
 
 )
 

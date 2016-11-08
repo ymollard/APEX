@@ -1,7 +1,7 @@
 geometry_msgs/Pose hand
-geometry_msgs/Pose ball
+nips2016/CircularState ball
 sensor_msgs/Joy joystick
-nips2016/ErgoState ergo
+nips2016/CircularState ergo
 nips2016/Sound sound
 uint8 color
 

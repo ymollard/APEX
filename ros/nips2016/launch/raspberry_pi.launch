@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="output" default="screen"/> <!-- Set output="log" to mute the screen output -->
+
+  <node name="ergo" pkg="nips2016" type="ergo.py" output="$(arg output)" respawn="true"/>
+</launch>
