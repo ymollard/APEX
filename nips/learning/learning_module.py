@@ -6,8 +6,8 @@ from explauto.agent import Agent
 from explauto.utils import rand_bounds
 from explauto.utils.config import make_configuration
 from explauto.exceptions import ExplautoBootstrapError
-from explauto.sensorimotor_model.non_parametric import NonParametric
 
+from sensorimotor_model import DemonstrableNN
 from interest_model import MiscRandomInterest, competence_dist
 
 
@@ -44,7 +44,7 @@ class LearningModule(Agent):
         
         self.im = im_cls(self.conf, self.im_dims, **kwargs)
         
-        sm_cls, kwargs = (NonParametric, {'fwd': 'NN', 'inv': 'NN', 'sigma_explo_ratio':explo_noise})
+        sm_cls, kwargs = (DemonstrableNN, {'fwd': 'NN', 'inv': 'NN', 'sigma_explo_ratio':explo_noise})
         self.sm = sm_cls(self.conf, **kwargs)
         
         Agent.__init__(self, self.conf, self.sm, self.im, context_mode=self.context_mode)
@@ -109,19 +109,24 @@ class LearningModule(Agent):
             self.emit(pref + 'inference' + '_' + self.mid, m)
         except ExplautoBootstrapError:
             if n == 1:
-                m = rand_bounds(self.conf.bounds[:, inf_dims]).flatten()
+                m = rand_bounds(self.conf.bounds[:, inf_dims]).flatten(), -1
             else:
-                m = rand_bounds(self.conf.bounds[:, inf_dims], n)
+                m = rand_bounds(self.conf.bounds[:, inf_dims], n), -1
         return m
             
-    def produce(self, context=None):
+    def produce(self, context=None, j_sm=None):
         if self.t < self.motor_babbling_n_iter:
             self.m = self.motor_babbling()
             self.s = np.zeros(len(self.s_space))
             self.x = np.zeros(len(self.expl_dims))
         else:
             self.x = self.choose(context)
-            self.y = self.infer(self.expl_dims, self.inf_dims, self.x)
+            m, idx = self.infer(self.expl_dims, self.inf_dims, self.x)
+            if idx<0:
+                self.y = m
+            else:
+                self.y = j_sm.inverse_idx(idx)
+                
             #self.m, self.s = self.extract_ms(self.x, self.y)
             self.m, sg = self.y, self.x#self.extract_ms(self.x, self.y)
             #self.m = self.motor_primitive(self.m)

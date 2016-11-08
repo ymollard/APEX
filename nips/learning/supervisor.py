@@ -113,7 +113,7 @@ class Supervisor(object):
     def get_s(self, ms): return ms[self.conf.s_dims]
                 
     def set_ms(self, m, s): return np.array(list(m) + list(s))
-        
+            
     def update_sensorimotor_models(self, ms):
         for mid in self.modules.keys():
             self.modules[mid].update_sm(self.modules[mid].get_m(ms), self.modules[mid].get_s(ms))
@@ -124,10 +124,12 @@ class Supervisor(object):
         else:
             mid = self.space2mid[space]
         self.mid_control = mid
+        
+        j_sm = self.modules["mod2"].sensorimotor_model
         if self.modules[mid].context_mode is None:
-            self.m = self.modules[mid].produce()
+            self.m = self.modules[mid].produce(j_sm=j_sm)
         else:
-            self.m = self.modules[mid].produce(context=np.array(context)[range(self.modules[mid].context_mode["context_n_dims"])])
+            self.m = self.modules[mid].produce(context=np.array(context)[range(self.modules[mid].context_mode["context_n_dims"])], j_sm=j_sm)
         self.t = self.t + 1
         return self.m
     
@@ -137,14 +139,18 @@ class Supervisor(object):
         self.m = self.modules[mid].inverse(s)
         return self.m
     
-    def perceive(self, s, m=None):
+    def perceive(self, s, m_demo=None, j_demo=False):
         s = self.sensory_primitive(s)
-        if m is None:
+        if m_demo is not None:
+            ms = self.set_ms(m_demo, s)
+            self.update_sensorimotor_models(ms)
+        elif j_demo:
+            m0 = [0]*self.conf.m_ndims
+            m0s = self.set_ms(m0, s)
+            self.update_sensorimotor_models(m0s, demo=True)
+        else:
             ms = self.set_ms(self.m, s)
             self.update_sensorimotor_models(ms)
             if self.mid_control is not None:
                 self.modules[self.mid_control].update_im(self.modules[self.mid_control].get_m(ms), self.modules[self.mid_control].get_s(ms))
-        else:
-            ms = self.set_ms(m, s)
-            self.update_sensorimotor_models(ms)
             

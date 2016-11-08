@@ -26,13 +26,15 @@ class Learning(object):
             return self.agent.produce(context, space=space)
             
             
-    def perceive(self, s, m_demo=None):
-        if m_demo is None:
+    def perceive(self, s, m_demo=None, j_demo=False):
+        if m_demo is not None:
+            # Demonstration of a torso arm trajectory converted to weights with "m_demo=environment.torsodemo2m(m_traj)"
+            self.agent.perceive(s, m_demo=m_demo)
+        elif j_demo:
+            self.agent.perceive(s, j_demo=True)
+        else:
             # Perception of environment when m was produced
             self.agent.perceive(s)
-        else:
-            # Demonstration of a torso arm trajectory converted to weights with "m_demo=environment.torsodemo2m(m_traj)"
-            self.agent.perceive(s, m=m_demo)
                 
 
     def plot(self):
