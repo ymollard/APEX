@@ -18,7 +18,6 @@ class MiscRandomInterest(RandomInterest):
     def __init__(self, 
                  conf, 
                  expl_dims,
-                 competence_measure,
                  win_size,
                  competence_mode,
                  k,
@@ -26,7 +25,6 @@ class MiscRandomInterest(RandomInterest):
         
         RandomInterest.__init__(self, conf, expl_dims)
         
-        self.competence_measure = competence_measure
         self.win_size = win_size
         self.competence_mode = competence_mode
         self.dist_max = np.linalg.norm(self.bounds[0,:] - self.bounds[1,:])
@@ -37,7 +35,10 @@ class MiscRandomInterest(RandomInterest):
         self.current_progress = 0.
         self.current_interest = 0.
               
-            
+    
+    def competence_measure(self, sg, s, dist_max):
+        return competence_dist(sg, s, dist_max=dist_max)
+    
     def add_xc(self, x, c):
         self.data_xc.add_xy(x, [c])
         
@@ -86,9 +87,8 @@ class MiscRandomInterest(RandomInterest):
         if self.n_points() > 0:
             idx_sg_NN = self.data_xc.nn_x(x, k=1)[1][0]
             sr_NN = self.data_sr.get_x(idx_sg_NN)
-            c_old = competence_dist(x, sr_NN, dist_max=self.dist_max)
+            c_old = self.competence_measure(x, sr_NN, self.dist_max)
             return c - c_old
-            #return np.abs(c - c_old)
         else:
             return 0.
         
@@ -124,3 +124,32 @@ class MiscRandomInterest(RandomInterest):
             return self.interest_global()
         else:
             raise NotImplementedError        
+
+        
+
+class ContextRandomInterest(MiscRandomInterest):
+    def __init__(self, 
+                 conf, 
+                 expl_dims,
+                 win_size,
+                 competence_mode,
+                 k,
+                 progress_mode,
+                 context_mode):
+        
+        self.context_mode = context_mode
+        
+        MiscRandomInterest.__init__(self,
+                                     conf, 
+                                     expl_dims,
+                                     win_size,
+                                     competence_mode,
+                                     k,
+                                     progress_mode)        
+
+              
+    def competence_measure(self, csg, cs, dist_max):
+        s = cs[self.context_mode["context_n_dims"]:]
+        sg = csg[self.context_mode["context_n_dims"]:]
+        return competence_dist(s, sg, dist_max=dist_max)
+        

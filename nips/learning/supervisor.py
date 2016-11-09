@@ -35,6 +35,15 @@ class Supervisor(object):
                              s_light=self.s_light, 
                              s_sound=self.s_sound)
         
+        print "self.m_space", self.m_space
+        print "self.c_dims", self.c_dims
+        print "self.s_hand", self.s_hand
+        print "self.s_joystick", self.s_joystick
+        print "self.s_ergo", self.s_ergo
+        print "self.s_ball", self.s_ball
+        
+        #print "environment.conf", environment.conf
+        
         # Create the 6 learning modules:
         self.modules['mod1'] = LearningModule("mod1", self.m_space, self.s_hand, environment.conf)
         self.modules['mod2'] = LearningModule("mod2", self.m_space, self.s_joystick, environment.conf)

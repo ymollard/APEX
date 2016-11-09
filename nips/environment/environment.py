@@ -52,16 +52,34 @@ class TestNCEnvironment(Environment):
         #print "m_dyn", m_dyn
         
         # COMPUTE PERCEPTION
-        self.hand = list(m_dyn[:25, 0]) + list(m_dyn[:5, 1])
-        self.joystick = list(np.array(self.hand[:20]) - np.array(self.hand[10:]))
-        self.ergo = list(self.ergo_theta - np.array(self.joystick))
-        self.ergo_theta = ((self.ergo[-1] + np.pi) % (2. * np.pi)) - np.pi  
-        self.ball = list(self.ball_theta - np.array(self.ergo))
-        self.ball_theta = ((self.ball[-1] + np.pi) % (2. * np.pi)) - np.pi  
-        self.light = list(np.array(self.ball[:10]) - np.array(self.ball[10:]))
-        self.sound = list(np.array(self.ball[2:12]) - np.array(self.ball[10:]))
+        self.hand = list(np.cos(2*np.pi*m_dyn[:10, 0])+np.sin(2*np.pi*m_dyn[:10, 1])) + list(np.cos(2*np.pi*m_dyn[:10, 2])+np.sin(2*np.pi*m_dyn[10:20, 3])) + list(np.cos(2*np.pi*m_dyn[10:20, 0])+np.sin(2*np.pi*m_dyn[:10, 3]))
+        
+        h = self.hand
+        j1 = np.array(h)[:10]
+        j1[j1 < -0.25] = 0
+        j1[j1 > 0.25] = 0
+        j1 = j1 * 4
+        j2 = np.array(h)[10:20]
+        j2[j2 < -0.25] = 0
+        j2[j2 > 0.25] = 0
+        j2 = j2 * 4
+        self.joystick = list(j1) + list(j2)
+        
+        self.ergo = list([0.]*10) + list((self.ergo_theta+np.cumsum(self.joystick[:10])+ np.pi) % (2. * np.pi) - np.pi)
+        
+        self.ergo_theta = self.ergo[-1]
+        
+        d = np.abs(np.array(self.ergo[10:]) - self.ball_theta)
+        d[d > 0.25] = 1
+        d = 1 - d 
+        self.ball = list([0.]*10) + list((self.ball_theta+np.cumsum(d)+ np.pi) % (2. * np.pi) - np.pi)
+        self.ball_theta = self.ball[-1]
+
+        self.light = list([0.]*10)
+        self.sound = list([0.]*10)
         self.current_context = [self.ergo_theta, self.ball_theta]
         
+#         print
 #         print "hand", self.hand
 #         print "joystick", self.joystick
 #         print "ergo", self.ergo

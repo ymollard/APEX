@@ -8,13 +8,14 @@ from explauto.utils.config import make_configuration
 from explauto.exceptions import ExplautoBootstrapError
 
 from sensorimotor_model import DemonstrableNN
-from interest_model import MiscRandomInterest, competence_dist
+from interest_model import MiscRandomInterest, ContextRandomInterest
 
 
 class LearningModule(Agent):
     def __init__(self, mid, m_space, s_space, env_conf, context_mode=None):
 
-
+        
+        
         explo_noise = 0.05
 
 
@@ -34,13 +35,20 @@ class LearningModule(Agent):
         self.s = None
         self.last_interest = 0
         
-
-        im_cls, kwargs = (MiscRandomInterest, {
-                          'competence_measure': competence_dist,
-                           'win_size': 1000,
-                           'competence_mode': 'knn',
-                           'k': 20,
-                           'progress_mode': 'local'})
+        if context_mode is not None:
+            im_cls, kwargs = (ContextRandomInterest, {
+                               'win_size': 1000,
+                               'competence_mode': 'knn',
+                               'k': 20,
+                               'progress_mode': 'local',
+                               'context_mode':context_mode})
+        else:
+            im_cls, kwargs = (MiscRandomInterest, {
+                               'win_size': 1000,
+                               'competence_mode': 'knn',
+                               'k': 20,
+                               'progress_mode': 'local'})
+            
         
         self.im = im_cls(self.conf, self.im_dims, **kwargs)
         
@@ -49,6 +57,7 @@ class LearningModule(Agent):
         
         Agent.__init__(self, self.conf, self.sm, self.im, context_mode=self.context_mode)
         
+
         
     def motor_babbling(self, n=1): 
         if n == 1:
