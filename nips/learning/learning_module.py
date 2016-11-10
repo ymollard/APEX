@@ -134,6 +134,7 @@ class LearningModule(Agent):
             if idx<0:
                 self.y = m
             else:
+                #print "use demonstrated point ", idx
                 self.y = j_sm.inverse_idx(idx)
                 
             #self.m, self.s = self.extract_ms(self.x, self.y)

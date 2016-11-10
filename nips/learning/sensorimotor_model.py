@@ -27,9 +27,15 @@ class DemonstrableNN(NonParametric):
             else:
                 self.mean_explore = array(self.model.infer_order(tuple(x)))
                 idx = -1
+#                 if len(self.model.imodel.fmodel.dataset) == 2001:
+#                     print "used nn idx", self.model.imodel.fmodel.dataset.nn_y(x, k=2)
+#                     print "x", x
+#                     print "best", self.model.imodel.fmodel.dataset.get_xy(self.model.imodel.fmodel.dataset.nn_y(x, k=1)[1][0])
+#                     print "2000", self.model.imodel.fmodel.dataset.get_xy(2000)
                 # Check if nearest s was demonstrated
                 if np.linalg.norm(self.mean_explore) == 0:
                     idx = self.model.imodel.fmodel.dataset.nn_y(x)[1][0]
+                    #print "demonstrated idx", idx
                 if self.mode == 'explore':
                     r = self.mean_explore
                     r[self.sigma_expl > 0] = np.random.normal(r[self.sigma_expl > 0], self.sigma_expl[self.sigma_expl > 0])
@@ -42,15 +48,27 @@ class DemonstrableNN(NonParametric):
             raise NotImplementedError
         
     def inverse_idx(self, idx):
+        print "Retrieve joystick demonstration"
         s = self.model.imodel.fmodel.dataset.get_y(idx)
+        #print "s demo", s
         _, idxs = self.model.imodel.fmodel.dataset.nn_y(s, k=1000)
         # Find nearest s that was not a demo
         for idx in idxs:
             m = self.model.imodel.fmodel.dataset.get_x(idx)
             if np.linalg.norm(m) > 0:
                 break
+#         print "nn idx", idx
+#         print "snn", self.model.imodel.fmodel.dataset.get_y(idx)
+#         print "m", m 
         r = m
         r[self.sigma_expl > 0] = np.random.normal(r[self.sigma_expl > 0], self.sigma_expl[self.sigma_expl > 0])
         res = bounds_min_max(r, self.m_mins, self.m_maxs)
         return res
     
+    def update(self, m, s):
+        self.model.add_xy(tuple(m), tuple(s))
+        self.t += 1
+        if not self.bootstrapped_s and self.t > 1:
+            if not (list(s[2:]) == list(self.model.imodel.fmodel.dataset.get_y(self.t - 2)[2:])):
+                #print "bootstrapped"
+                self.bootstrapped_s = True

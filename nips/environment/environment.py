@@ -75,7 +75,11 @@ class TestNCEnvironment(Environment):
         self.ball = list([0.]*10) + list((self.ball_theta+np.cumsum(d)+ np.pi) % (2. * np.pi) - np.pi)
         self.ball_theta = self.ball[-1]
 
-        self.light = list([0.]*10)
+        if 0.2 < np.linalg.norm(self.joystick) < 0.201:
+            self.light = list(10.*m_dyn[:10, 0])
+            print "LIGHT"
+        else:
+            self.light = list([0.]*10)
         self.sound = list([0.]*10)
         self.current_context = [self.ergo_theta, self.ball_theta]
         

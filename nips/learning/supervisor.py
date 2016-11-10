@@ -8,6 +8,7 @@ class Supervisor(object):
     def __init__(self, environment):
         
         self.environment = environment
+        self.conf = self.environment.conf
         
         self.t = 1
         self.modules = {}
@@ -35,12 +36,15 @@ class Supervisor(object):
                              s_light=self.s_light, 
                              s_sound=self.s_sound)
         
-        print "self.m_space", self.m_space
-        print "self.c_dims", self.c_dims
-        print "self.s_hand", self.s_hand
-        print "self.s_joystick", self.s_joystick
-        print "self.s_ergo", self.s_ergo
-        print "self.s_ball", self.s_ball
+        print
+        print "Spaces:"
+        print "M", self.m_space
+        print "C", self.c_dims
+        print "Hand", self.s_hand
+        print "Joystick", self.s_joystick
+        print "Ergo", self.s_ergo
+        print "Ball", self.s_ball
+        print
         
         #print "environment.conf", environment.conf
         
@@ -55,12 +59,12 @@ class Supervisor(object):
         for mid in self.modules.keys():
             self.chosen_modules[mid] = 0  
     
-        self.space2mid = dict(s_hand="mid1", 
-                             s_joystick="mid2", 
-                             s_ergo="mid3", 
-                             s_ball="mid4", 
-                             s_light="mid5", 
-                             s_sound="mid6")
+        self.space2mid = dict(s_hand="mod1", 
+                             s_joystick="mod2", 
+                             s_ergo="mod3", 
+                             s_ball="mod4", 
+                             s_light="mod5", 
+                             s_sound="mod6")
         
     def choose_babbling_module(self, mode='prop'):
         interests = {}
@@ -139,7 +143,6 @@ class Supervisor(object):
             self.m = self.modules[mid].produce(j_sm=j_sm)
         else:
             self.m = self.modules[mid].produce(context=np.array(context)[range(self.modules[mid].context_mode["context_n_dims"])], j_sm=j_sm)
-        self.t = self.t + 1
         return self.m
     
     def inverse(self, mid, s, context):
@@ -155,11 +158,14 @@ class Supervisor(object):
             self.update_sensorimotor_models(ms)
         elif j_demo:
             m0 = [0]*self.conf.m_ndims
-            m0s = self.set_ms(m0, s)
-            self.update_sensorimotor_models(m0s, demo=True)
+            m0s = self.set_ms(m0, s[:2] + [0]*30 + s[2:])
+            for mid in self.modules.keys():
+                if not (mid == "mod1"): # don't update hand model
+                    self.modules[mid].update_sm(self.modules[mid].get_m(m0s), self.modules[mid].get_s(m0s))
         else:
             ms = self.set_ms(self.m, s)
             self.update_sensorimotor_models(ms)
             if self.mid_control is not None:
                 self.modules[self.mid_control].update_im(self.modules[self.mid_control].get_m(ms), self.modules[self.mid_control].get_s(ms))
+        self.t = self.t + 1
             
