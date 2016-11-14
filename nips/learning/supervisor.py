@@ -10,12 +10,15 @@ class Supervisor(object):
         self.environment = environment
         self.conf = self.environment.conf
         
-        self.t = 1
+        self.t = 0
         self.modules = {}
-        self.chosen_modules = {}
-        self.interests_evolution = []
+        self.chosen_modules = []
+        self.progresses_evolution = {}
+        self.interests_evolution = {}
+        
             
         self.mid_control = ''
+        
             
         # Define motor and sensory spaces:
         m_ndims = environment.conf.m_ndims # number of motor parameters
@@ -37,14 +40,15 @@ class Supervisor(object):
                              s_sound=self.s_sound)
         
         print
-        print "Spaces:"
-        print "M", self.m_space
-        print "C", self.c_dims
+        print "Initialize agent with spaces:"
+        print "Motor", self.m_space
+        print "Context", self.c_dims
         print "Hand", self.s_hand
         print "Joystick", self.s_joystick
         print "Ergo", self.s_ergo
         print "Ball", self.s_ball
-        print
+        print "Light", self.s_light
+        print "Sound", self.s_sound
         
         #print "environment.conf", environment.conf
         
@@ -55,9 +59,6 @@ class Supervisor(object):
         self.modules['mod4'] = LearningModule("mod4", self.m_space, self.c_dims + self.s_ball, environment.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
         self.modules['mod5'] = LearningModule("mod5", self.m_space, self.c_dims + self.s_light, environment.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
         self.modules['mod6'] = LearningModule("mod6", self.m_space, self.c_dims + self.s_sound, environment.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
-                  
-        for mid in self.modules.keys():
-            self.chosen_modules[mid] = 0  
     
         self.space2mid = dict(s_hand="mod1", 
                              s_joystick="mod2", 
@@ -65,6 +66,46 @@ class Supervisor(object):
                              s_ball="mod4", 
                              s_light="mod5", 
                              s_sound="mod6")
+        
+        for mid in self.modules.keys():
+            self.progresses_evolution[mid] = []
+            self.interests_evolution[mid] = []
+        
+    
+    def save(self):
+        sm_data = {}
+        im_data = {}
+        for mid in self.modules.keys():
+            sm_data[mid] = self.modules[mid].sensorimotor_model.save()
+            im_data[mid] = self.modules[mid].interest_model.save()            
+        return {"sm_data":sm_data,
+                "im_data":im_data,
+                "chosen_modules":self.chosen_modules,
+                "progresses_evolution":self.progresses_evolution,
+                "interests_evolution":self.interests_evolution}
+
+        
+    def forward(self, data, iteration):
+        if iteration > len(data["chosen_modules"]):
+            print "\nWARNING: asked to restart from iteration", iteration, "but only", len(data["chosen_modules"]), "are available. Restarting from iteration", len(data["chosen_modules"]), "..."
+            iteration = len(data["chosen_modules"])
+        self.chosen_modules = data["chosen_modules"][:iteration]
+        self.progresses_evolution = data["progresses_evolution"]
+        self.interests_evolution = data["interests_evolution"]
+        for mid in self.modules.keys():
+            self.progresses_evolution[mid] = self.progresses_evolution[mid][:iteration]
+            self.interests_evolution[mid] = self.interests_evolution[mid][:iteration]
+        self.t = iteration
+        if iteration > 0:
+            for mid in self.modules.keys():
+                if mid == "mod1":
+                    self.modules[mid].sensorimotor_model.forward(data["sm_data"][mid], iteration-self.chosen_modules.count("j_demo"))
+                else:
+                    self.modules[mid].sensorimotor_model.forward(data["sm_data"][mid], iteration)
+                    
+                self.modules[mid].interest_model.forward(data["im_data"][mid], self.chosen_modules.count(mid), self.progresses_evolution[mid][-1], self.interests_evolution[mid][-1])
+    
+        
         
     def choose_babbling_module(self, mode='prop'):
         interests = {}
@@ -87,15 +128,15 @@ class Supervisor(object):
         elif mode == 'prop':
             w = interests.values()
             mid = self.modules.keys()[prop_choice(w, eps=0.2)]
-            if self.t % 1000 == 0:
+            if (self.t + 1) % 1000 == 0:
                 print
-                print 'Iteration', self.t
+                print 'Iteration', self.t +1
                 print "Interests", np.array([self.modules[mid].interest() for mid in self.modules.keys()])
                 #print "im db n points", [len(self.modules[mid].interest_model.data_xc) for mid in self.modules.keys()]
-                print self.chosen_modules
-            self.interests_evolution.append(w)
+                #print self.chosen_modules
+            #self.interests_evolution.append(w)
         
-        self.chosen_modules[mid] = self.chosen_modules[mid] + 1
+        self.chosen_modules.append(mid)
         return mid
         
         
@@ -156,16 +197,23 @@ class Supervisor(object):
         if m_demo is not None:
             ms = self.set_ms(m_demo, s)
             self.update_sensorimotor_models(ms)
+            self.chosen_modules.append("m_demo")
         elif j_demo:
             m0 = [0]*self.conf.m_ndims
             m0s = self.set_ms(m0, s[:2] + [0]*30 + s[2:])
             for mid in self.modules.keys():
                 if not (mid == "mod1"): # don't update hand model
                     self.modules[mid].update_sm(self.modules[mid].get_m(m0s), self.modules[mid].get_s(m0s))
+            self.chosen_modules.append("j_demo")
         else:
             ms = self.set_ms(self.m, s)
             self.update_sensorimotor_models(ms)
             if self.mid_control is not None:
                 self.modules[self.mid_control].update_im(self.modules[self.mid_control].get_m(ms), self.modules[self.mid_control].get_s(ms))
         self.t = self.t + 1
-            
+        
+        for mid in self.modules.keys():
+            self.progresses_evolution[mid].append(self.modules[mid].progress())
+            self.interests_evolution[mid].append(self.modules[mid].interest())
+
+    

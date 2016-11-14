@@ -12,6 +12,14 @@ class DemonstrableNN(NonParametric):
         self.demonstrated = []
         NonParametric.__init__(self, conf, sigma_explo_ratio, fwd, inv, **learner_kwargs)
         
+    def save(self):
+        return [[self.model.imodel.fmodel.dataset.get_x(i) for i in range(len(self.model.imodel.fmodel.dataset))],
+                [self.model.imodel.fmodel.dataset.get_y(i) for i in range(len(self.model.imodel.fmodel.dataset))]]
+    
+    def forward(self, data, iteration):
+        self.model.imodel.fmodel.dataset.add_xy_batch(data[0], data[1])
+        self.t = iteration
+
     def infer(self, in_dims, out_dims, x):
         if self.t < max(self.model.imodel.fmodel.k, self.model.imodel.k):
             raise ExplautoBootstrapError
@@ -27,11 +35,6 @@ class DemonstrableNN(NonParametric):
             else:
                 self.mean_explore = array(self.model.infer_order(tuple(x)))
                 idx = -1
-#                 if len(self.model.imodel.fmodel.dataset) == 2001:
-#                     print "used nn idx", self.model.imodel.fmodel.dataset.nn_y(x, k=2)
-#                     print "x", x
-#                     print "best", self.model.imodel.fmodel.dataset.get_xy(self.model.imodel.fmodel.dataset.nn_y(x, k=1)[1][0])
-#                     print "2000", self.model.imodel.fmodel.dataset.get_xy(2000)
                 # Check if nearest s was demonstrated
                 if np.linalg.norm(self.mean_explore) == 0:
                     idx = self.model.imodel.fmodel.dataset.nn_y(x)[1][0]
@@ -48,7 +51,7 @@ class DemonstrableNN(NonParametric):
             raise NotImplementedError
         
     def inverse_idx(self, idx):
-        print "Retrieve joystick demonstration"
+        #print "Retrieve joystick demonstration"
         s = self.model.imodel.fmodel.dataset.get_y(idx)
         #print "s demo", s
         _, idxs = self.model.imodel.fmodel.dataset.nn_y(s, k=1000)

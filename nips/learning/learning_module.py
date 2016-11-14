@@ -154,6 +154,7 @@ class LearningModule(Agent):
             return self.interest_model.update(hstack((m, self.s)), hstack((m, s)))
         
     def competence(self): return self.interest_model.competence()
+    def progress(self): return self.interest_model.progress()
     def interest(self): return self.interest_model.interest()
 
     def perceive(self, m, s):

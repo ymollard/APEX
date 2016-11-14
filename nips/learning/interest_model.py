@@ -3,7 +3,7 @@ import numpy as np
 
 from explauto.interest_model.random import RandomInterest
 from explauto.interest_model.competences import competence_dist
-from explauto.models.dataset import BufferedDataset as Dataset
+from explauto.models.dataset import Dataset
 
 
 class MiscRandomInterest(RandomInterest):
@@ -35,6 +35,17 @@ class MiscRandomInterest(RandomInterest):
         self.current_progress = 0.
         self.current_interest = 0.
               
+        
+    def save(self):
+        return [self.data_xc.data, 
+                self.data_sr.data]
+        
+    def forward(self, data, iteration, progress, interest):
+        self.data_xc.add_xy_batch(data[0][0][:iteration], data[0][1][:iteration])
+        self.data_sr.data[0] = self.data_sr.data[0] + data[1][0][:iteration]
+        self.data_sr.size += len(data[1][0][:iteration])
+        self.current_progress = progress
+        self.current_interest = interest
     
     def competence_measure(self, sg, s, dist_max):
         return competence_dist(sg, s, dist_max=dist_max)
@@ -117,6 +128,8 @@ class MiscRandomInterest(RandomInterest):
         
     def competence(self): return self.competence_global()
         
+    def progress(self): return self.current_progress
+    
     def interest(self):
         if self.progress_mode == 'local':
             return self.current_interest

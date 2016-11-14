@@ -1,4 +1,7 @@
+
+import os
 import sys
+import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -12,7 +15,7 @@ from nips.learning.supervisor import Supervisor
 class Learning(object):
     def __init__(self, environment):
         self.environment = environment
-        self.agent = Supervisor(self.environment)
+        self.agent = None
         
         
     def produce(self, context, space=None):
@@ -25,7 +28,6 @@ class Learning(object):
             assert space in ["s_hand", "s_joystick", 's_ergo', "s_ball", "s_light", "s_sound"]
             return self.agent.produce(context, space=space)
             
-            
     def perceive(self, s, m_demo=None, j_demo=False):
         if m_demo is not None:
             # Demonstration of a torso arm trajectory converted to weights with "m_demo = environment.torsodemo2m(m_traj)"
@@ -37,11 +39,35 @@ class Learning(object):
             # Perception of environment when m was produced
             assert len(s) == 112
             self.agent.perceive(s)
+            
+    def get_iterations(self):
+        return self.learning.agent.t
+    
+    def get_current_interests(self):
+        interests = {}
+        for mid in self.learning.agent.modules.keys():
+            interests[mid] = self.learning.modules[mid].interest()
+        return interests
                 
+    def save(self, log_dir, name):        
+        data = self.agent.save() 
+        filename = os.path.join(log_dir, name)
+        with open(filename, 'w') as f:
+            pickle.dump(data, f)
+    
+    def start(self):
+        self.agent = Supervisor(self.environment)
+         
+    def restart(self, log_dir, name, iteration):
+        filename = os.path.join(log_dir, name)
+        with open(filename, 'r') as f:
+            data = pickle.load(f)
+        self.start()
+        self.agent.forward(data, iteration)
 
     def plot(self):
         fig, ax = plt.subplots()
-        ax.plot(np.array(self.agent.interests_evolution), lw=2)
+        ax.plot(np.transpose(np.array(self.agent.interests_evolution.values())), lw=2)
         ax.legend(["s_hand", "s_joystick", "s_ergo", "s_ball", "s_light", "s_sound"], ncol=3)
         ax.set_xlabel('Time steps', fontsize=20)
         ax.set_ylabel('Learning progress', fontsize=20)
@@ -56,8 +82,9 @@ if __name__ == "__main__":
     
     print "Create agent"
     learning = Learning(environment)
+    learning.start()
     
-    
+    print
     print "Do 2000 autonomous steps:" 
     for i in range(2000):
         context = environment.get_current_context()
@@ -82,6 +109,20 @@ if __name__ == "__main__":
     learning.produce(environment.get_current_context(), "s_light")
     
     
+    
+    print
+    print "Saving current data to file"
+    learning.save("../../data", "test.pickle")
+    
+#     print "Data before saving"
+#     print learning.agent.t
+#     print learning.agent.interests_evolution["mod1"][-10:]
+#     print learning.agent.progresses_evolution["mod1"][-10:]
+#     print learning.agent.chosen_modules[-10:]
+#     print len(learning.agent.modules["mod1"].sensorimotor_model.model.imodel.fmodel.dataset)
+#     print len(learning.agent.modules["mod2"].sensorimotor_model.model.imodel.fmodel.dataset)
+#     print learning.agent.modules["mod1"].interest_model.current_interest
+    
     print
     print "Do 2000 autonomous steps:" 
     for i in range(2000):
@@ -90,6 +131,25 @@ if __name__ == "__main__":
         s = environment.update(m)
         learning.perceive(s)
     
+    print "Rebuilding agent from file"
+    learning.restart("../../data", "test.pickle", 2001)
+        
+#     print "Data after rebuilding"
+#     print learning.agent.t
+#     print learning.agent.interests_evolution["mod1"][-10:]
+#     print learning.agent.progresses_evolution["mod1"][-10:]
+#     print learning.agent.chosen_modules[-10:]
+#     print len(learning.agent.modules["mod1"].sensorimotor_model.model.imodel.fmodel.dataset)
+#     print len(learning.agent.modules["mod2"].sensorimotor_model.model.imodel.fmodel.dataset)
+#     print learning.agent.modules["mod1"].interest_model.current_interest
+    
+    print
+    print "Do 2000 autonomous steps:" 
+    for i in range(2000):
+        context = environment.get_current_context()
+        m = learning.produce(context)
+        s = environment.update(m)
+        learning.perceive(s)
         
     print "\nPloting interests..."
     learning.plot()
