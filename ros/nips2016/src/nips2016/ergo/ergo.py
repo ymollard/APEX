@@ -26,18 +26,22 @@ class Ergo(object):
             self.params = json.load(f)
         self.rate = rospy.Rate(self.params['publish_rate'])
         self.eef_pub = rospy.Publisher('/nips2016/ergo/end_effector_pose', PoseStamped, queue_size=1)
-        self.joy_pub = rospy.Publisher('/nips2016/ergo/joystick', Joy, queue_size=1)
+        self.joy_pub = rospy.Publisher('/nips2016/ergo/joysticks/1', Joy, queue_size=1)
+        self.joy_pub2 = rospy.Publisher('/nips2016/ergo/joysticks/2', Joy, queue_size=1)
         self.srv_reset = rospy.Service('/nips2016/ergo/reset', Reset, self._cb_reset)
         self.ergo = None
         self.limits = []
         
-        if pygame.joystick.get_count() == 0:
-            rospy.logerr("Ergo: No joystick found, exiting")
+        if pygame.joystick.get_count() < 2:
+            rospy.logerr("Ergo: Expecting 2 joysticks but found only {}, exiting".format(pygame.joystick.get_count()))
             sys.exit(0)
         else:
             self.joystick = pygame.joystick.Joystick(0)
+            self.joystick2 = pygame.joystick.Joystick(0)
             self.joystick.init()
-            rospy.loginfo('Initialized Joystick: {}'.format(self.joystick.get_name()))
+            self.joystick2.init()
+            rospy.loginfo('Initialized Joystick 1: {}'.format(self.joystick.get_name()))
+            rospy.loginfo('Initialized Joystick 2: {}'.format(self.joystick2.get_name()))
 
     def go_to_start(self):
         self.go_to([0.0, -15.4, 35.34, -8.06, -15.69, 71.99], 1)
@@ -61,11 +65,16 @@ class Ergo(object):
         self.go_to_start()
         while not rospy.is_shutdown():
             pygame.event.get()
-            x = self.joystick.get_axis(1)
-            y = self.joystick.get_axis(0)
-            self.publish_joy(x, y)
-            self.servo_robot(x, y)
+            x = self.joystick.get_axis(0)
+            y = self.joystick.get_axis(1)
+            self.servo_robot(y, x)
             self.publish_eef()
+
+            # Publishers
+            self.publish_joy(x, y, 1)
+            x = self.joystick2.get_axis(0)
+            y = self.joystick2.get_axis(1)
+            self.publish_joy(x, y, 2)
             self.rate.sleep()
 
     def servo_axis_rotation(self, x):
@@ -96,12 +105,16 @@ class Ergo(object):
         pose.pose.position.z = eef_pose[2]
         self.eef_pub.publish(pose)
 
-    def publish_joy(self, x, y):
+    def publish_joy(self, x, y, id):
         joy = Joy()
         joy.header.stamp = rospy.Time.now()
         joy.axes.append(x)
         joy.axes.append(y)
-        self.joy_pub.publish(joy)
+        if id == 1:
+            self.joy_pub.publish(joy)
+        else:
+            self.joy_pub2.publish(joy)
+
 
     def _cb_reset(self, request):
         self.go_to_start()
