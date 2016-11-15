@@ -6,6 +6,7 @@ import pygame
 import pygame.display
 from nips2016.srv import *
 from geometry_msgs.msg import PoseStamped
+from std_msgs.msg import Bool
 from sensor_msgs.msg import Joy
 from poppy.creatures import PoppyErgoJr
 from rospkg import RosPack
@@ -26,10 +27,12 @@ class Ergo(object):
             self.params = json.load(f)
         self.rate = rospy.Rate(self.params['publish_rate'])
         self.eef_pub = rospy.Publisher('/nips2016/ergo/end_effector_pose', PoseStamped, queue_size=1)
+        self.eef_extended_pub = rospy.Publisher('/nips2016/ergo/extended', Bool, queue_size=1)
         self.joy_pub = rospy.Publisher('/nips2016/ergo/joysticks/1', Joy, queue_size=1)
         self.joy_pub2 = rospy.Publisher('/nips2016/ergo/joysticks/2', Joy, queue_size=1)
         self.srv_reset = rospy.Service('/nips2016/ergo/reset', Reset, self._cb_reset)
         self.ergo = None
+        self.extended = False
         self.limits = []
         
         if pygame.joystick.get_count() < 2:
@@ -49,10 +52,12 @@ class Ergo(object):
     def go_to_extended(self):
         extended = {'m2': 60, 'm3': -37, 'm4': 0, 'm5': -50, 'm6': 96}
         self.ergo.goto_position(extended, 0.5)
+        self.extended = True
 
     def go_to_rest(self):
         rest = {'m2': -26, 'm3': 59, 'm4': 0, 'm5': -30, 'm6': 78}
         self.ergo.goto_position(rest, 0.5)
+        self.extended = False
 
     def go_to(self, motors, duration):
         self.ergo.goto_position(dict(zip(['m1', 'm2', 'm3', 'm4', 'm5', 'm6'], motors)), duration)
@@ -104,6 +109,7 @@ class Ergo(object):
         pose.pose.position.y = eef_pose[1]
         pose.pose.position.z = eef_pose[2]
         self.eef_pub.publish(pose)
+        self.eef_extended_pub.publish(Bool(data=self.extended))
 
     def publish_joy(self, x, y, id):
         joy = Joy()
