@@ -29,7 +29,8 @@ class Ergo(object):
         self.joy_pub = rospy.Publisher('/nips2016/ergo/joystick', Joy, queue_size=1)
         self.srv_reset = rospy.Service('/nips2016/ergo/reset', Reset, self._cb_reset)
         self.ergo = None
-
+        self.limits = []
+        
         if pygame.joystick.get_count() == 0:
             rospy.logerr("Ergo: No joystick found, exiting")
             sys.exit(0)
@@ -39,12 +40,23 @@ class Ergo(object):
             rospy.loginfo('Initialized Joystick: {}'.format(self.joystick.get_name()))
 
     def go_to_start(self):
-        for m, p in zip(self.ergo.motors, [0.0, -15.4, 35.34, -8.06, -15.69, 71.99]):
-            m.goto_position(p, 1.)
-        rospy.sleep(1)
+        self.go_to([0.0, -15.4, 35.34, -8.06, -15.69, 71.99], 1)
+
+    def go_to_extended(self):
+        extended = {'m2': 60, 'm3': -37, 'm4': 0, 'm5': -50, 'm6': 96}
+        self.ergo.goto_position(extended, 0.5)
+
+    def go_to_rest(self):
+        rest = {'m2': -26, 'm3': 59, 'm4': 0, 'm5': -30, 'm6': 78}
+        self.ergo.goto_position(rest, 0.5)
+
+    def go_to(self, motors, duration):
+        self.ergo.goto_position(dict(zip(['m1', 'm2', 'm3', 'm4', 'm5', 'm6'], motors)), duration)
+        rospy.sleep(duration)
 
     def run(self, dummy=False):
-        self.ergo = PoppyErgoJr(simulator='poppy-simu' if dummy else None, camera='dummy')
+        self.ergo = PoppyErgoJr(use_http=True, simulator='poppy-simu' if dummy else None, camera='dummy')
+        self.limits = [self.ergo.config['motors'][motor]['angle_limit'] for motor in ['m1', 'm2', 'm3', 'm4', 'm5', 'm6']]
         self.ergo.compliant = False
         self.go_to_start()
         while not rospy.is_shutdown():
@@ -56,15 +68,24 @@ class Ergo(object):
             self.publish_eef()
             self.rate.sleep()
 
-    def servo_axis0(self, x, id):
-        if x <= 1 and x >= -1:
-            p = self.ergo.motors[id].goal_position
-            if -180 < p+x < 180 :
-                self.ergo.motors[id].goto_position(p + self.params['speed']*x, 0.1)
+    def servo_axis_rotation(self, x):
+        self.servo_axis(x, 0)
+
+    def servo_axis_elongation(self, x):
+        if x > 0.5:
+            self.go_to_extended()
+        else:
+            self.go_to_rest()
+
+    def servo_axis(self, x, id):
+        p = self.ergo.motors[id].goal_position
+        new_x = p + self.params['speed']*x
+        if self.limits[id][0] < new_x < self.limits[id][1]:
+            self.ergo.motors[id].goto_position(new_x, 0.1)
 
     def servo_robot(self, x, y):
-        self.servo_axis0(x, 0)
-        self.servo_axis0(y, 1)
+        self.servo_axis_rotation(-x)
+        self.servo_axis_elongation(y)
 
     def publish_eef(self):
         pose = PoseStamped()
