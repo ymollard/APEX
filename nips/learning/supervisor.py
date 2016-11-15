@@ -26,14 +26,16 @@ class Supervisor(object):
         self.m_space = range(m_ndims)
         self.c_dims = range(m_ndims, m_ndims+2)
         self.s_hand = range(m_ndims+2, m_ndims+32)
-        self.s_joystick = range(m_ndims+32, m_ndims+52)
-        self.s_ergo = range(m_ndims+52, m_ndims+72)
-        self.s_ball = range(m_ndims+72, m_ndims+92)
-        self.s_light = range(m_ndims+92, m_ndims+102)
-        self.s_sound = range(m_ndims+102, m_ndims+112)
+        self.s_joystick1 = range(m_ndims+32, m_ndims+52)
+        self.s_joystick2 = range(m_ndims+52, m_ndims+72)
+        self.s_ergo = range(m_ndims+72, m_ndims+92)
+        self.s_ball = range(m_ndims+92, m_ndims+112)
+        self.s_light = range(m_ndims+112, m_ndims+122)
+        self.s_sound = range(m_ndims+122, m_ndims+132)
         
         self.s_spaces = dict(s_hand=self.s_hand, 
-                             s_joystick=self.s_joystick, 
+                             s_joystick1=self.s_joystick1, 
+                             s_joystick2=self.s_joystick2, 
                              s_ergo=self.s_ergo, 
                              s_ball=self.s_ball, 
                              s_light=self.s_light, 
@@ -44,7 +46,8 @@ class Supervisor(object):
         print "Motor", self.m_space
         print "Context", self.c_dims
         print "Hand", self.s_hand
-        print "Joystick", self.s_joystick
+        print "Joystick1", self.s_joystick1
+        print "Joystick2", self.s_joystick2
         print "Ergo", self.s_ergo
         print "Ball", self.s_ball
         print "Light", self.s_light
@@ -54,18 +57,20 @@ class Supervisor(object):
         
         # Create the 6 learning modules:
         self.modules['mod1'] = LearningModule("mod1", self.m_space, self.s_hand, environment.conf)
-        self.modules['mod2'] = LearningModule("mod2", self.m_space, self.s_joystick, environment.conf)
-        self.modules['mod3'] = LearningModule("mod3", self.m_space, [self.c_dims[0]] + self.s_ergo, environment.conf, context_mode=dict(mode='mcs', context_n_dims=1, context_sensory_bounds=[[-1.],[1.]]))
-        self.modules['mod4'] = LearningModule("mod4", self.m_space, self.c_dims + self.s_ball, environment.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
-        self.modules['mod5'] = LearningModule("mod5", self.m_space, self.c_dims + self.s_light, environment.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
-        self.modules['mod6'] = LearningModule("mod6", self.m_space, self.c_dims + self.s_sound, environment.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
+        self.modules['mod2'] = LearningModule("mod2", self.m_space, self.s_joystick1, environment.conf)
+        self.modules['mod3'] = LearningModule("mod2", self.m_space, self.s_joystick2, environment.conf)
+        self.modules['mod4'] = LearningModule("mod3", self.m_space, [self.c_dims[0]] + self.s_ergo, environment.conf, context_mode=dict(mode='mcs', context_n_dims=1, context_sensory_bounds=[[-1.],[1.]]))
+        self.modules['mod5'] = LearningModule("mod4", self.m_space, self.c_dims + self.s_ball, environment.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
+        self.modules['mod6'] = LearningModule("mod5", self.m_space, self.c_dims + self.s_light, environment.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
+        self.modules['mod7'] = LearningModule("mod6", self.m_space, self.c_dims + self.s_sound, environment.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
     
         self.space2mid = dict(s_hand="mod1", 
-                             s_joystick="mod2", 
-                             s_ergo="mod3", 
-                             s_ball="mod4", 
-                             s_light="mod5", 
-                             s_sound="mod6")
+                             s_joystick1="mod2", 
+                             s_joystick2="mod3", 
+                             s_ergo="mod4", 
+                             s_ball="mod5", 
+                             s_light="mod6", 
+                             s_sound="mod7")
         
         for mid in self.modules.keys():
             self.progresses_evolution[mid] = []
@@ -82,7 +87,8 @@ class Supervisor(object):
                 "im_data":im_data,
                 "chosen_modules":self.chosen_modules,
                 "progresses_evolution":self.progresses_evolution,
-                "interests_evolution":self.interests_evolution}
+                "interests_evolution":self.interests_evolution,
+                "normalized_interests_evolution":self.get_normalized_interests_evolution()}
 
         
     def forward(self, data, iteration):
@@ -216,4 +222,19 @@ class Supervisor(object):
             self.progresses_evolution[mid].append(self.modules[mid].progress())
             self.interests_evolution[mid].append(self.modules[mid].interest())
 
+    def get_normalized_interests_evolution(self):
+        data = np.transpose(np.array([self.interests_evolution[mid] for mid in ["mod1", "mod2", "mod3", "mod4", "mod5", "mod6", "mod7"]]))
+        data_sum = data.sum(axis=1)
+        data_sum[data_sum==0.] = 1.
+        return data / data_sum.reshape(data.shape[0],1)
     
+    def get_normalized_interests(self):
+        interests = {}
+        for mid in self.modules.keys():
+            interests[mid] = self.modules[mid].interest()
+        s = sum(interests.values())
+        if s > 0:
+            for mid in self.modules.keys():
+                interests[mid] = interests[mid] / s
+        return interests
+        

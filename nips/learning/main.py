@@ -33,27 +33,24 @@ class Learning(object):
             # Demonstration of a torso arm trajectory converted to weights with "m_demo = environment.torsodemo2m(m_traj)"
             self.agent.perceive(s, m_demo=m_demo)
         elif j_demo:
-            assert len(s) == 82 # [context, s_joystick,...] (no hand trajectory in s)
+            assert len(s) == 102 # [context, s_joystick,...] (no hand trajectory in s)
             self.agent.perceive(s, j_demo=True)
         else:
             # Perception of environment when m was produced
-            assert len(s) == 112
+            assert len(s) == 132
             self.agent.perceive(s)
             
-    def get_iterations(self):
-        return self.learning.agent.t
-    
-    def get_current_interests(self):
-        interests = {}
-        for mid in self.learning.agent.modules.keys():
-            interests[mid] = self.learning.modules[mid].interest()
-        return interests
+    def get_iterations(self): return self.agent.t
+    def get_normalized_interests(self): return self.agent.get_normalized_interests()    
+    def get_normalized_interests_evolution(self): return self.agent.get_normalized_interests_evolution()
                 
     def save(self, log_dir, name):        
         data = self.agent.save() 
         filename = os.path.join(log_dir, name)
         with open(filename, 'w') as f:
             pickle.dump(data, f)
+        with open(os.path.join(log_dir, "interests_" + name), 'w') as f:
+            pickle.dump(data["normalized_interests_evolution"], f)
     
     def start(self):
         self.agent = Supervisor(self.environment)
@@ -67,8 +64,8 @@ class Learning(object):
 
     def plot(self):
         fig, ax = plt.subplots()
-        ax.plot(np.transpose(np.array(self.agent.interests_evolution.values())), lw=2)
-        ax.legend(["s_hand", "s_joystick", "s_ergo", "s_ball", "s_light", "s_sound"], ncol=3)
+        ax.plot(self.get_normalized_interests_evolution(), lw=2)
+        ax.legend(["s_hand", "s_joystick1", "s_joystick2", "s_ergo", "s_ball", "s_light", "s_sound"], ncol=3)
         ax.set_xlabel('Time steps', fontsize=20)
         ax.set_ylabel('Learning progress', fontsize=20)
         plt.show(block=True)
@@ -101,7 +98,7 @@ if __name__ == "__main__":
     print
     print "Do 1 joystick demonstration to show how to produce light"
     j_demo = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.2, 0.001, 0., 0., 0., 0., 0.]
-    s = environment.get_current_context() + j_demo + [0.2]*20 + [0.2]*20 + [0.1]*10 + [0.]*10
+    s = environment.get_current_context() + j_demo + [0.]*20 + [0.2]*20 + [0.2]*20 + [0.1]*10 + [0.]*10
     #print "j_demo", s
     learning.perceive(s, j_demo=True)
     

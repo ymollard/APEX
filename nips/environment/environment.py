@@ -22,7 +22,8 @@ class TestNCEnvironment(Environment):
         
         # SPACES
         self.hand = 30*[0.]
-        self.joystick = 20*[0.]
+        self.joystick1 = 20*[0.]
+        self.joystick2 = 20*[0.]
         self.ergo = 20*[0.]
         self.ball = 20*[0.]
         self.light = 10*[0.]
@@ -63,9 +64,9 @@ class TestNCEnvironment(Environment):
         j2[j2 < -0.25] = 0
         j2[j2 > 0.25] = 0
         j2 = j2 * 4
-        self.joystick = list(j1) + list(j2)
+        self.joystick1 = list(j1) + list(j2)
         
-        self.ergo = list([0.]*10) + list((self.ergo_theta+np.cumsum(self.joystick[:10])+ np.pi) % (2. * np.pi) - np.pi)
+        self.ergo = list([0.]*10) + list((self.ergo_theta+np.cumsum(self.joystick1[:10])+ np.pi) % (2. * np.pi) - np.pi)
         
         self.ergo_theta = self.ergo[-1]
         
@@ -75,7 +76,7 @@ class TestNCEnvironment(Environment):
         self.ball = list([0.]*10) + list((self.ball_theta+np.cumsum(d)+ np.pi) % (2. * np.pi) - np.pi)
         self.ball_theta = self.ball[-1]
 
-        if 0.2 < np.linalg.norm(self.joystick) < 0.201:
+        if 0.2 < np.linalg.norm(self.joystick1) < 0.201:
             self.light = list(10.*m_dyn[:10, 0])
             print "LIGHT"
         else:
@@ -92,7 +93,7 @@ class TestNCEnvironment(Environment):
 #         print "sound", self.sound
 #         print "current_context", self.current_context
         
-        return list(self.hand + self.joystick + self.ergo + self.ball + self.light + self.sound)
+        return list(self.hand + self.joystick1 + self.joystick2 + self.ergo + self.ball + self.light + self.sound)
     
 
 
@@ -101,8 +102,8 @@ class TestEnvironment(ContextEnvironment):
         env_cls = TestNCEnvironment
         env_conf = dict(m_mins=[-1.]*32, 
                         m_maxs=[1.]*32, 
-                        s_mins=[-1.]*110, 
-                        s_maxs=[1.]*110)
+                        s_mins=[-1.]*130, 
+                        s_maxs=[1.]*130)
         context_mode = dict(mode='mcs',
                             context_n_dims=2,
                             context_sensory_bounds=[[-1., -1.],[1., 1.]])
