@@ -1,6 +1,6 @@
 {
   "ergo": {
     "threshold_extended": 0.09
-  }
-
+  },
+  "rate": 15
 }
