@@ -11,14 +11,20 @@ import rospy
 
 class Environment(object):
     def __init__(self):
-        self.tracking = BallTracking()
+        # Load parameters and hack the tuple conversions so that OpenCV is happy
+        self.rospack = RosPack()
+        with open(join(self.rospack.get_path('nips2016'), 'config', 'environment.json')) as f:
+            self.params = json.load(f)
+        self.params['tracking']['ball']['lower'] = tuple(self.params['tracking']['ball']['lower'])
+        self.params['tracking']['ball']['upper'] = tuple(self.params['tracking']['ball']['upper'])
+        self.params['tracking']['arena']['lower'] = tuple(self.params['tracking']['arena']['lower'])
+        self.params['tracking']['arena']['upper'] = tuple(self.params['tracking']['arena']['upper'])
+
+        self.tracking = BallTracking(self.params)
         self.conversions = EnvironmentConversions()
         self.ball_pub = rospy.Publisher('/nips2016/environment/ball', CircularState, queue_size=1)
         self.light_pub = rospy.Publisher('/nips2016/environment/light', UInt8, queue_size=1)
         self.sound_pub = rospy.Publisher('/nips2016/environment/sound', Float32, queue_size=1)
-        self.rospack = RosPack()
-        with open(join(self.rospack.get_path('nips2016'), 'config', 'environment.json')) as f:
-            self.params = json.load(f)
         self.rate = rospy.Rate(self.params['rate'])
 
     def update_light(self, state):
@@ -52,7 +58,8 @@ class Environment(object):
                 self.ball_pub.publish(circular_state)
 
             if debug:
-                self.tracking.draw_images(frame, hsv, mask_ball, mask_arena, arena_center, int(arena_radius/2.2))
+                self.tracking.draw_images(frame, hsv, mask_ball, mask_arena, arena_center,
+                                          None if arena_radius is None else int(arena_radius/self.params['tracking']['ring_divider']))
             self.rate.sleep()
 
 

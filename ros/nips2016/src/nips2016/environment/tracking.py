@@ -7,14 +7,8 @@ import cv2
 
 
 class BallTracking(object):
-    def __init__(self):
-        self.buffer_size = 32
-        # define the lower and upper color boundaries H,S, V
-        self.lower = (27, 45, 185)
-        self.upper = (38, 200, 255)
-        self.lower_arena = (95, 110, 150)
-        self.upper_arena = (110, 250, 250)
-
+    def __init__(self, parameters):
+        self.params = parameters
 
         # initialize the lists of tracked points in a map and the coordinate deltas
         self.pts = {}
@@ -28,24 +22,16 @@ class BallTracking(object):
         return self.camera.read()
 
     def get_images(self, frame):
-        """
-        Get HSV and masks
-        :return:
-        """
-        # resize the frame, blur it, and convert it to the HSV
-        # color space
+        # resize the frame, blur it, and convert it to the HSV color space
         frame = imutils.resize(frame, width=600)
         # blurred = cv2.GaussianBlur(frame, (11, 11), 0)
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-        # construct a mask for the color "green", then perform
-        # a series of dilations and erosions to remove any small
-        # blobs left in the mask
-        mask_ball = cv2.inRange(hsv, self.lower, self.upper)
+        mask_ball = cv2.inRange(hsv, self.params['tracking']['ball']['lower'], self.params['tracking']['ball']['upper'])
         mask_ball = cv2.erode(mask_ball, None, iterations=4)
         mask_ball = cv2.dilate(mask_ball, None, iterations=10)
 
-        mask_arena = cv2.inRange(hsv, self.lower_arena, self.upper_arena)
+        mask_arena = cv2.inRange(hsv, self.params['tracking']['arena']['lower'], self.params['tracking']['arena']['upper'])
         mask_arena = cv2.erode(mask_arena, None, iterations=4)
         mask_arena = cv2.dilate(mask_arena, None, iterations=10)
 
@@ -53,7 +39,7 @@ class BallTracking(object):
 
     def find_center(self, name, frame, mask, min_radius):
         if name not in self.pts:
-            self.pts[name] = deque(maxlen=self.buffer_size)
+            self.pts[name] = deque(maxlen=self.params['tracking']['buffer_size'])
 
         # find contours in the mask and initialize the current (x, y) center of the ball
         cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
@@ -75,10 +61,11 @@ class BallTracking(object):
                 return center, radius
         return None, None
 
-    def draw_images(self, frame, hsv, mask_ball, mask_arena, arena_center, arena_ring_radius):
+    def draw_images(self, frame, hsv, mask_ball, mask_arena, arena_center, arena_ring_radius=None):
         self.draw_history(frame, 'ball')
         self.draw_history(frame, 'arena')
-        cv2.circle(frame, arena_center, arena_ring_radius, (0, 128, 255), 2)
+        if arena_ring_radius is not None:
+            cv2.circle(frame, arena_center, arena_ring_radius, (0, 128, 255), 2)
 
 
         rgbs = cv2.split(frame)
@@ -114,7 +101,7 @@ class BallTracking(object):
 
                 # otherwise, compute the thickness of the line and
                 # draw the connecting lines
-                thickness = int(np.sqrt(self.buffer_size / float(i + 1)) * 2.5)
+                thickness = int(np.sqrt(self.params['tracking']['buffer_size'] / float(i + 1)) * 2.5)
                 cv2.line(frame, self.pts[name][i - 1], self.pts[name][i], (0, 0, 255), thickness)
             if len(self.pts[name]) > 1:
                 # show the movement deltas of movement
