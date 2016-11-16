@@ -4,6 +4,8 @@ import sys
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
+import time
+import datetime
 
 sys.path.append('../../')
 from nips.environment.environment import TestEnvironment
@@ -44,23 +46,28 @@ class Learning(object):
     def get_normalized_interests(self): return self.agent.get_normalized_interests()    
     def get_normalized_interests_evolution(self): return self.agent.get_normalized_interests_evolution()
                 
-    def save(self, log_dir, name):        
+    def save(self, log_dir, name, log_normalized_interests=True):        
         data = self.agent.save() 
-        filename = os.path.join(log_dir, name)
+        filename = os.path.join(log_dir, name + ".pickle")
         with open(filename, 'w') as f:
             pickle.dump(data, f)
-        with open(os.path.join(log_dir, "interests_" + name), 'w') as f:
-            pickle.dump(data["normalized_interests_evolution"], f)
+        if log_normalized_interests:
+            with open(os.path.join(log_dir, name + "_interests" + ".pickle"), 'w') as f:
+                pickle.dump(data["normalized_interests_evolution"], f)
     
     def start(self):
         self.agent = Supervisor(self.environment)
          
     def restart(self, log_dir, name, iteration):
-        filename = os.path.join(log_dir, name)
+        t = time.time()
+        self.save(log_dir, name + "_log-restart_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), log_normalized_interests=False)
+        print "time save", time.time() - t
+        filename = os.path.join(log_dir, name + ".pickle")
         with open(filename, 'r') as f:
             data = pickle.load(f)
         self.start()
         self.agent.forward(data, iteration)
+        print "total time restart", time.time() - t
 
     def plot(self):
         fig, ax = plt.subplots()
@@ -82,8 +89,8 @@ if __name__ == "__main__":
     learning.start()
     
     print
-    print "Do 2000 autonomous steps:" 
-    for i in range(2000):
+    print "Do 500 autonomous steps:" 
+    for i in range(500):
         context = environment.get_current_context()
         m = learning.produce(context)
         s = environment.update(m)
@@ -109,7 +116,7 @@ if __name__ == "__main__":
     
     print
     print "Saving current data to file"
-    learning.save("../../data", "test.pickle")
+    learning.save("../../data", "test")
     
 #     print "Data before saving"
 #     print learning.agent.t
@@ -121,15 +128,15 @@ if __name__ == "__main__":
 #     print learning.agent.modules["mod1"].interest_model.current_interest
     
     print
-    print "Do 2000 autonomous steps:" 
-    for i in range(2000):
+    print "Do 500 autonomous steps:" 
+    for i in range(500):
         context = environment.get_current_context()
         m = learning.produce(context)
         s = environment.update(m)
         learning.perceive(s)
     
     print "Rebuilding agent from file"
-    learning.restart("../../data", "test.pickle", 2001)
+    learning.restart("../../data", "test", 2001)
         
 #     print "Data after rebuilding"
 #     print learning.agent.t
@@ -141,8 +148,8 @@ if __name__ == "__main__":
 #     print learning.agent.modules["mod1"].interest_model.current_interest
     
     print
-    print "Do 2000 autonomous steps:" 
-    for i in range(2000):
+    print "Do 500 autonomous steps:" 
+    for i in range(500):
         context = environment.get_current_context()
         m = learning.produce(context)
         s = environment.update(m)
