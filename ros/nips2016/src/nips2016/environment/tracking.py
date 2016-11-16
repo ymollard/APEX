@@ -23,7 +23,7 @@ class BallTracking(object):
 
     def get_images(self, frame):
         # resize the frame, blur it, and convert it to the HSV color space
-        frame = imutils.resize(frame, width=600)
+        #frame = imutils.resize(frame, width=600)
         # blurred = cv2.GaussianBlur(frame, (11, 11), 0)
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -109,12 +109,14 @@ class BallTracking(object):
                             (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
                             0.35, (0, 0, 255), 1)
 
-    def open(self):
+    def open(self, width=800, height=600):
         try:
             self.camera = cv2.VideoCapture(1)
         except:
             return False
         else:
+            self.camera.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, height)
+            self.camera.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, width)
             return True
 
     def close(self):
