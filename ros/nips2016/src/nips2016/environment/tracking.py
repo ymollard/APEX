@@ -1,6 +1,5 @@
 from collections import deque
 import numpy as np
-import imutils
 import cv2
 
 # From http://www.pyimagesearch.com/2015/09/14/ball-tracking-with-opencv/

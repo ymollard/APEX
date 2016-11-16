@@ -11,15 +11,16 @@ class EnvironmentConversions(object):
         with open(join(self.rospack.get_path('nips2016'), 'config', 'environment.json')) as f:
             self.params = json.load(f)
 
-    def get_state(self, x, y):
+    def get_state(self, ball_center, arena_center, ring_radius):
         """
         Reduce the current joint configuration of the ergo in (angle, theta)
         :return: a CircularState
         """
-        theta = arctan2(y, x)
+        x, y = (ball_center[0] - arena_center[0], ball_center[1] - arena_center[1])
         elongation = sqrt(x*x + y*y)
+        theta = arctan2(y, x)
         state = CircularState()
-        state.extended = elongation > self.params['ergo']['threshold_extended']
+        state.extended = elongation > ring_radius
         state.angle = theta
         return state
 
@@ -27,9 +28,8 @@ class EnvironmentConversions(object):
     def ball_to_color(state):
         """
         Reduce the given 2D ball position in color
-        :param x:
-        :param y:
+        :param state: the requested circular state of the ball
         :return: hue value designating the color in [0, 255]
         """
-        hue = min(255, max(0, int((state.angle - 3.14)*255/(2*pi))))
+        hue = min(255, max(0, int((state.angle + pi)*255/(2*pi))))
         return hue

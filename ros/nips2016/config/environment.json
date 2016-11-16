@@ -1,7 +1,4 @@
 {
-  "ergo": {
-    "threshold_extended": 0.09
-  },
   "tracking": {
     "ball" : {
       "lower": [27, 45, 185],
@@ -12,7 +9,7 @@
       "upper": [110, 250, 250]
     },
     "buffer_size": 32,
-    "ring_divider": 2.2
+    "ring_divider": 1.5
   },
   "rate": 15
 }

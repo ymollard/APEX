@@ -49,19 +49,17 @@ class Environment(object):
             hsv, mask_ball, mask_arena = self.tracking.get_images(frame)
             ball_center, _ = self.tracking.find_center('ball', frame, mask_ball, 20)
             arena_center, arena_radius = self.tracking.find_center('arena', frame, mask_arena, 100)
+            ring_radius = int(arena_radius/self.params['tracking']['ring_divider']) if arena_radius is not None else None
 
-            if ball_center is not None:
-                x_ball, y_ball = ball_center
-                circular_state = self.conversions.get_state(x_ball, y_ball)
+            if ball_center is not None and arena_center is not None:
+                circular_state = self.conversions.get_state(ball_center, arena_center, ring_radius)
                 self.update_light(circular_state)
                 self.update_sound(circular_state)
                 self.ball_pub.publish(circular_state)
 
             if debug:
-                self.tracking.draw_images(frame, hsv, mask_ball, mask_arena, arena_center,
-                                          None if arena_radius is None else int(arena_radius/self.params['tracking']['ring_divider']))
+                self.tracking.draw_images(frame, hsv, mask_ball, mask_arena, arena_center, ring_radius)
             self.rate.sleep()
-
 
 
 if __name__ == '__main__':
