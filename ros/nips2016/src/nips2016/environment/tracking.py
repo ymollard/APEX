@@ -19,9 +19,11 @@ class BallTracking(object):
         self.dX, self.dY = (0, 0)
         self.direction = ""
 
-        self.camera = cv2.VideoCapture(1)
+        self.camera = None
 
     def read(self):
+        if not self.camera:
+            return False, None
         return self.camera.read()
 
     def get_images(self, frame):
@@ -132,6 +134,14 @@ class BallTracking(object):
         cv2.imshow("Mask", mask)
         cv2.imshow("Frame", frame)
         cv2.waitKey(1)
+
+    def open(self):
+        try:
+            self.camera = cv2.VideoCapture(1)
+        except:
+            return False
+        else:
+            return True
 
     def close(self):
         # cleanup the camera and close any open windows
