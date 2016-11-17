@@ -1,6 +1,7 @@
 import rospy
 import json
 from os.path import join
+from os import system
 from rospkg.rospack import RosPack
 from nips2016.srv import *
 from nips2016.msg import SensorialState
@@ -48,7 +49,8 @@ class Perception(object):
     def cb_record(self, request):
         response = RecordResponse()
         # TODO eventually keep trace of the last XX points to start recording prior to the start signal
-        self.setup_torso_recording(SetupTorsoRecordingRequest())  # Blocking... Wait for the user's grasp...
+        self.setup_torso_recording(SetupTorsoRecordingRequest(wait_for_grasp=1))  # Blocking... Wait for the user's grasp...
+        system('beep')
         t0 = rospy.Time.now()
         while not rospy.is_shutdown() and rospy.Time.now() - t0 < request.duration.data:
             response.sensorial_demonstration.points.append(self.get())
