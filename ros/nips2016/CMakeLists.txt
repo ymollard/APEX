@@ -68,7 +68,7 @@ add_service_files(
   ExecuteTorsoTrajectory.srv
   Perceive.srv
   Record.srv
-  SetCompliant.srv
+  SetupTorsoRecording.srv
 
 )
 

@@ -6,7 +6,7 @@ from poppy.creatures import PoppyTorso
 from threading import RLock
 from rospkg import RosPack
 from os.path import join
-
+from ..tools.joints import wait_for_effort_variation
 
 class Torso(object):
     def __init__(self):
@@ -23,7 +23,7 @@ class Torso(object):
 
         self.srv_reset = rospy.Service('/nips2016/torso/reset', Reset, self._cb_reset)
         self.srv_execute = rospy.Service('/nips2016/torso/execute', ExecuteTorsoTrajectory, self._cb_execute)
-        #self.srv_record = rospy.Service('/nips2016/torso/record', None, self._cb_record)
+        self.srv_record = rospy.Service('/nips2016/torso/record', SetupTorsoRecording, self._cb_record)
 
         # Protected resources
         self.torso = None
@@ -60,6 +60,7 @@ class Torso(object):
     def publish_eef(self, eef_pose, publisher):
         pose = PoseStamped()
         pose.header.stamp = rospy.Time.now()
+        pose.header.frame_id = 'torso_base'
         pose.pose.position.x = eef_pose[0]
         pose.pose.position.y = eef_pose[1]
         pose.pose.position.z = eef_pose[2]
@@ -77,10 +78,20 @@ class Torso(object):
                 self.execute_rate.sleep()
 
     def _cb_record(self, request):
-        raise NotImplementedError()
+        with self.robot_lock:
+            if request.wait_for_grasp:
+                rospy.loginfo("Torso is waiting for an effort variation...")
+                wait_for_effort_variation(self.torso.l_arm)
+            self.left_arm_compliant(True)
+        return SetupTorsoRecordingResponse()
+
+    def left_arm_compliant(self, compliant):
+        for m in self.torso.l_arm:
+            m.compliant = compliant
 
     def _cb_reset(self, request):
         with self.robot_lock:
+            self.left_arm_compliant(False)
             self.go_to_rest()
         return ResetResponse()
 
