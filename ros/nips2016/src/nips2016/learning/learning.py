@@ -24,7 +24,7 @@ class Learning(object):
             return self.agent.produce(context)
         else:
             # Force space
-            assert space in ["s_hand", "s_joystick", 's_ergo', "s_ball", "s_light", "s_sound"]
+            assert space in ["s_hand", "s_joystick_1", "s_joystick_2", 's_ergo', "s_ball", "s_light", "s_sound"]
             return self.agent.produce(context, space=space)
             
     def perceive(self, s, m_demo=None, j_demo=False):
@@ -69,7 +69,7 @@ class Learning(object):
     def plot(self):
         fig, ax = plt.subplots()
         ax.plot(self.get_normalized_interests_evolution(), lw=2)
-        ax.legend(["s_hand", "s_joystick1", "s_joystick2", "s_ergo", "s_ball", "s_light", "s_sound"], ncol=3)
+        ax.legend(["Hand", "Joystick_1", "Joystick_2", "Ergo", "Ball", "Light", "Sound"], ncol=3)
         ax.set_xlabel('Time steps', fontsize=20)
         ax.set_ylabel('Learning progress', fontsize=20)
         plt.show(block=True)
