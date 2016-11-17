@@ -103,6 +103,7 @@ class Ergo(object):
 
     def publish_eef(self):
         pose = PoseStamped()
+        pose.header.frame_id = 'ergo_base'
         eef_pose = self.ergo.chain.end_effector
         pose.header.stamp = rospy.Time.now()
         pose.pose.position.x = eef_pose[0]
