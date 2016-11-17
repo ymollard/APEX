@@ -1,9 +1,10 @@
-geometry_msgs/Pose hand
+geometry_msgs/PoseStamped hand
 nips2016/CircularState ball
-sensor_msgs/Joy joystick
+sensor_msgs/Joy joystick_1
+sensor_msgs/Joy joystick_2
 nips2016/CircularState ergo
-nips2016/Sound sound
-uint8 color
+std_msgs/Float32 sound
+std_msgs/UInt8 color
 
 
 # Hand: 3 valeurs (X, Y, Z) x 10 points temporels = 30D

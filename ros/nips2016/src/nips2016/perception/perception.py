@@ -1,75 +1,45 @@
-import cv2
 import rospy
-from nips2016.srv import GetSensorialState, GetSensorialStateResponse, Record, RecordResponse
-from nips2016.msg import SensorialState, CircularState
-from nips2016.tools import joints
-from trajectory_msgs.msg import JointTrajectoryPoint
-from sensor_msgs.msg import JointState, Joy
-from .environment import Environment
+import json
+from os.path import join
+from rospkg.rospack import RosPack
+from nips2016.srv import *
+from nips2016.msg import SensorialState
+from .aggregator import TopicAggregator
 from ..tools import joints
 
 
 class Perception(object):
     def __init__(self):
-        self.environment = Environment()
-        self.rate = rospy.get_param('/nips2016/perception/rate')
+        self.rospack = RosPack()
+        with open(join(self.rospack.get_path('nips2016'), 'config', 'perception.json')) as f:
+            self.params = json.load(f)
+        self.rate = rospy.Rate(self.params['recording_rate'])
+
+        # Serving these services
         self.service_name_get = "/nips2016/perception/get"
         self.service_name_record = "/nips2016/perception/record"
-
-        self.sub_ergo_joints = rospy.Subscriber('/nips2016/ergo/joints', JointState, self.cb_ergo_joints)
-        self.sub_torso_joints = rospy.Subscriber('/nips2016/torso/joints', JointState, self.cb_torso_joints)
-        self.sub_joy = rospy.Subscriber('/nips2016/torso/joystick', Joy, self.cb_torso_joy)
-        self.ergo_joints = JointState(position=[0, 0, 0, 0, 0, 0])
-        self.torso_joints = JointState()
-        self.torso_joy = Joy()
+        # Using these services
+        self.service_name_setup_torso_rec = "/nips2016/torso/setup_recording"
+        self.topics = TopicAggregator()  # All topics are read and stored in that object
 
     def run(self):
+        for service in [self.service_name_setup_torso_rec]:
+            rospy.loginfo("Perception is waiting service {}".format(service))
+            rospy.wait_for_service(service)
+        self.setup_torso_recording = rospy.ServiceProxy(self.service_name_setup_torso_rec, SetupTorsoRecording)
         rospy.Service(self.service_name_get, GetSensorialState, self.cb_get)
         rospy.Service(self.service_name_record, Record, self.cb_record)
-
-    def _get_ball_position(self):
-        """
-        Return the current ball position
-        :return: [e, theta]
-        """
-        # TODO openCV
-        return False, 42
+        rospy.loginfo("Done, perception is up!")
 
     def get(self):
-        # TODO read the full sensorial state
-        state = SensorialState()
-
-        # Ball
-        ball = self._get_ball_position()
-        state.ball.extended = ball[0]
-        state.ball.angle = ball[1]
-
-        # Ergo joints
-        state.ergo = self.environment.get_state()
-
-        # LED colors
-        state.color = self.environment.ball_to_color(*ball)
-
-        # Sound
-        # state.sound =
-
-        # Joystick
-        # state.joystick =
-
-        # Hand
-        # state.hand =
-
+        state = SensorialState(ball=self.topics.ball,
+                               ergo=self.topics.ergo,
+                               color=self.topics.light,
+                               sound=self.topics.sound,
+                               joystick_1=self.topics.joy1,
+                               joystick_2=self.topics.joy2,
+                               hand=self.topics.torso_l_eef)
         return state
-
-    ################################# Topic callbacks
-    def cb_ergo_joints(self, joints):
-        self.ergo_joints = joints
-
-    def cb_torso_joints(self, joints):
-        self.torso_joints = joints
-
-    def cb_torso_joy(self, joy):
-        self.torso_joy = joy
 
     ################################# Service callbacks
     def cb_get(self, request):
@@ -77,10 +47,11 @@ class Perception(object):
 
     def cb_record(self, request):
         response = RecordResponse()
-        rate = rospy.Rate(self.rate)
+        # TODO eventually keep trace of the last XX points to start recording prior to the start signal
+        self.setup_torso_recording(SetupTorsoRecordingRequest())  # Blocking... Wait for the user's grasp...
         t0 = rospy.Time.now()
-        while not rospy.is_shutdown() and rospy.Time.now() - t0 < request.duration:
+        while not rospy.is_shutdown() and rospy.Time.now() - t0 < request.duration.data:
             response.sensorial_demonstration.points.append(self.get())
-            response.torso_demonstration.append(joints.state_to_jtp(self.torso_joints))
-            rate.sleep()
+            response.torso_demonstration.points.append(joints.state_to_jtp(self.topics.torso_l_j))
+            self.rate.sleep()
         return response
