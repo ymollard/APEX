@@ -1,15 +1,13 @@
 
 import os
-import sys
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import time
 import datetime
 
-sys.path.append('../../')
-from nips.environment.environment import TestEnvironment
-from nips.learning.supervisor import Supervisor
+from environment_explauto.environment import TestEnvironment
+from core.supervisor import Supervisor
 
 
 
@@ -116,7 +114,7 @@ if __name__ == "__main__":
     
     print
     print "Saving current data to file"
-    learning.save("../../data", "test")
+    learning.save("../../../../../data", "test")
     
 #     print "Data before saving"
 #     print learning.agent.t
@@ -136,7 +134,7 @@ if __name__ == "__main__":
         learning.perceive(s)
     
     print "Rebuilding agent from file"
-    learning.restart("../../data", "test", 2001)
+    learning.restart("../../../../../data", "test", 2001)
         
 #     print "Data after rebuilding"
 #     print learning.agent.t

@@ -3,7 +3,7 @@ import numpy as np
 from explauto.utils import bounds_min_max
 from explauto.environment.environment import Environment
 from explauto.environment.context_environment import ContextEnvironment
-from nips.dmp.mydmp import MyDMP
+from dmp.mydmp import MyDMP
 
 
 
