@@ -39,7 +39,7 @@ class Ergo(object):
             sys.exit(0)
         else:
             self.joystick = pygame.joystick.Joystick(0)
-            self.joystick2 = pygame.joystick.Joystick(0)
+            self.joystick2 = pygame.joystick.Joystick(1)
             self.joystick.init()
             self.joystick2.init()
             rospy.loginfo('Initialized Joystick 1: {}'.format(self.joystick.get_name()))
