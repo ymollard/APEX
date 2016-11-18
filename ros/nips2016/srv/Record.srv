@@ -1,4 +1,5 @@
 # Duration of the recording in seconds
+std_msgs/Bool human_demo
 std_msgs/Duration duration
 ---
 trajectory_msgs/JointTrajectory torso_demonstration

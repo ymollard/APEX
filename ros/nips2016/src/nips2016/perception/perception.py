@@ -49,11 +49,14 @@ class Perception(object):
     def cb_record(self, request):
         response = RecordResponse()
         # TODO eventually keep trace of the last XX points to start recording prior to the start signal
-        self.setup_torso_recording(SetupTorsoRecordingRequest(wait_for_grasp=1))  # Blocking... Wait for the user's grasp...
+        if request.human_demo:
+            # Blocking... Wait for the user's grasp before recording...
+            self.setup_torso_recording(SetupTorsoRecordingRequest(wait_for_grasp=1))
         system('beep')
         t0 = rospy.Time.now()
         while not rospy.is_shutdown() and rospy.Time.now() - t0 < request.duration.data:
             response.sensorial_demonstration.points.append(self.get())
             response.torso_demonstration.points.append(joints.state_to_jtp(self.topics.torso_l_j))
             self.rate.sleep()
+        system('beep')
         return response
