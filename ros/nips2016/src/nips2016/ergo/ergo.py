@@ -33,7 +33,7 @@ class Ergo(object):
         self.button_pub = rospy.Publisher('/nips2016/ergo/button', Bool, queue_size=1)
         self.joy_pub = rospy.Publisher('/nips2016/ergo/joysticks/1', Joy, queue_size=1)
         self.joy_pub2 = rospy.Publisher('/nips2016/ergo/joysticks/2', Joy, queue_size=1)
-        self.srv_reset = rospy.Service('/nips2016/ergo/reset', Reset, self._cb_reset)
+        self.srv_reset = None
         self.ergo = None
         self.extended = False
         self.limits = []
@@ -67,10 +67,18 @@ class Ergo(object):
         rospy.sleep(duration)
 
     def run(self, dummy=False):
-        self.ergo = PoppyErgoJr(use_http=True, simulator='poppy-simu' if dummy else None, camera='dummy')
+        try:
+            self.ergo = PoppyErgoJr(use_http=True, simulator='poppy-simu' if dummy else None, camera='dummy')
+        except IOError as e:
+            rospy.logerr("Ergo hardware failed to init: {}".format(e))
+            return None
+
         self.limits = [self.ergo.config['motors'][motor]['angle_limit'] for motor in ['m1', 'm2', 'm3', 'm4', 'm5', 'm6']]
         self.ergo.compliant = False
         self.go_to_start()
+        self.srv_reset = rospy.Service('/nips2016/ergo/reset', Reset, self._cb_reset)
+        rospy.loginfo('Ergo is ready and starts joystick servoing...')
+
         while not rospy.is_shutdown():
             pygame.event.get()
             x = self.joystick.get_axis(0)
