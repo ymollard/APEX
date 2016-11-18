@@ -7,9 +7,11 @@ from nips2016.srv import *
 from nips2016.msg import *
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Joy
+from std_msgs.msg import Bool
 from poppy.creatures import PoppyErgoJr
 from rospkg import RosPack
 from os.path import join
+from .button import Button
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 try:
@@ -24,9 +26,11 @@ class Ergo(object):
         self.rospack = RosPack()
         with open(join(self.rospack.get_path('nips2016'), 'config', 'ergo.json')) as f:
             self.params = json.load(f)
+        self.button = Button(self.params)
         self.rate = rospy.Rate(self.params['publish_rate'])
         self.eef_pub = rospy.Publisher('/nips2016/ergo/end_effector_pose', PoseStamped, queue_size=1)
         self.state_pub = rospy.Publisher('/nips2016/ergo/state', CircularState, queue_size=1)
+        self.button_pub = rospy.Publisher('/nips2016/ergo/button', Bool, queue_size=1)
         self.joy_pub = rospy.Publisher('/nips2016/ergo/joysticks/1', Joy, queue_size=1)
         self.joy_pub2 = rospy.Publisher('/nips2016/ergo/joysticks/2', Joy, queue_size=1)
         self.srv_reset = rospy.Service('/nips2016/ergo/reset', Reset, self._cb_reset)
@@ -74,6 +78,7 @@ class Ergo(object):
             self.servo_robot(y, x)
             self.publish_eef()
             self.publish_state()
+            self.publish_button()
 
             # Publishers
             self.publish_joy(x, y, self.joy_pub)
@@ -110,6 +115,9 @@ class Ergo(object):
         pose.pose.position.y = eef_pose[1]
         pose.pose.position.z = eef_pose[2]
         self.eef_pub.publish(pose)
+
+    def publish_button(self):
+        self.button_pub.publish(Bool(data=self.button.pressed))
 
     def publish_state(self):
         # TODO We might want a better state here, get the arena center, get EEF and do the maths as in environment/get_state

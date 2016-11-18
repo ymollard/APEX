@@ -1,4 +1,5 @@
 {
   "publish_rate": 30,
-  "speed": 6
+  "speed": 6,
+  "button_pin": 21
 }
