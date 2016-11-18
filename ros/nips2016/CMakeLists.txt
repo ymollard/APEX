@@ -54,7 +54,6 @@ add_message_files(
   ErgoTrajectory.msg
   SensorialState.msg
   SensorialTrajectory.msg
-  Sound.msg
 
 )
 
@@ -68,7 +67,7 @@ add_service_files(
   ExecuteTorsoTrajectory.srv
   Perceive.srv
   Record.srv
-  SetCompliant.srv
+  SetupTorsoRecording.srv
 
 )
 

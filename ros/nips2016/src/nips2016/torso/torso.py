@@ -2,10 +2,12 @@ import rospy
 import json
 from nips2016.srv import *
 from geometry_msgs.msg import PoseStamped
+from sensor_msgs.msg import JointState
 from poppy.creatures import PoppyTorso
 from threading import RLock
 from rospkg import RosPack
 from os.path import join
+from ..tools.joints import wait_for_effort_variation
 
 
 class Torso(object):
@@ -20,10 +22,11 @@ class Torso(object):
 
         self.eef_pub_l = rospy.Publisher('/nips2016/torso/left_arm/end_effector_pose', PoseStamped, queue_size=1)
         self.eef_pub_r = rospy.Publisher('/nips2016/torso/right_arm/end_effector_pose', PoseStamped, queue_size=1)
+        self.js_pub_l = rospy.Publisher('/nips2016/torso/left_arm/joints', JointState, queue_size=1)
 
         self.srv_reset = rospy.Service('/nips2016/torso/reset', Reset, self._cb_reset)
         self.srv_execute = rospy.Service('/nips2016/torso/execute', ExecuteTorsoTrajectory, self._cb_execute)
-        #self.srv_record = rospy.Service('/nips2016/torso/record', None, self._cb_record)
+        self.srv_setup_record = rospy.Service('/nips2016/torso/setup_recording', SetupTorsoRecording, self._cb_record)
 
         # Protected resources
         self.torso = None
@@ -55,15 +58,26 @@ class Torso(object):
         while not rospy.is_shutdown():
             self.publish_eef(self.torso.l_arm_chain.end_effector, self.eef_pub_l)
             self.publish_eef(self.torso.r_arm_chain.end_effector, self.eef_pub_r)
+            self.publish_js()
             self.publish_rate.sleep()
 
     def publish_eef(self, eef_pose, publisher):
         pose = PoseStamped()
         pose.header.stamp = rospy.Time.now()
+        pose.header.frame_id = 'torso_base'
         pose.pose.position.x = eef_pose[0]
         pose.pose.position.y = eef_pose[1]
         pose.pose.position.z = eef_pose[2]
         publisher.publish(pose)
+
+    def publish_js(self):
+        js = JointState()
+        js.header.stamp = rospy.Time.now()
+        js.name = [m.name for m in self.torso.l_arm]
+        js.position = [m.present_position for m in self.torso.l_arm]
+        js.velocity = [m.present_speed for m in self.torso.l_arm]
+        js.effort = [m.present_load for m in self.torso.l_arm]
+        self.js_pub_l.publish(js)
 
     def _cb_execute(self, request):
         trajectory = request.torso_trajectory
@@ -77,10 +91,20 @@ class Torso(object):
                 self.execute_rate.sleep()
 
     def _cb_record(self, request):
-        raise NotImplementedError()
+        with self.robot_lock:
+            if request.wait_for_grasp:
+                rospy.loginfo("Torso is waiting for an effort variation...")
+                wait_for_effort_variation(self.torso.l_arm)
+            self.left_arm_compliant(True)
+        return SetupTorsoRecordingResponse()
+
+    def left_arm_compliant(self, compliant):
+        for m in self.torso.l_arm:
+            m.compliant = compliant
 
     def _cb_reset(self, request):
         with self.robot_lock:
+            self.left_arm_compliant(False)
             self.go_to_rest()
         return ResetResponse()
 

@@ -1,16 +1,17 @@
-import sys
 import os
 import rospy
 import json
 import pygame
 import pygame.display
 from nips2016.srv import *
+from nips2016.msg import *
 from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import Bool
 from sensor_msgs.msg import Joy
+from std_msgs.msg import Bool
 from poppy.creatures import PoppyErgoJr
 from rospkg import RosPack
 from os.path import join
+from .button import Button
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 try:
@@ -25,9 +26,11 @@ class Ergo(object):
         self.rospack = RosPack()
         with open(join(self.rospack.get_path('nips2016'), 'config', 'ergo.json')) as f:
             self.params = json.load(f)
+        self.button = Button(self.params)
         self.rate = rospy.Rate(self.params['publish_rate'])
         self.eef_pub = rospy.Publisher('/nips2016/ergo/end_effector_pose', PoseStamped, queue_size=1)
-        self.eef_extended_pub = rospy.Publisher('/nips2016/ergo/extended', Bool, queue_size=1)
+        self.state_pub = rospy.Publisher('/nips2016/ergo/state', CircularState, queue_size=1)
+        self.button_pub = rospy.Publisher('/nips2016/ergo/button', Bool, queue_size=1)
         self.joy_pub = rospy.Publisher('/nips2016/ergo/joysticks/1', Joy, queue_size=1)
         self.joy_pub2 = rospy.Publisher('/nips2016/ergo/joysticks/2', Joy, queue_size=1)
         self.srv_reset = rospy.Service('/nips2016/ergo/reset', Reset, self._cb_reset)
@@ -40,7 +43,7 @@ class Ergo(object):
             sys.exit(0)
         else:
             self.joystick = pygame.joystick.Joystick(0)
-            self.joystick2 = pygame.joystick.Joystick(0)
+            self.joystick2 = pygame.joystick.Joystick(1)
             self.joystick.init()
             self.joystick2.init()
             rospy.loginfo('Initialized Joystick 1: {}'.format(self.joystick.get_name()))
@@ -74,12 +77,14 @@ class Ergo(object):
             y = self.joystick.get_axis(1)
             self.servo_robot(y, x)
             self.publish_eef()
+            self.publish_state()
+            self.publish_button()
 
             # Publishers
-            self.publish_joy(x, y, 1)
+            self.publish_joy(x, y, self.joy_pub)
             x = self.joystick2.get_axis(0)
             y = self.joystick2.get_axis(1)
-            self.publish_joy(x, y, 2)
+            self.publish_joy(x, y, self.joy_pub2)
             self.rate.sleep()
 
     def servo_axis_rotation(self, x):
@@ -103,24 +108,28 @@ class Ergo(object):
 
     def publish_eef(self):
         pose = PoseStamped()
+        pose.header.frame_id = 'ergo_base'
         eef_pose = self.ergo.chain.end_effector
         pose.header.stamp = rospy.Time.now()
         pose.pose.position.x = eef_pose[0]
         pose.pose.position.y = eef_pose[1]
         pose.pose.position.z = eef_pose[2]
         self.eef_pub.publish(pose)
-        self.eef_extended_pub.publish(Bool(data=self.extended))
 
-    def publish_joy(self, x, y, id):
+    def publish_button(self):
+        self.button_pub.publish(Bool(data=self.button.pressed))
+
+    def publish_state(self):
+        # TODO We might want a better state here, get the arena center, get EEF and do the maths as in environment/get_state
+        angle = self.ergo.motors[0].present_position
+        self.state_pub.publish(CircularState(angle=angle, extended=self.extended))
+
+    def publish_joy(self, x, y, publisher):
         joy = Joy()
         joy.header.stamp = rospy.Time.now()
         joy.axes.append(x)
         joy.axes.append(y)
-        if id == 1:
-            self.joy_pub.publish(joy)
-        else:
-            self.joy_pub2.publish(joy)
-
+        publisher.publish(joy)
 
     def _cb_reset(self, request):
         self.go_to_start()
