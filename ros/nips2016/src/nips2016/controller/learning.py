@@ -4,11 +4,11 @@ from nips2016.srv import *
 
 class Learning(object):
     def __init__(self):
-        self.services = {'produce': {'name': '/nips2016/learner/produce', 'type': Produce},
-                         'perceive': {'name': '/nips2016/learner/perceive', 'type': Perceive}}
+        self.services = {'produce': {'name': '/nips2016/learning/produce', 'type': Produce},
+                         'perceive': {'name': '/nips2016/learning/perceive', 'type': Perceive}}
 
         for service_name, service in self.services.items():
-            rospy.loginfo("Waiting service {}...".format(service['name']))
+            rospy.loginfo("Controller is waiting service {}...".format(service['name']))
             rospy.wait_for_service(service['name'])
             service['call'] = rospy.ServiceProxy(service['name'], service['type'])
 

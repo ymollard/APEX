@@ -51,20 +51,23 @@ class Torso(object):
             rospy.logerr("Torso failed to init: {}".format(e))
             return None
 
-        self.torso.compliant = False
-        self.go_to_rest(True)
+        try:
+            self.torso.compliant = False
+            self.go_to_rest(True)
 
-        self.srv_reset = rospy.Service('/nips2016/torso/reset', Reset, self._cb_reset)
-        self.srv_execute = rospy.Service('/nips2016/torso/execute', ExecuteTorsoTrajectory, self._cb_execute)
-        self.srv_setup_record = rospy.Service('/nips2016/torso/setup_recording', SetupTorsoRecording, self._cb_record)
+            self.srv_reset = rospy.Service('/nips2016/torso/reset', Reset, self._cb_reset)
+            self.srv_execute = rospy.Service('/nips2016/torso/execute', ExecuteTorsoTrajectory, self._cb_execute)
+            self.srv_setup_record = rospy.Service('/nips2016/torso/setup_recording', SetupTorsoRecording, self._cb_record)
 
-        rospy.loginfo("Torso is ready to execute trajectories at {} Hz ".format(self.execute_rate_hz))
+            rospy.loginfo("Torso is ready to execute trajectories at {} Hz ".format(self.execute_rate_hz))
 
-        while not rospy.is_shutdown():
-            self.publish_eef(self.torso.l_arm_chain.end_effector, self.eef_pub_l)
-            self.publish_eef(self.torso.r_arm_chain.end_effector, self.eef_pub_r)
-            self.publish_js()
-            self.publish_rate.sleep()
+            while not rospy.is_shutdown():
+                self.publish_eef(self.torso.l_arm_chain.end_effector, self.eef_pub_l)
+                self.publish_eef(self.torso.r_arm_chain.end_effector, self.eef_pub_r)
+                self.publish_js()
+                self.publish_rate.sleep()
+        finally:
+            self.torso.close()
 
     def publish_eef(self, eef_pose, publisher):
         pose = PoseStamped()
@@ -86,6 +89,7 @@ class Torso(object):
 
     def _cb_execute(self, request):
         trajectory = request.torso_trajectory
+        rospy.loginfo("Executing Torso trajectory with {} points...".format(len(trajectory.points)))
         with self.robot_lock:
             if not self.in_rest_pose:
                 self.go_to_rest()
@@ -94,6 +98,7 @@ class Torso(object):
                     break
                 self.torso.goto_position(dict(zip(trajectory.joint_names, point.positions)), 1./self.execute_rate_hz)
                 self.execute_rate.sleep()
+        return ExecuteTorsoTrajectoryResponse()
 
     def _cb_record(self, request):
         with self.robot_lock:
@@ -104,10 +109,12 @@ class Torso(object):
         return SetupTorsoRecordingResponse()
 
     def left_arm_compliant(self, compliant):
+        rospy.loginfo("Torso left arm now compliant")
         for m in self.torso.l_arm:
             m.compliant = compliant
 
     def _cb_reset(self, request):
+        rospy.loginfo("Resetting Torso...")
         with self.robot_lock:
             self.left_arm_compliant(False)
             self.go_to_rest()

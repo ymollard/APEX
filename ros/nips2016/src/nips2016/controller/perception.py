@@ -1,4 +1,4 @@
-from std_msgs.msg import Bool, Duration
+from std_msgs.msg import Bool, UInt8
 from rospkg import RosPack
 from os.path import join
 from nips2016.srv import RecordRequest, Record
@@ -30,6 +30,6 @@ class Perception(object):
         self.button_pressed = False
         return pressed
 
-    def record(self, human_demo, duration=10.0):
+    def record(self, human_demo, nb_points):
         call = self.services['record']['call']
-        return call(RecordRequest(human_demo=Bool(data=human_demo), duration=Duration(data=rospy.Duration(duration))))
+        return call(RecordRequest(human_demo=Bool(data=human_demo), nb_points=UInt8(data=nb_points)))

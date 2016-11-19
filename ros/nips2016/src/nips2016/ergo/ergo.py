@@ -140,6 +140,7 @@ class Ergo(object):
         publisher.publish(joy)
 
     def _cb_reset(self, request):
+        rospy.loginfo("Resetting Ergo...")
         self.go_to_start()
         return ResetResponse()
 

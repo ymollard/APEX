@@ -7,7 +7,7 @@ class Ergo(object):
         self.services = {'reset_ergo': {'name': '/nips2016/ergo/reset', 'type': Reset}}
 
         for service_name, service in self.services.items():
-            rospy.loginfo("Waiting service {}...".format(service['name']))
+            rospy.loginfo("Controller is waiting service {}...".format(service['name']))
             rospy.wait_for_service(service['name'])
             service['call'] = rospy.ServiceProxy(service['name'], service['type'])
 

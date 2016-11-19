@@ -26,14 +26,13 @@ class Controller(object):
         while not rospy.is_shutdown():
             self.reset()
             if self.perception.help_pressed():
-                recording = self.perception.record(human_demo=True, duration=self.params['run_duration'])
+                recording = self.perception.record(human_demo=True, nb_points=self.params['nb_points'])
                 self.learning.perceive(recording.torso_demonstration, recording.sensorial_demonstration)
             else:
-                rospy.sleep(1)
-                continue
-                space = self.perception.get_space_to_explore()
-                trajectory = self.learning.produce(space)
-                recording = self.perception.record(human_demo=False, duration=self.params['run_duration'])
+                #space = self.perception.get_space_to_explore()
+                #trajectory = self.learning.produce(space)
+                trajectory = self.learning.produce().torso_trajectory
+                recording = self.perception.record(human_demo=False, nb_points=self.params['nb_points'])
                 self.torso.execute_trajectory(trajectory)  # TODO: blocking, non-blocking, action server?
                 self.learning.perceive(JointTrajectory(), recording.sensorial_demonstration)  # TODO non-blocking
             # Many blocking calls: No sleep?

@@ -1,14 +1,14 @@
 import numpy as np
 
 from explauto.utils import rand_bounds, bounds_min_max, softmax_choice, prop_choice
+from explauto.utils.config import make_configuration
 from learning_module import LearningModule
 
 
 class Supervisor(object):
-    def __init__(self, environment):
+    def __init__(self, config):
         
-        self.environment = environment
-        self.conf = self.environment.conf
+        self.conf = make_configuration(**config)
         
         self.t = 0
         self.modules = {}
@@ -21,7 +21,7 @@ class Supervisor(object):
         
             
         # Define motor and sensory spaces:
-        m_ndims = environment.conf.m_ndims # number of motor parameters
+        m_ndims = self.conf.m_ndims # number of motor parameters
         
         self.m_space = range(m_ndims)
         self.c_dims = range(m_ndims, m_ndims+2)
@@ -41,28 +41,27 @@ class Supervisor(object):
                              s_light=self.s_light, 
                              s_sound=self.s_sound)
         
-        print
-        print "Initialize agent with spaces:"
-        print "Motor", self.m_space
-        print "Context", self.c_dims
-        print "Hand", self.s_hand
-        print "Joystick1", self.s_joystick_1
-        print "Joystick2", self.s_joystick_2
-        print "Ergo", self.s_ergo
-        print "Ball", self.s_ball
-        print "Light", self.s_light
-        print "Sound", self.s_sound
+        #print
+        #print "Initialize agent with spaces:"
+        #print "Motor", self.m_space
+        #print "Context", self.c_dims
+        #print "Hand", self.s_hand
+        #print "Joystick1", self.s_joystick_1
+        #print "Joystick2", self.s_joystick_2
+        #print "Ergo", self.s_ergo
+        #print "Ball", self.s_ball
+        #print "Light", self.s_light
+        #print "Sound", self.s_sound
         
-        #print "environment.conf", environment.conf
-        
+
         # Create the 6 learning modules:
-        self.modules['mod1'] = LearningModule("mod1", self.m_space, self.s_hand, environment.conf)
-        self.modules['mod2'] = LearningModule("mod2", self.m_space, self.s_joystick_1, environment.conf)
-        self.modules['mod3'] = LearningModule("mod2", self.m_space, self.s_joystick_2, environment.conf)
-        self.modules['mod4'] = LearningModule("mod3", self.m_space, [self.c_dims[0]] + self.s_ergo, environment.conf, context_mode=dict(mode='mcs', context_n_dims=1, context_sensory_bounds=[[-1.],[1.]]))
-        self.modules['mod5'] = LearningModule("mod4", self.m_space, self.c_dims + self.s_ball, environment.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
-        self.modules['mod6'] = LearningModule("mod5", self.m_space, self.c_dims + self.s_light, environment.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
-        self.modules['mod7'] = LearningModule("mod6", self.m_space, self.c_dims + self.s_sound, environment.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
+        self.modules['mod1'] = LearningModule("mod1", self.m_space, self.s_hand, self.conf)
+        self.modules['mod2'] = LearningModule("mod2", self.m_space, self.s_joystick_1, self.conf)
+        self.modules['mod3'] = LearningModule("mod2", self.m_space, self.s_joystick_2, self.conf)
+        self.modules['mod4'] = LearningModule("mod3", self.m_space, [self.c_dims[0]] + self.s_ergo, self.conf, context_mode=dict(mode='mcs', context_n_dims=1, context_sensory_bounds=[[-1.],[1.]]))
+        self.modules['mod5'] = LearningModule("mod4", self.m_space, self.c_dims + self.s_ball, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
+        self.modules['mod6'] = LearningModule("mod5", self.m_space, self.c_dims + self.s_light, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
+        self.modules['mod7'] = LearningModule("mod6", self.m_space, self.c_dims + self.s_sound, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
     
         self.space2mid = dict(s_hand="mod1", 
                              s_joystick_1="mod2", 
@@ -167,8 +166,7 @@ class Supervisor(object):
                 
     def check_bounds_dmp(self, m_ag):return bounds_min_max(m_ag, self.conf.m_mins, self.conf.m_maxs)
     def motor_primitive(self, m): return m
-    def rest_params(self): return self.environment.rest_params()
-    def sensory_primitive(self, s): return s    
+    def sensory_primitive(self, s): return s
     def get_m(self, ms): return ms[self.conf.m_dims]
     def get_s(self, ms): return ms[self.conf.s_dims]
                 
