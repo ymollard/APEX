@@ -26,6 +26,7 @@ class Controller(object):
         while not rospy.is_shutdown():
             self.reset()
             if self.perception.help_pressed():
+                rospy.sleep(1.5)  # Wait for the robot to fully stop
                 recording = self.perception.record(human_demo=True, nb_points=self.params['nb_points'])
                 self.learning.perceive(recording.torso_demonstration, recording.sensorial_demonstration)
             else:
