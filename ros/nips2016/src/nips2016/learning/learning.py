@@ -29,14 +29,16 @@ class Learning(object):
             
     def perceive(self, s, m_demo=None, j_demo=False):
         if m_demo is not None:
+            assert len(m_demo) == 32, len(m_demo)
+            assert len(s) == 132, len(s)
             # Demonstration of a torso arm trajectory converted to weights with "m_demo = environment.torsodemo2m(m_traj)"
             self.agent.perceive(s, m_demo=m_demo)
         elif j_demo:
-            assert len(s) == 102 # [context, s_joystick,...] (no hand trajectory in s)
+            assert len(s) == 102, len(s) # [context, s_joystick,...] (no hand trajectory in s)
             self.agent.perceive(s, j_demo=True)
         else:
             # Perception of environment when m was produced
-            assert len(s) == 132
+            assert len(s) == 132, len(s)
             self.agent.perceive(s)
             
     def get_iterations(self): return self.agent.t

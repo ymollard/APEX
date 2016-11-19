@@ -32,8 +32,8 @@ class Controller(object):
                 #space = self.perception.get_space_to_explore()
                 #trajectory = self.learning.produce(space)
                 trajectory = self.learning.produce().torso_trajectory
-                recording = self.perception.record(human_demo=False, nb_points=self.params['nb_points'])
                 self.torso.execute_trajectory(trajectory)  # TODO: blocking, non-blocking, action server?
+                recording = self.perception.record(human_demo=False, nb_points=self.params['nb_points'])
                 self.learning.perceive(JointTrajectory(), recording.sensorial_demonstration)  # TODO non-blocking
             # Many blocking calls: No sleep?
 

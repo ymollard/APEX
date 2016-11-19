@@ -16,7 +16,7 @@ class EnvironmentTranslator(object):
         # DMP PARAMETERS
         self.n_dmps = 4
         self.n_bfs = 7
-        self.timesteps = 25
+        self.timesteps = 30
         self.max_params = np.array([300.] * self.n_bfs * self.n_dmps + [1.] * self.n_dmps)
         self.motor_dmp = MyDMP(n_dmps=self.n_dmps, n_bfs=self.n_bfs, timesteps=self.timesteps, max_params=self.max_params)
         self.context = {}
@@ -26,7 +26,7 @@ class EnvironmentTranslator(object):
                            s_maxs=[1.]*132)
 
     def trajectory_to_w(self, m_traj):
-        # m_traj is the trajectory of the 4 motors: must be shaped 25*4
+        assert m_traj.shape == (self.timesteps, self.n_dmps)
         return self.motor_dmp.imitate(m_traj) / self.max_params
 
     def w_to_trajectory(self, w):
@@ -60,18 +60,18 @@ class EnvironmentTranslator(object):
         assert len(state_dict['light']) == 10, len(state_dict['light'])
         assert len(state_dict['sound']) == 10, len(state_dict['sound'])
 
-        # Concatenate all these values in a huge 140-float list
+        # Concatenate all these values in a huge 132-float list
         return [self.context['ergo'], self.context['ball']] + [value for space in ['hand', 'joystick_1', 'joystick_2', 'ergo', 'ball', 'light', 'sound'] for value in state_dict[space]]
 
-    @staticmethod
-    def matrix_to_trajectory_msg(matrix_traj):
-        assert matrix_traj.shape == (25, 4)
+    def matrix_to_trajectory_msg(self, matrix_traj):
+        assert matrix_traj.shape == (self.timesteps, self.n_dmps)
         traj = JointTrajectory()
         traj.header.stamp = rospy.Time.now()
         traj.joint_names = ['l_shoulder_y', 'l_shoulder_x', 'l_arm_z', 'l_elbow_y']
         traj.points = [JointTrajectoryPoint(positions=list(matrix_traj[point])) for point in range(len(matrix_traj))]
         return traj
 
-    @staticmethod
-    def trajectory_msg_to_matrix(trajectory):
-        return np.array([point.positions for point in trajectory.points])
+    def trajectory_msg_to_matrix(self, trajectory):
+        matrix = np.array([point.positions for point in trajectory.points])
+        assert matrix.shape == (self.timesteps, self.n_dmps)
+        return matrix

@@ -53,11 +53,14 @@ class Perception(object):
             # Blocking... Wait for the user's grasp before recording...
             self.setup_torso_recording(SetupTorsoRecordingRequest(wait_for_grasp=1))
         system('beep')
+        rospy.loginfo("Recording...")
         for point in range(request.nb_points.data):
             if rospy.is_shutdown():
                 break
-            response.sensorial_demonstration.points.append(self.get())
+            if point % self.params["divider_nb_points_sensory"] == 0:
+                response.sensorial_demonstration.points.append(self.get())
             response.torso_demonstration.points.append(joints.state_to_jtp(self.topics.torso_l_j))
             self.rate.sleep()
+        rospy.loginfo("Recorded!")
         system('beep')
         return response
