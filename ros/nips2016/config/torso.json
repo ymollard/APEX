@@ -1,6 +1,5 @@
 {
   "publish_rate": 30,
-  "trajectory_duration": 10,
-  "trajectory_points" : 25,
-  "speed": 6
+  "speed": 6,
+  "torques": 20
 }

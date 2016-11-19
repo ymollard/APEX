@@ -8,6 +8,7 @@ from threading import RLock
 from rospkg import RosPack
 from os.path import join
 from ..tools.joints import wait_for_effort_variation
+from threading import Thread
 
 
 class Torso(object):
@@ -15,10 +16,13 @@ class Torso(object):
         self.rospack = RosPack()
         with open(join(self.rospack.get_path('nips2016'), 'config', 'torso.json')) as f:
             self.params = json.load(f)
+        with open(join(self.rospack.get_path('nips2016'), 'config', 'perception.json')) as f:
+            self.perception_params = json.load(f) # TODO remove perception
+
+        self.execute_rate_hz = self.perception_params['recording_rate']  # TODO
+        self.execute_rate = rospy.Rate(self.execute_rate_hz)
 
         self.publish_rate = rospy.Rate(self.params['publish_rate'])
-        self.execute_rate_hz = float(self.params['trajectory_points'])/self.params['trajectory_duration']
-        self.execute_rate = rospy.Rate(self.execute_rate_hz)
 
         self.eef_pub_l = rospy.Publisher('/nips2016/torso/left_arm/end_effector_pose', PoseStamped, queue_size=1)
         self.eef_pub_r = rospy.Publisher('/nips2016/torso/right_arm/end_effector_pose', PoseStamped, queue_size=1)
@@ -43,6 +47,10 @@ class Torso(object):
         self.torso.goto_position(motors_dict, duration)
         rospy.sleep(duration)
 
+    def set_torque_limits(self):
+        for m in self.torso.l_arm:
+            m.torque_limit = self.params['torques']
+
     def run(self, dummy=False):
         rospy.loginfo("Torso is connecting to the robot...")
         try:
@@ -52,6 +60,7 @@ class Torso(object):
             return None
 
         try:
+            self.set_torque_limits()
             self.torso.compliant = False
             self.go_to_rest(True)
 
@@ -88,28 +97,34 @@ class Torso(object):
         self.js_pub_l.publish(js)
 
     def _cb_execute(self, request):
-        trajectory = request.torso_trajectory
-        rospy.loginfo("Executing Torso trajectory with {} points...".format(len(trajectory.points)))
+        # TODO Action server
+        thread = Thread(target=self.execute, args=[request.torso_trajectory])
+        thread.daemon = True
+        thread.start()
+        return ExecuteTorsoTrajectoryResponse()
+
+    def execute(self, trajectory):
         with self.robot_lock:
+            rospy.loginfo("Executing Torso trajectory with {} points...".format(len(trajectory.points)))
             if not self.in_rest_pose:
                 self.go_to_rest()
             for point in trajectory.points:
                 if rospy.is_shutdown():
                     break
-                self.torso.goto_position(dict(zip(trajectory.joint_names, point.positions)), 1./self.execute_rate_hz)
+                self.torso.goto_position(dict(zip(trajectory.joint_names, point.positions)), 1.05/self.execute_rate_hz)
                 self.execute_rate.sleep()
-        return ExecuteTorsoTrajectoryResponse()
+            rospy.loginfo("Trajectory ended!")
 
     def _cb_record(self, request):
         with self.robot_lock:
             if request.wait_for_grasp:
                 rospy.loginfo("Torso is waiting for an effort variation...")
-                wait_for_effort_variation(self.torso.l_arm)
+                wait_for_effort_variation(self.torso.l_arm, threshold=1)
             self.left_arm_compliant(True)
         return SetupTorsoRecordingResponse()
 
     def left_arm_compliant(self, compliant):
-        rospy.loginfo("Torso left arm now compliant")
+        rospy.loginfo("Torso left arm now {}".format('compliant' if compliant else 'rigid'))
         for m in self.torso.l_arm:
             m.compliant = compliant
 
