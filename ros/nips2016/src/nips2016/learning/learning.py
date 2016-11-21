@@ -45,7 +45,7 @@ class Learning(object):
     def get_iterations(self): return self.agent.t
     def get_normalized_interests(self): return self.agent.get_normalized_interests()    
     def get_normalized_interests_evolution(self): return self.agent.get_normalized_interests_evolution()
-    def get_last_focus(self): return self.agent.chosen_modules[-1]
+    def get_last_focus(self): return self.agent.get_last_focus()
     
     def get_data_from_file(self, log_dir, name):
         filename = os.path.join(log_dir, name + ".pickle")
