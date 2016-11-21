@@ -37,19 +37,24 @@ class Torso(object):
         self.in_rest_pose = False
         self.robot_lock = RLock()
 
-    def go_to_rest(self, slow=False):
+    def go_to_rest(self, slow):
         with self.robot_lock:
-            self.go_to([90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 4 if slow else 2)
+            duration = 2 if slow else 0.25
+            self.set_torque_limits(60)
+            self.torso.goto_position({'l_shoulder_y': 13, 'l_shoulder_x': 20, 'l_elbow_y': -25}, duration)
+            rospy.sleep(duration)
+            self.go_to([90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], duration)
             self.in_rest_pose = True
+            self.set_torque_limits()
 
     def go_to(self, motors, duration):
         motors_dict = dict(zip([m.name for m in self.torso.motors], motors))
         self.torso.goto_position(motors_dict, duration)
         rospy.sleep(duration)
 
-    def set_torque_limits(self):
+    def set_torque_limits(self, value=None):
         for m in self.torso.l_arm:
-            m.torque_limit = self.params['torques']
+            m.torque_limit = self.params['torques'] if value is None else value
 
     def run(self, dummy=False):
         rospy.loginfo("Torso is connecting to the robot...")
@@ -107,7 +112,7 @@ class Torso(object):
         with self.robot_lock:
             rospy.loginfo("Executing Torso trajectory with {} points...".format(len(trajectory.points)))
             if not self.in_rest_pose:
-                self.go_to_rest()
+                self.go_to_rest(False)
             for point in trajectory.points:
                 if rospy.is_shutdown():
                     break
@@ -132,6 +137,6 @@ class Torso(object):
         rospy.loginfo("Resetting Torso...")
         with self.robot_lock:
             self.left_arm_compliant(False)
-            self.go_to_rest()
+            self.go_to_rest(False)
         return ResetResponse()
 
