@@ -1,5 +1,7 @@
 {
   "publish_rate": 30,
-  "speed": 6,
-  "button_pin": 21
+  "speed": 3,
+  "button_pin": 21,
+  "auto_standby_duration": 600,
+  "min_joy_activity": 0.05
 }

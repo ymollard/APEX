@@ -1,5 +1,6 @@
 import os
 import rospy
+import rosnode
 import json
 import pygame
 import pygame.display
@@ -36,6 +37,8 @@ class Ergo(object):
         self.srv_reset = None
         self.ergo = None
         self.extended = False
+        self.standby = False
+        self.last_activity = rospy.Time.now()
         self.limits = []
         
         if pygame.joystick.get_count() < 2:
@@ -62,6 +65,24 @@ class Ergo(object):
         self.ergo.goto_position(rest, 0.5)
         self.extended = False
 
+    def is_controller_running(self):
+        return len([node for node in rosnode.get_node_names() if 'controller' in node]) > 0
+
+    def go_or_resume_standby(self):
+        recent_activity = rospy.Time.now() - self.last_activity < rospy.Duration(self.params['auto_standby_duration'])
+        if recent_activity and self.standby:
+            rospy.loginfo("Ergo is resuming from standby")
+            self.ergo.compliant = False
+            self.standby = False
+        elif not self.standby and not recent_activity:
+            rospy.loginfo("Ergo is entering standby mode")
+            self.standby = True
+            self.ergo.compliant = True
+
+        if self.is_controller_running():
+            self.last_activity = rospy.Time.now()
+
+
     def go_to(self, motors, duration):
         self.ergo.goto_position(dict(zip(['m1', 'm2', 'm3', 'm4', 'm5', 'm6'], motors)), duration)
         rospy.sleep(duration)
@@ -76,10 +97,12 @@ class Ergo(object):
         self.limits = [self.ergo.config['motors'][motor]['angle_limit'] for motor in ['m1', 'm2', 'm3', 'm4', 'm5', 'm6']]
         self.ergo.compliant = False
         self.go_to_start()
+        self.last_activity = rospy.Time.now()
         self.srv_reset = rospy.Service('/nips2016/ergo/reset', Reset, self._cb_reset)
         rospy.loginfo('Ergo is ready and starts joystick servoing...')
 
         while not rospy.is_shutdown():
+            self.go_or_resume_standby()
             pygame.event.get()
             x = self.joystick.get_axis(0)
             y = self.joystick.get_axis(1)
@@ -133,6 +156,10 @@ class Ergo(object):
         self.state_pub.publish(CircularState(angle=angle, extended=self.extended))
 
     def publish_joy(self, x, y, publisher):
+        # Update the alst activity
+        if abs(x) > self.params['min_joy_activity'] or abs(y) > self.params['min_joy_activity']:
+            self.last_activity = rospy.Time.now()
+
         joy = Joy()
         joy.header.stamp = rospy.Time.now()
         joy.axes.append(x)
