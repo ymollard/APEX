@@ -15,6 +15,7 @@ class Learning(object):
     def __init__(self, environment):
         self.environment = environment
         self.agent = None
+        self.data = None
         
         
     def produce(self, context, space=None):
@@ -44,6 +45,12 @@ class Learning(object):
     def get_iterations(self): return self.agent.t
     def get_normalized_interests(self): return self.agent.get_normalized_interests()    
     def get_normalized_interests_evolution(self): return self.agent.get_normalized_interests_evolution()
+    
+    def get_data_from_file(self, log_dir, name):
+        filename = os.path.join(log_dir, name + ".pickle")
+        with open(filename, 'r') as f:
+            data = pickle.load(f)
+        return data
                 
     def save(self, log_dir, name, log_normalized_interests=True):        
         data = self.agent.save() 
@@ -56,17 +63,17 @@ class Learning(object):
     
     def start(self):
         self.agent = Supervisor(self.environment)
-         
-    def restart(self, log_dir, name, iteration):
-        t = time.time()
-        self.save(log_dir, name + "_log-restart_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), log_normalized_interests=False)
-        print "time save", time.time() - t
-        filename = os.path.join(log_dir, name + ".pickle")
-        with open(filename, 'r') as f:
-            data = pickle.load(f)
+        
+    def restart_from_end_of_file(self, log_dir, name):
+        data = self.get_data_from_file(log_dir, name)
+        self.start()
+        self.agent.forward(data, len(data["chosen_modules"]))
+    
+    def restart_from_file(self, iteration, log_dir, name):
+        #self.save(log_dir, name + "_log-restart_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), log_normalized_interests=False)
+        data = self.get_data_from_file(log_dir, name)
         self.start()
         self.agent.forward(data, iteration)
-        print "total time restart", time.time() - t
 
     def plot(self):
         fig, ax = plt.subplots()
