@@ -23,7 +23,10 @@ class Controller(object):
         #self.ergo.reset()
 
     def run(self):
-        while not rospy.is_shutdown():
+        iteration = 0
+        nb_iterations = rospy.get_param('/nips2016/iterations')
+        while not rospy.is_shutdown() and iteration < nb_iterations:
+            rospy.loginfo("#### Iteration {}/{}".format(iteration + 1, nb_iterations))
             self.reset()
             if self.perception.help_pressed():
                 rospy.sleep(1.5)  # Wait for the robot to fully stop
@@ -37,6 +40,7 @@ class Controller(object):
                 recording = self.perception.record(human_demo=False, nb_points=self.params['nb_points'])
                 self.learning.perceive(JointTrajectory(), recording.sensorial_demonstration)  # TODO non-blocking
             # Many blocking calls: No sleep?
+            iteration += 1
 
 rospy.init_node("nips2016_controller")
 Controller().run()

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
+import os
 import json
 from os.path import join
 from rospkg.rospack import RosPack
@@ -11,12 +12,13 @@ from nips2016.learning import EnvironmentTranslator, Learning
 class LearningNode(object):
     def __init__(self):
         self.rospack = RosPack()
-        #with open(join(self.rospack.get_path('nips2016'), 'config', 'learning.json')) as f:
-        #    self.params = json.load(f)
+        with open(join(self.rospack.get_path('nips2016'), 'config', 'learning.json')) as f:
+            self.params = json.load(f)
 
         self.translator = EnvironmentTranslator()
         self.learning = Learning(self.translator.config)
         self.learning.start()
+        self.experiment_name = rospy.get_param("/nips2016/experiment_name", "experiment")
 
         # Serving these services
         self.service_name_perceive = "/nips2016/learning/perceive"
@@ -35,6 +37,12 @@ class LearningNode(object):
         rospy.loginfo("Learning is up!")
         rospy.spin()
 
+    def save(self):
+        dir = join(self.rospack.get_path('nips2016'), 'logs')
+        if not os.path.isdir(dir):
+            os.makedirs(dir)
+        self.learning.save(dir, self.experiment_name)
+
     ################################# Service callbacks
     def cb_perceive(self, request):
         s = self.translator.sensory_trajectory_msg_to_list(request.sensorial_demonstration)
@@ -46,6 +54,10 @@ class LearningNode(object):
         else:
             rospy.loginfo("Learning node is perceiving sensory trajectory only")
             self.learning.perceive(s)
+
+        # Regularly overwrite the results
+        if self.learning.get_iterations() % self.params['save_every'] == 0:
+            self.save()
         return PerceiveResponse()
 
     def cb_produce(self, request):
