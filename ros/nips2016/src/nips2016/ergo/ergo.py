@@ -82,7 +82,6 @@ class Ergo(object):
         if self.is_controller_running():
             self.last_activity = rospy.Time.now()
 
-
     def go_to(self, motors, duration):
         self.ergo.goto_position(dict(zip(['m1', 'm2', 'm3', 'm4', 'm5', 'm6'], motors)), duration)
         rospy.sleep(duration)
@@ -117,6 +116,7 @@ class Ergo(object):
             y = self.joystick2.get_axis(1)
             self.publish_joy(x, y, self.joy_pub2)
             self.rate.sleep()
+        self.ergo.compliant = True
 
     def servo_axis_rotation(self, x):
         self.servo_axis(x, 0)
