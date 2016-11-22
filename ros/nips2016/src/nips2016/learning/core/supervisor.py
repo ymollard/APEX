@@ -69,12 +69,28 @@ class Supervisor(object):
                              s_ergo="mod4", 
                              s_ball="mod5", 
                              s_light="mod6", 
-                             s_sound="mod7")
+                             s_sound="mod7")   
+         
+        self.mid2space = dict(mod1="s_hand", 
+                             mod2="s_joystick_1", 
+                             mod3="s_joystick_2", 
+                             mod4="s_ergo", 
+                             mod5="s_ball", 
+                             mod6="s_light", 
+                             mod7="s_sound")
         
         for mid in self.modules.keys():
             self.progresses_evolution[mid] = []
             self.interests_evolution[mid] = []
-        
+    
+    def mid_to_space(self, mid): return self.mid2space[mid]
+    def space_to_mid(self, space): return self.space2mid[space]
+    
+    def get_last_focus(self):
+        if len(self.chosen_modules) > 0:
+            return self.mid_to_space(self.chosen_modules[-1])
+        else:
+            return "None"
     
     def save(self):
         sm_data = {}

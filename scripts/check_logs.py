@@ -4,7 +4,7 @@ import pickle
 
 import matplotlib.pyplot as plt
 
-log_dir = "../../../../../data/logs/"
+log_dir = "../data/logs/"
 name = "motor_babbling"
 
 filename = os.path.join(log_dir, name + ".pickle")
@@ -20,12 +20,13 @@ print "\nnormalized_interests_evolution", data["normalized_interests_evolution"]
 
 
 
-# fig, ax = plt.subplots()
-# ax.plot(data["normalized_interests_evolution"], lw=2)
-# ax.legend(["Hand", "Joystick_1", "Joystick_2", "Ergo", "Ball", "Light", "Sound"], ncol=3)
-# ax.set_xlabel('Time steps', fontsize=20)
-# ax.set_ylabel('Learning progress', fontsize=20)
-# plt.show(block=True)
+print data["normalized_interests_evolution"]
+fig, ax = plt.subplots()
+ax.plot(data["normalized_interests_evolution"], lw=2)
+ax.legend(["Hand", "Joystick_1", "Joystick_2", "Ergo", "Ball", "Light", "Sound"], ncol=3)
+ax.set_xlabel('Time steps', fontsize=20)
+ax.set_ylabel('Learning progress', fontsize=20)
+plt.show(block=True)
 
 
 fig, ax = plt.subplots()
