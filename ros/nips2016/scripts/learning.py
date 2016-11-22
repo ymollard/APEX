@@ -5,7 +5,7 @@ import os
 import json
 from os.path import join
 from rospkg.rospack import RosPack
-from nips2016.srv import Perceive, Produce, ProduceResponse, PerceiveResponse, GetSensorialState, GetSensorialStateRequest
+from nips2016.srv import *
 from nips2016.msg import Interests
 from nips2016.learning import EnvironmentTranslator, Learning
 from std_msgs.msg import String, Bool, UInt32, Float32
@@ -27,11 +27,14 @@ class LearningNode(object):
         self.experiment_name = rospy.get_param("/nips2016/experiment_name", "experiment")
         self.lock_next_iteration = RLock()
         self.next_iteration = True
+        self.ready_for_interaction = True
+        self.focus = None
 
         # Serving these services
         self.service_name_perceive = "/nips2016/learning/perceive"
         self.service_name_produce = "/nips2016/learning/produce"
-        # Using these services
+        self.service_name_set_interest = "/nips2016/learning/set_interest"
+        self.service_name_set_iteration = "/nips2016/learning/set_iteration"
 
         # Publishing these topics
         self.pub_interests = rospy.Publisher('/nips2016/learning/interests', Interests, queue_size=1, latch=True)
@@ -39,6 +42,11 @@ class LearningNode(object):
         self.pub_ready = rospy.Publisher('/nips2016/learning/ready_for_interaction', Bool, queue_size=1, latch=True)
         self.pub_iteration = rospy.Publisher('/nips2016/iteration', UInt32, queue_size=1, latch=True)
 
+        self.dir = join(self.rospack.get_path('nips2016'), 'logs')
+        if not os.path.isdir(self.dir):
+            os.makedirs(self.dir)
+
+        # Using these services
         self.service_name_get_perception = "/nips2016/perception/get"
         for service in [self.service_name_get_perception]:
             rospy.loginfo("Learning  node is waiting service {}...".format(service))
@@ -48,6 +56,8 @@ class LearningNode(object):
     def run(self):
         rospy.Service(self.service_name_perceive, Perceive, self.cb_perceive)
         rospy.Service(self.service_name_produce, Produce, self.cb_produce)
+        rospy.Service(self.service_name_set_interest, SetFocus, self.cb_set_focus)
+        rospy.Service(self.service_name_set_iteration, SetIteration, self.cb_set_iteration)
         rospy.loginfo("Learning is up!")
 
         rate = rospy.Rate(self.params['publish_rate'])
@@ -62,10 +72,7 @@ class LearningNode(object):
             rate.sleep()
 
     def save(self):
-        dir = join(self.rospack.get_path('nips2016'), 'logs')
-        if not os.path.isdir(dir):
-            os.makedirs(dir)
-        self.learning.save(dir, self.experiment_name)
+        self.learning.save(self.dir, self.experiment_name)
 
     def publish(self):
         interests_list = self.learning.get_normalized_interests_evolution()
@@ -73,15 +80,24 @@ class LearningNode(object):
         interests.names = self.learning.get_space_names()
         interests.num_iterations = UInt32(len(interests_list))
         interests.interests = [Float32(val) for sublist in interests_list for val in sublist]
-        ready_for_interaction = True  # TODO
 
         self.pub_interests.publish(interests)
         self.pub_focus.publish(String(data=self.learning.get_last_focus()))
-        self.pub_ready.publish(Bool(data=ready_for_interaction))
+        self.pub_ready.publish(Bool(data=self.ready_for_interaction))
         self.pub_iteration.publish(UInt32(data=self.learning.get_iterations()))
 
 
     ################################# Service callbacks
+    def cb_set_iteration(self, request):
+        if self.ready_for_interaction:
+            self.learning.restart_from_file(self.dir, self.experiment_name, request.iteration.data)
+        return SetIterationResponse()
+
+    def cb_set_focus(self, request):
+        if self.ready_for_interaction:
+            self.focus = request.space.data
+        return SetFocusResponse()
+
     def cb_perceive(self, request):
         s = self.translator.sensory_trajectory_msg_to_list(request.sensorial_demonstration)
         if len(request.torso_demonstration.points) > 0:
@@ -102,7 +118,7 @@ class LearningNode(object):
         rospy.loginfo("Learning node is requesting the current state")
         state = self.get_state(GetSensorialStateRequest()).state
         rospy.loginfo("Learning node is producing...")
-        w = self.learning.produce(self.translator.get_context(state))
+        w = self.learning.produce(self.translator.get_context(state), self.focus)
         trajectory_matrix = self.translator.w_to_trajectory(w)
         trajectory_msg = self.translator.matrix_to_trajectory_msg(trajectory_matrix)
         with self.lock_next_iteration:

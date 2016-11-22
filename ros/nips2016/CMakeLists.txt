@@ -69,6 +69,8 @@ add_service_files(
   Perceive.srv
   Record.srv
   SetupTorsoRecording.srv
+  SetFocus.srv
+  SetIteration.srv
 
 )
 
