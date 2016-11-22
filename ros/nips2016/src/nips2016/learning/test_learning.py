@@ -9,7 +9,10 @@ if __name__ == "__main__":
     environment = TestEnvironment()
     
     print "Create agent"
-    learning = Learning(environment)
+    learning = Learning(dict(m_mins=environment.conf.m_mins,
+                             m_maxs=environment.conf.m_maxs,
+                             s_mins=environment.conf.s_mins,
+                             s_maxs=environment.conf.s_maxs))
     learning.start()
     
     print
@@ -60,7 +63,7 @@ if __name__ == "__main__":
         learning.perceive(s)
     
     print "Rebuilding agent from file"
-    learning.restart("../../../../../data", "test", 2001)
+    learning.restart_from_file("../../../../../data", "test", 2001)
         
 #     print "Data after rebuilding"
 #     print learning.agent.t
@@ -78,6 +81,13 @@ if __name__ == "__main__":
         m = learning.produce(context)
         s = environment.update(m)
         learning.perceive(s)
+        
+
+    context = environment.get_current_context()
+    print "motor babbling", learning.motor_babbling()
+    print "motor_move_joystick_1", learning.motor_move_joystick_1(context, "forward")
+    print "motor_move_joystick_2", learning.motor_move_joystick_2(context, "forward")
+    print "motor_move_ergo", learning.motor_move_ergo(context, "right")
         
     print "\nPloting interests..."
     learning.plot()

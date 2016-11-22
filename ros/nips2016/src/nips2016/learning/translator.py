@@ -79,7 +79,7 @@ class EnvironmentTranslator(object):
         # Concatenate all these values in a huge 132-float list
         s_bounded = np.array([self.context['ergo'], self.context['ball']] + [value for space in ['hand', 'joystick_1', 'joystick_2', 'ergo', 'ball', 'light', 'sound'] for value in state_dict[space]])
         s_normalized = ((s_bounded - self.bounds_sensory_min) / self.bounds_sensory_diff) * 2 + np.array([-1.]*132)
-
+        s_normalized = bounds_min_max(s_normalized, 132 * [-1.], 132 * [1.])
         # print "context", s_bounded[:2], s_normalized[:2]
         # print "hand", s_bounded[2:32], s_normalized[2:32]
         # print "joystick_1", s_bounded[32:52], s_normalized[32:52]

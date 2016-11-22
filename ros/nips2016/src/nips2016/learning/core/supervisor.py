@@ -6,7 +6,12 @@ from learning_module import LearningModule
 
 
 class Supervisor(object):
-    def __init__(self, config):
+    def __init__(self, config, n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2):
+        
+        self.config = config
+        self.n_motor_babbling = n_motor_babbling
+        self.explo_noise = explo_noise
+        self.choice_eps = choice_eps
         
         self.conf = make_configuration(**config)
         
@@ -55,13 +60,13 @@ class Supervisor(object):
         
 
         # Create the 6 learning modules:
-        self.modules['mod1'] = LearningModule("mod1", self.m_space, self.s_hand, self.conf)
-        self.modules['mod2'] = LearningModule("mod2", self.m_space, self.s_joystick_1, self.conf)
-        self.modules['mod3'] = LearningModule("mod2", self.m_space, self.s_joystick_2, self.conf)
-        self.modules['mod4'] = LearningModule("mod3", self.m_space, [self.c_dims[0]] + self.s_ergo, self.conf, context_mode=dict(mode='mcs', context_n_dims=1, context_sensory_bounds=[[-1.],[1.]]))
-        self.modules['mod5'] = LearningModule("mod4", self.m_space, self.c_dims + self.s_ball, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
-        self.modules['mod6'] = LearningModule("mod5", self.m_space, self.c_dims + self.s_light, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
-        self.modules['mod7'] = LearningModule("mod6", self.m_space, self.c_dims + self.s_sound, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]))
+        self.modules['mod1'] = LearningModule("mod1", self.m_space, self.s_hand, self.conf, explo_noise=self.explo_noise)
+        self.modules['mod2'] = LearningModule("mod2", self.m_space, self.s_joystick_1, self.conf, explo_noise=self.explo_noise)
+        self.modules['mod3'] = LearningModule("mod2", self.m_space, self.s_joystick_2, self.conf, explo_noise=self.explo_noise)
+        self.modules['mod4'] = LearningModule("mod3", self.m_space, [self.c_dims[0]] + self.s_ergo, self.conf, context_mode=dict(mode='mcs', context_n_dims=1, context_sensory_bounds=[[-1.],[1.]]), explo_noise=self.explo_noise)
+        self.modules['mod5'] = LearningModule("mod4", self.m_space, self.c_dims + self.s_ball, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise)
+        self.modules['mod6'] = LearningModule("mod5", self.m_space, self.c_dims + self.s_light, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise)
+        self.modules['mod7'] = LearningModule("mod6", self.m_space, self.c_dims + self.s_sound, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise)
     
         self.space2mid = dict(s_hand="mod1", 
                              s_joystick_1="mod2", 
@@ -148,7 +153,7 @@ class Supervisor(object):
         
         elif mode == 'prop':
             w = interests.values()
-            mid = self.modules.keys()[prop_choice(w, eps=0.2)]
+            mid = self.modules.keys()[prop_choice(w, eps=self.choice_eps)]
             if (self.t + 1) % 1000 == 0:
                 print
                 print 'Iteration', self.t +1
@@ -185,7 +190,11 @@ class Supervisor(object):
     def sensory_primitive(self, s): return s
     def get_m(self, ms): return ms[self.conf.m_dims]
     def get_s(self, ms): return ms[self.conf.s_dims]
-                
+    
+    def motor_babbling(self):
+        self.m = self.modules["mod1"].motor_babbling()
+        return self.m
+    
     def set_ms(self, m, s): return np.array(list(m) + list(s))
             
     def update_sensorimotor_models(self, ms):
@@ -193,21 +202,28 @@ class Supervisor(object):
             self.modules[mid].update_sm(self.modules[mid].get_m(ms), self.modules[mid].get_s(ms))
         
     def produce(self, context, space=None):
-        if space is None:
-            mid = self.choose_babbling_module()
+        if self.t < self.n_motor_babbling:
+            self.mid_control = None
+            return self.motor_babbling()
         else:
-            mid = self.space2mid[space]
-        self.mid_control = mid
-        
-        j_sm = self.modules["mod2"].sensorimotor_model
-        if self.modules[mid].context_mode is None:
-            self.m = self.modules[mid].produce(j_sm=j_sm)
-        else:
-            self.m = self.modules[mid].produce(context=np.array(context)[range(self.modules[mid].context_mode["context_n_dims"])], j_sm=j_sm)
-        return self.m
+            if space is None:
+                mid = self.choose_babbling_module()
+            else:
+                mid = self.space2mid[space]
+            self.mid_control = mid
+            
+            j_sm = self.modules["mod2"].sensorimotor_model
+            if self.modules[mid].context_mode is None:
+                self.m = self.modules[mid].produce(j_sm=j_sm)
+            else:
+                self.m = self.modules[mid].produce(context=np.array(context)[range(self.modules[mid].context_mode["context_n_dims"])], j_sm=j_sm)
+            return self.m
     
     def inverse(self, mid, s, context):
-        s = np.array(list(context[self.modules[mid].context_dims]) + list(s))
+        if self.modules[mid].context_mode is not None:
+            s = np.array(list(context[:self.modules[mid].context_mode["context_n_dims"]]) + list(s))
+        else:
+            s = np.array(s)
         self.mid_control = None
         self.m = self.modules[mid].inverse(s)
         return self.m

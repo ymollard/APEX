@@ -12,11 +12,12 @@ from core.supervisor import Supervisor
 
 
 class Learning(object):
-    def __init__(self, environment):
-        self.environment = environment
+    def __init__(self, config, n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2):
+        self.config = config
+        self.n_motor_babbling = n_motor_babbling
+        self.explo_noise = explo_noise
+        self.choice_eps = choice_eps
         self.agent = None
-        self.data = None
-        
         
     def produce(self, context, space=None):
         # context is the rotation of the ergo and the ball: "context = environment.get_current_context()"
@@ -46,6 +47,192 @@ class Learning(object):
     def get_normalized_interests(self): return self.agent.get_normalized_interests()    
     def get_normalized_interests_evolution(self): return self.agent.get_normalized_interests_evolution()
     def get_last_focus(self): return self.agent.get_last_focus()
+    def motor_babbling(self): return self.agent.motor_babbling()
+    
+    def move_hand(self, context, direction="up"):
+        if direction=="up":
+            return self.agent.inverse("mod1", [0., 0., 0.,
+                                               0., 0., 0., 
+                                               0., 0., 0.5,
+                                               0., 0., 0.5,
+                                               0., 0., 1.,
+                                               0., 0., 1., 
+                                               0., 0., 1.,
+                                               0., 0., 1.,
+                                               0., 0., 1., 
+                                               0., 0., 1.], context)
+        elif direction=="forward":
+            return self.agent.inverse("mod1", [0., 0., 0., 
+                                               0., 0., 0., 
+                                               0.5, 0., 0., 
+                                               0.5, 0., 0., 
+                                               1., 0., 0., 
+                                               1., 0., 0., 
+                                               1., 0., 0., 
+                                               1., 0., 0., 
+                                               1., 0., 0., 
+                                               1., 0., 0.,], context)
+        elif direction=="right":
+            return self.agent.inverse("mod1", [0., 0., 0., 
+                                               0., 0., 0., 
+                                               0., -0.5, 0., 
+                                               0., -0.5, 0., 
+                                               0., -1., 0., 
+                                               0., -1., 0., 
+                                               0., -1., 0., 
+                                               0., -1., 0., 
+                                               0., -1., 0., 
+                                               0., -1., 0.,], context)
+        elif direction=="left":
+            return self.agent.inverse("mod1", [0., 0., 0., 
+                                               0., 0., 0., 
+                                               0., 0.5, 0., 
+                                               0., 0.5, 0., 
+                                               0., 1., 0., 
+                                               0., 1., 0., 
+                                               0., 1., 0., 
+                                               0., 1., 0., 
+                                               0., 1., 0., 
+                                               0., 1., 0.,], context)
+        else:
+            raise NotImplementedError
+            
+        
+    def motor_move_joystick_1(self, context, direction="forward"):
+        if direction=="forward":
+            return self.agent.inverse("mod2", [-1., 0., 
+                                               -1., 0., 
+                                               0., 0., 
+                                               1., 0., 
+                                               1., 0., 
+                                               1., 0., 
+                                               1., 0., 
+                                               0., 0., 
+                                               -1., 0., 
+                                               -1., 0.], context)
+        elif direction=="right":
+            return self.agent.inverse("mod2", [-1., 0., 
+                                               -1., 0., 
+                                               -1., 0., 
+                                               -1., 1., 
+                                               -1., 1., 
+                                               -1., 1., 
+                                               -1., 1., 
+                                               -1., 0., 
+                                               -1., 0., 
+                                               -1., 0.], context)
+        elif direction=="left":
+            return self.agent.inverse("mod2", [-1., 0., 
+                                               -1., 0., 
+                                               -1., 0., 
+                                               -1., -1., 
+                                               -1., -1., 
+                                               -1., -1., 
+                                               -1., -1., 
+                                               -1., 0., 
+                                               -1., 0., 
+                                               -1., 0.], context)  
+        else:
+            raise NotImplementedError
+              
+    def motor_move_joystick_2(self, context, direction="forward"):
+        if direction=="forward":
+            return self.agent.inverse("mod3", [0., -1., 
+                                               0., -1., 
+                                               0., 0., 
+                                               0., 1., 
+                                               0., 1., 
+                                               0., 1., 
+                                               0., 1., 
+                                               0., 0., 
+                                               0., -1., 
+                                               0., -1.], context)
+        elif direction=="right":
+            return self.agent.inverse("mod3", [0., -1., 
+                                               0., -1., 
+                                               0., -1., 
+                                               1., -1., 
+                                               1., -1., 
+                                               1., -1., 
+                                               1., -1., 
+                                               0., -1., 
+                                               0., -1., 
+                                               0., -1.], context)
+        elif direction=="left":
+            return self.agent.inverse("mod3", [0., -1., 
+                                               0., -1., 
+                                               0., -1., 
+                                               -1., -1., 
+                                               -1., -1., 
+                                               -1., -1., 
+                                               -1., -1., 
+                                               0., -1., 
+                                               0., -1., 
+                                               0., -1.], context)
+        else:
+            raise NotImplementedError
+    
+    def motor_move_ergo(self, context, direction="right"):
+        angle = context[0]
+        if direction=="right":
+            return self.agent.inverse("mod4", [angle, -1.,
+                                               angle, -1.,
+                                               ((angle+1.+0.25) % 2.)- 1., 0.,
+                                               ((angle+1.+0.50) % 2.)- 1., 1.,
+                                               ((angle+1.+0.75) % 2.)- 1., 1.,
+                                               ((angle+1.+1.00) % 2.)- 1., 1.,
+                                               ((angle+1.+1.25) % 2.)- 1., 1.,
+                                               ((angle+1.+1.75) % 2.)- 1., 0.,
+                                               ((angle+1.+2.) % 2.)- 1., -1.,
+                                               ((angle+1.+2.) % 2.)- 1., -1.], context)
+        elif direction=="left":
+            return self.agent.inverse("mod4", [angle, -1.,
+                                               angle, -1.,
+                                               ((angle+1.-0.25) % 2.)- 1., 0.,
+                                               ((angle+1.-0.50) % 2.)- 1., 1.,
+                                               ((angle+1.-0.75) % 2.)- 1., 1.,
+                                               ((angle+1.-1.00) % 2.)- 1., 1.,
+                                               ((angle+1.-1.25) % 2.)- 1., 1.,
+                                               ((angle+1.-1.75) % 2.)- 1., 0.,
+                                               ((angle+1.-2.) % 2.)- 1., -1.,
+                                               ((angle+1.-2.) % 2.)- 1., -1.], context)
+        else:
+            raise NotImplementedError
+        
+    def motor_move_ball(self, context, direction="right"):
+        angle = context[1]
+        if direction=="right":
+            return self.agent.inverse("mod5", [angle, -1.,
+                                               angle, -1.,
+                                               ((angle+1.+0.25) % 2.)- 1., 0.,
+                                               ((angle+1.+0.50) % 2.)- 1., 1.,
+                                               ((angle+1.+0.75) % 2.)- 1., 1.,
+                                               ((angle+1.+1.00) % 2.)- 1., 1.,
+                                               ((angle+1.+1.25) % 2.)- 1., 1.,
+                                               ((angle+1.+1.75) % 2.)- 1., 0.,
+                                               ((angle+1.+2.) % 2.)- 1., -1.,
+                                               ((angle+1.+2.) % 2.)- 1., -1.], context)
+        elif direction=="left":
+            return self.agent.inverse("mod5", [angle, -1.,
+                                               angle, -1.,
+                                               ((angle+1.-0.25) % 2.)- 1., 0.,
+                                               ((angle+1.-0.50) % 2.)- 1., 1.,
+                                               ((angle+1.-0.75) % 2.)- 1., 1.,
+                                               ((angle+1.-1.00) % 2.)- 1., 1.,
+                                               ((angle+1.-1.25) % 2.)- 1., 1.,
+                                               ((angle+1.-1.75) % 2.)- 1., 0.,
+                                               ((angle+1.-2.) % 2.)- 1., -1.,
+                                               ((angle+1.-2.) % 2.)- 1., -1.], context)
+        else:
+            raise NotImplementedError
+            
+    
+    def motor_make_light(self, context):
+        return self.agent.inverse("mod6", [-1., -1., 0., 1., 1., 1., 1., 0., -1., -1.], context)
+    
+    def motor_make_sound(self, context):
+        return self.agent.inverse("mod7", [-1., -1., 0., 1., 1., 1., 1., 0., -1., -1.], context)
+        
     
     def get_data_from_file(self, log_dir, name):
         filename = os.path.join(log_dir, name + ".pickle")
@@ -63,14 +250,17 @@ class Learning(object):
                 pickle.dump(data["normalized_interests_evolution"], f)
     
     def start(self):
-        self.agent = Supervisor(self.environment)
+        self.agent = Supervisor(self.config, 
+                                n_motor_babbling=self.n_motor_babbling, 
+                                explo_noise=self.explo_noise, 
+                                choice_eps=self.choice_eps)
         
     def restart_from_end_of_file(self, log_dir, name):
         data = self.get_data_from_file(log_dir, name)
         self.start()
         self.agent.forward(data, len(data["chosen_modules"]))
     
-    def restart_from_file(self, iteration, log_dir, name):
+    def restart_from_file(self, log_dir, name, iteration):
         #self.save(log_dir, name + "_log-restart_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), log_normalized_interests=False)
         data = self.get_data_from_file(log_dir, name)
         self.start()

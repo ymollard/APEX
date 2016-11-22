@@ -12,11 +12,7 @@ from interest_model import MiscRandomInterest, ContextRandomInterest
 
 
 class LearningModule(Agent):
-    def __init__(self, mid, m_space, s_space, env_conf, context_mode=None):
-
-        
-        
-        explo_noise = 0.05
+    def __init__(self, mid, m_space, s_space, env_conf, explo_noise=0.1, context_mode=None):
 
 
         self.conf = make_configuration(env_conf.m_mins[m_space], 
@@ -98,7 +94,7 @@ class LearningModule(Agent):
         return ms          
     
     def inverse(self, s):
-        m = self.infer(self.conf.s_dims, self.conf.m_dims, s, pref='')
+        m,_ = self.infer(self.conf.s_dims, self.conf.m_dims, s, pref='')
         return self.motor_primitive(m)
         
     def infer(self, expl_dims, inf_dims, x, pref='', n=1, explore=True):      
