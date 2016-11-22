@@ -6,7 +6,10 @@ import json
 from os.path import join
 from rospkg.rospack import RosPack
 from nips2016.srv import Perceive, Produce, ProduceResponse, PerceiveResponse, GetSensorialState, GetSensorialStateRequest
+from nips2016.msg import Interests
 from nips2016.learning import EnvironmentTranslator, Learning
+from std_msgs.msg import String, Bool, UInt32, Float32
+from threading import RLock
 
 
 class LearningNode(object):
@@ -22,11 +25,19 @@ class LearningNode(object):
                                  choice_eps=self.params["choice_eps"])
         self.learning.start()
         self.experiment_name = rospy.get_param("/nips2016/experiment_name", "experiment")
+        self.lock_next_iteration = RLock()
+        self.next_iteration = True
 
         # Serving these services
         self.service_name_perceive = "/nips2016/learning/perceive"
         self.service_name_produce = "/nips2016/learning/produce"
         # Using these services
+
+        # Publishing these topics
+        self.pub_interests = rospy.Publisher('/nips2016/learning/interests', Interests, queue_size=1, latch=True)
+        self.pub_focus = rospy.Publisher('/nips2016/learning/current_focus', String, queue_size=1, latch=True)
+        self.pub_ready = rospy.Publisher('/nips2016/learning/ready_for_interaction', Bool, queue_size=1, latch=True)
+        self.pub_iteration = rospy.Publisher('/nips2016/iteration', UInt32, queue_size=1, latch=True)
 
         self.service_name_get_perception = "/nips2016/perception/get"
         for service in [self.service_name_get_perception]:
@@ -38,13 +49,37 @@ class LearningNode(object):
         rospy.Service(self.service_name_perceive, Perceive, self.cb_perceive)
         rospy.Service(self.service_name_produce, Produce, self.cb_produce)
         rospy.loginfo("Learning is up!")
-        rospy.spin()
+
+        rate = rospy.Rate(self.params['publish_rate'])
+        while not rospy.is_shutdown():
+            publish = False
+            with self.lock_next_iteration:
+                if self.next_iteration:
+                    publish = True
+                    self.next_iteration = False
+            if publish:
+                self.publish()
+            rate.sleep()
 
     def save(self):
         dir = join(self.rospack.get_path('nips2016'), 'logs')
         if not os.path.isdir(dir):
             os.makedirs(dir)
         self.learning.save(dir, self.experiment_name)
+
+    def publish(self):
+        interests_list = self.learning.get_normalized_interests_evolution()
+        interests = Interests()
+        interests.names = self.learning.get_space_names()
+        interests.num_iterations = UInt32(len(interests_list))
+        interests.interests = [Float32(val) for sublist in interests_list for val in sublist]
+        ready_for_interaction = True  # TODO
+
+        self.pub_interests.publish(interests)
+        self.pub_focus.publish(String(data=self.learning.get_last_focus()))
+        self.pub_ready.publish(Bool(data=ready_for_interaction))
+        self.pub_iteration.publish(UInt32(data=self.learning.get_iterations()))
+
 
     ################################# Service callbacks
     def cb_perceive(self, request):
@@ -70,6 +105,8 @@ class LearningNode(object):
         w = self.learning.produce(self.translator.get_context(state))
         trajectory_matrix = self.translator.w_to_trajectory(w)
         trajectory_msg = self.translator.matrix_to_trajectory_msg(trajectory_matrix)
+        with self.lock_next_iteration:
+            self.next_iteration = True
         response = ProduceResponse(torso_trajectory=trajectory_msg)
         return response
 

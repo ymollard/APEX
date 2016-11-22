@@ -5,6 +5,7 @@ from os.path import join
 from rospkg import RosPack
 from nips2016.controller import Perception, Learning, Torso, Ergo
 from trajectory_msgs.msg import JointTrajectory
+from std_msgs.msg import UInt32
 
 
 class Controller(object):
@@ -16,17 +17,20 @@ class Controller(object):
         self.ergo = Ergo()
         self.learning = Learning()
         self.perception = Perception()
+        self.iteration = 0
+        rospy.Subscriber('/nips2016/iteration', UInt32, self._cb_iteration)
         rospy.loginfo('Controller fully started!')
+
+    def _cb_iteration(self, msg):
+        self.iteration = msg.data
 
     def reset(self):
         self.torso.reset()
-        #self.ergo.reset()
 
     def run(self):
-        iteration = 0
         nb_iterations = rospy.get_param('/nips2016/iterations')
-        while not rospy.is_shutdown() and iteration < nb_iterations:
-            rospy.loginfo("#### Iteration {}/{}".format(iteration + 1, nb_iterations))
+        while not rospy.is_shutdown() and self.iteration < nb_iterations:
+            rospy.loginfo("#### Iteration {}/{}".format(self.iteration + 1, nb_iterations))
             self.reset()
             if self.perception.help_pressed():
                 rospy.sleep(1.5)  # Wait for the robot to fully stop
@@ -40,7 +44,6 @@ class Controller(object):
                 recording = self.perception.record(human_demo=False, nb_points=self.params['nb_points'])
                 self.learning.perceive(JointTrajectory(), recording.sensorial_demonstration)  # TODO non-blocking
             # Many blocking calls: No sleep?
-            iteration += 1
 
 rospy.init_node("nips2016_controller")
 Controller().run()

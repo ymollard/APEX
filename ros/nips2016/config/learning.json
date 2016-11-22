@@ -2,5 +2,6 @@
   "save_every": 10,
   "n_motor_babbling": 0,
   "explo_noise": 0.1,
-  "choice_eps": 0.2
+  "choice_eps": 0.2,
+  "publish_rate": 4
 }

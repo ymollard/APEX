@@ -54,6 +54,7 @@ add_message_files(
   ErgoTrajectory.msg
   SensorialState.msg
   SensorialTrajectory.msg
+  Interests.msg
 
 )
 
