@@ -47,6 +47,7 @@ class Learning(object):
     def get_normalized_interests(self): return self.agent.get_normalized_interests()    
     def get_normalized_interests_evolution(self): return self.agent.get_normalized_interests_evolution()
     def get_last_focus(self): return self.agent.get_last_focus()
+    def get_space_names(self): return self.agent.get_space_names()
     def motor_babbling(self): return self.agent.motor_babbling()
     
     def move_hand(self, context, direction="up"):
