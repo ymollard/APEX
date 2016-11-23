@@ -25,10 +25,13 @@ class LearningNode(object):
                                  choice_eps=self.params["choice_eps"])
         self.learning.start()
         self.experiment_name = rospy.get_param("/nips2016/experiment_name", "experiment")
-        self.lock_next_iteration = RLock()
+
+        # User control
+        self.lock_iteration = RLock()
         self.next_iteration = True
         self.ready_for_interaction = True
         self.focus = None
+        self.set_iteration = -1
 
         # Serving these services
         self.service_name_perceive = "/nips2016/learning/perceive"
@@ -63,7 +66,7 @@ class LearningNode(object):
         rate = rospy.Rate(self.params['publish_rate'])
         while not rospy.is_shutdown():
             publish = False
-            with self.lock_next_iteration:
+            with self.lock_iteration:
                 if self.next_iteration:
                     publish = True
                     self.next_iteration = False
@@ -90,7 +93,7 @@ class LearningNode(object):
     ################################# Service callbacks
     def cb_set_iteration(self, request):
         if self.ready_for_interaction:
-            self.learning.restart_from_file(self.dir, self.experiment_name, request.iteration.data)
+            self.set_iteration = request.iteration.data
         return SetIterationResponse()
 
     def cb_set_focus(self, request):
@@ -104,14 +107,23 @@ class LearningNode(object):
             torso_traj = self.translator.trajectory_msg_to_matrix(request.torso_demonstration)
             torso_traj_w = self.translator.trajectory_to_w(torso_traj)
             rospy.loginfo("Learning node is perceiving sensory + torso trajectories")
-            self.learning.perceive(s, m_demo=torso_traj_w)
+            if not self.learning.perceive(s, m_demo=torso_traj_w):
+                rospy.logerr("Learner could not perceive these trajectories")
         else:
             rospy.loginfo("Learning node is perceiving sensory trajectory only")
-            self.learning.perceive(s)
+            if not self.learning.perceive(s):
+                rospy.logerr("Learner could not perceive this trajectory")
 
         # Regularly overwrite the results
         if self.learning.get_iterations() % self.params['save_every'] == 0:
             self.save()
+
+        # This turn is over, check if we have a time travel pending...
+        with self.lock_iteration:
+            if self.set_iteration > -1:
+                rospy.logwarn("Applying time travel to iteration {}".format(self.set_iteration))
+                self.learning.restart_from_file(self.dir, self.experiment_name, self.set_iteration)
+                self.set_iteration = -1
         return PerceiveResponse()
 
     def cb_produce(self, request):
@@ -121,7 +133,7 @@ class LearningNode(object):
         w = self.learning.produce(self.translator.get_context(state), self.focus)
         trajectory_matrix = self.translator.w_to_trajectory(w)
         trajectory_msg = self.translator.matrix_to_trajectory_msg(trajectory_matrix)
-        with self.lock_next_iteration:
+        with self.lock_iteration:
             self.next_iteration = True
         response = ProduceResponse(torso_trajectory=trajectory_msg)
         return response
