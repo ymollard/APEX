@@ -7,7 +7,7 @@ from std_msgs.msg import String, Bool
 class UserServices(object):
     def __init__(self):
         self.services = {'set_iteration': {'name': '/nips2016/learning/set_iteration', 'type': SetIteration},
-                         'set_focus': {'name': '/nips2016/learning/set_focus', 'type': SetFocus}
+                         'set_focus': {'name': '/nips2016/learning/set_interest', 'type': SetFocus}
                          }
 
         rospy.Subscriber('/nips2016/learning/interests', Interests, self._cb_interests)
@@ -26,8 +26,8 @@ class UserServices(object):
         rospy.loginfo("User node started!")
 
     def _cb_interests(self, msg):
-        self.interests = dict(zip(msg.names, [[msg.interests[iteration + iteration*space]
-                                               for iteration in range(msg.num_iterations)]
+        self.interests = dict(zip(msg.names, [[msg.interests[iteration + iteration*space].data
+                                               for iteration in range(msg.num_iterations.data)]
                                               for space in range(len(msg.names))]))
 
     def _cb_focus(self, msg):
