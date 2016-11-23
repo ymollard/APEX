@@ -1,7 +1,7 @@
 import rospy
 from nips2016.srv import SetIteration, SetIterationRequest, SetFocus, SetFocusRequest
 from nips2016.msg import Interests
-from std_msgs.msg import String, Bool
+from std_msgs.msg import String, Bool, UInt32
 
 
 class UserServices(object):
@@ -38,8 +38,8 @@ class UserServices(object):
 
     def set_focus(self, space):
         call = self.services['set_focus']['call']
-        return call(SetIterationRequest(space=space))
+        return call(SetFocusRequest(space=space))
 
     def set_iteration(self, iteration):
         call = self.services['set_iteration']['call']
-        return call(SetIterationRequest(iteration=iteration))
+        return call(SetIterationRequest(iteration=UInt32(data=int(iteration))))

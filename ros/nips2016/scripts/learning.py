@@ -98,7 +98,7 @@ class LearningNode(object):
 
     def cb_set_focus(self, request):
         if self.ready_for_interaction:
-            self.focus = request.space.data
+            self.focus = request.space
         return SetFocusResponse()
 
     def cb_perceive(self, request):

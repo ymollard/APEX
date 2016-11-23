@@ -41,16 +41,22 @@ class UserNode(object):
         """ Returns default experiment status. """
         scores = self.services.interests
 
+        def get_last(interest):
+            try:
+                return scores[interest][-1]
+            except IndexError:
+                return 0.
+
         return json.dumps({
             'isBusy': False,
             'interests': [
-                {'interestId': 's_hand', 'value': scores['s_hand'][-1], 'title': 'Hand'},
-                {'interestId': 's_joystick_1', 'value': scores['s_joystick_1'][-1], 'title': 'Joystick Left'},
-                {'interestId': 's_joystick_2', 'value': scores['s_joystick_2'][-1], 'title': 'Joystick Right'},
-                {'interestId': 's_ergo', 'value': scores['s_ergo'][-1], 'title': 'Ergo'},
-                {'interestId': 's_ball', 'value': scores['s_ball'][-1], 'title': 'Ball'},
-                {'interestId': 's_light', 'value': scores['s_light'][-1], 'title': 'Light'},
-                {'interestId': 's_sound', 'value': scores['s_sound'][-1], 'title': 'Sound'}
+                {'interestId': 's_hand', 'value': get_last('s_hand'), 'title': 'Hand'},
+                {'interestId': 's_joystick_1', 'value': get_last('s_joystick_1'), 'title': 'Joystick Left'},
+                {'interestId': 's_joystick_2', 'value': get_last('s_joystick_2'), 'title': 'Joystick Right'},
+                {'interestId': 's_ergo', 'value': get_last('s_ergo'), 'title': 'Ergo'},
+                {'interestId': 's_ball', 'value': get_last('s_ball'), 'title': 'Ball'},
+                {'interestId': 's_light', 'value': get_last('s_light'), 'title': 'Light'},
+                {'interestId': 's_sound', 'value': get_last('s_sound'), 'title': 'Sound'}
             ],
             'dataset': [
                 {
@@ -77,18 +83,18 @@ class UserNode(object):
         try:
             interest_id = request.form['interestId']
             self.services.set_focus(interest_id)
-            return '', 204
         except ServiceException as e:
             rospy.logerr("Cannot set focus. " + repr(e))
+        return '', 204
 
     def time_travel(self):
         """ Revert experiment state to a given point."""
         try:
             point = request.form['point']
             self.services.set_iteration(point)
-            return '', 204
         except ServiceException as e:
             rospy.logerr("Cannot set iteration. " + repr(e))
+        return '', 204
 
     def reset(self, arg):
         pass
