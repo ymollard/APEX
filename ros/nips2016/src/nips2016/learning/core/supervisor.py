@@ -91,7 +91,7 @@ class Supervisor(object):
     def mid_to_space(self, mid): return self.mid2space[mid]
     def space_to_mid(self, space): return self.space2mid[space]
     def get_space_names(self): return ["s_hand", "s_joystick_1", "s_joystick_2", "s_ergo", "s_ball", "s_light", "s_sound"]
-    def get_last_focus(self): return self.mid_to_space(self.mid_control)
+    def get_last_focus(self): return self.mid_to_space(self.mid_control) if self.mid_control else ""
     
     def save(self):
         sm_data = {}
