@@ -90,14 +90,8 @@ class Supervisor(object):
     
     def mid_to_space(self, mid): return self.mid2space[mid]
     def space_to_mid(self, space): return self.space2mid[space]
-    
     def get_space_names(self): return ["s_hand", "s_joystick_1", "s_joystick_2", "s_ergo", "s_ball", "s_light", "s_sound"]
-    
-    def get_last_focus(self):
-        if len(self.chosen_modules) > 0:
-            return self.mid_to_space(self.chosen_modules[-1])
-        else:
-            return "None"
+    def get_last_focus(self): return self.mid_to_space(self.mid_control)
     
     def save(self):
         sm_data = {}
@@ -212,6 +206,7 @@ class Supervisor(object):
                 mid = self.choose_babbling_module()
             else:
                 mid = self.space2mid[space]
+                self.chosen_modules.append("forced_" + mid)
             self.mid_control = mid
             
             j_sm = self.modules["mod2"].sensorimotor_model
@@ -244,6 +239,8 @@ class Supervisor(object):
                     self.modules[mid].update_sm(self.modules[mid].get_m(m0s), self.modules[mid].get_s(m0s))
             self.chosen_modules.append("j_demo")
         else:
+            if not hasattr(self, "m"):
+                return False
             ms = self.set_ms(self.m, s)
             self.update_sensorimotor_models(ms)
             if self.mid_control is not None:
@@ -253,6 +250,8 @@ class Supervisor(object):
         for mid in self.modules.keys():
             self.progresses_evolution[mid].append(self.modules[mid].progress())
             self.interests_evolution[mid].append(self.modules[mid].interest())
+    
+        return True
 
     def get_normalized_interests_evolution(self):
         data = np.transpose(np.array([self.interests_evolution[mid] for mid in ["mod1", "mod2", "mod3", "mod4", "mod5", "mod6", "mod7"]]))
