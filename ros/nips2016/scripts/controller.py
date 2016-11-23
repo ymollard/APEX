@@ -37,8 +37,6 @@ class Controller(object):
                 recording = self.perception.record(human_demo=True, nb_points=self.params['nb_points'])
                 self.learning.perceive(recording.torso_demonstration, recording.sensorial_demonstration)
             else:
-                #space = self.perception.get_space_to_explore()
-                #trajectory = self.learning.produce(space)
                 trajectory = self.learning.produce().torso_trajectory
                 self.torso.execute_trajectory(trajectory)  # TODO: blocking, non-blocking, action server?
                 recording = self.perception.record(human_demo=False, nb_points=self.params['nb_points'])

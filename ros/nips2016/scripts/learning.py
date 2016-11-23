@@ -25,6 +25,10 @@ class LearningNode(object):
                                  choice_eps=self.params["choice_eps"])
         self.learning.start()
         self.experiment_name = rospy.get_param("/nips2016/experiment_name", "experiment")
+        self.source_name = rospy.get_param("/nips2016/source_name", "experiment")
+
+        rospy.loginfo("Learning node will write {}".format(self.experiment_name))
+        rospy.loginfo("Learning node will read {}".format(self.source_name))
 
         # User control
         self.lock_iteration = RLock()
@@ -122,7 +126,7 @@ class LearningNode(object):
         with self.lock_iteration:
             if self.set_iteration > -1:
                 rospy.logwarn("Applying time travel to iteration {}".format(self.set_iteration))
-                self.learning.restart_from_file(self.dir, self.experiment_name, self.set_iteration)
+                self.learning.restart_from_file(self.dir, self.source_name, self.set_iteration)
                 self.set_iteration = -1
         return PerceiveResponse()
 

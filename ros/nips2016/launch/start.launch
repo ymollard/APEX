@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="output" default="screen"/> <!-- Set output="log" to mute the screen output -->
+  <arg name="debug" default="True"/> <!-- Enable debugging information and pictures -->
+  <arg name="source" default="experiment"/> <!-- Source of pre-planned data for this experiment -->
+  <arg name="name" default="experiment"/> <!-- Name of the experiment -->
+  <arg name="iterations" default="-1"/> <!-- Number of iterations to run -->
+
+  <include file="$(find nips2016)/launch/workstation.launch" >
+    <arg name="output" value="$(arg output)"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="source" value="$(arg source)"/>
+    <arg name="name" value="$(arg name)"/>
+    <arg name="iterations" value="$(arg iterations)"/>
+  </include>
+
+  <node name="controller" pkg="nips2016" type="controller.py" output="$(arg output)" required="true"/>
+</launch>
