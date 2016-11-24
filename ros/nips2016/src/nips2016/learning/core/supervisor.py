@@ -111,6 +111,8 @@ class Supervisor(object):
         if iteration > len(data["chosen_modules"]):
             print "\nWARNING: asked to restart from iteration", iteration, "but only", len(data["chosen_modules"]), "are available. Restarting from iteration", len(data["chosen_modules"]), "..."
             iteration = len(data["chosen_modules"])
+        if iteration < 0:
+            iteration = len(data["chosen_modules"])
         self.chosen_modules = data["chosen_modules"][:iteration]
         self.progresses_evolution = data["progresses_evolution"]
         self.interests_evolution = data["interests_evolution"]
