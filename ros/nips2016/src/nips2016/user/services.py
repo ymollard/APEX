@@ -1,4 +1,5 @@
 import rospy
+from numpy import array
 from nips2016.srv import SetIteration, SetIterationRequest, SetFocus, SetFocusRequest
 from nips2016.msg import Interests
 from std_msgs.msg import String, Bool, UInt32
@@ -26,9 +27,7 @@ class UserServices(object):
         rospy.loginfo("User node started!")
 
     def _cb_interests(self, msg):
-        self.interests = dict(zip(msg.names, [[msg.interests[iteration + iteration*space].data
-                                               for iteration in range(msg.num_iterations.data)]
-                                              for space in range(len(msg.names))]))
+        self.interests = dict(zip(msg.names, array(map(lambda x: x.data, msg.interests)).reshape(msg.num_iterations.data, len(msg.names)).T.tolist()))
 
     def _cb_focus(self, msg):
         self.current_focus = msg.data

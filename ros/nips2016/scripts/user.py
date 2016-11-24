@@ -48,7 +48,7 @@ class UserNode(object):
                 return 0.
 
         return json.dumps({
-            'isBusy': False,
+            'isBusy': not self.services.ready_for_interaction,
             'interests': [
                 {'interestId': 's_hand', 'value': get_last('s_hand'), 'title': 'Hand'},
                 {'interestId': 's_joystick_1', 'value': get_last('s_joystick_1'), 'title': 'Joystick Left'},

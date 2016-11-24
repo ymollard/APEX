@@ -3,6 +3,7 @@
 import rospy
 import os
 import json
+import datetime
 from os.path import join
 from rospkg.rospack import RosPack
 from nips2016.srv import *
@@ -23,7 +24,6 @@ class LearningNode(object):
                                  n_motor_babbling=self.params["n_motor_babbling"], 
                                  explo_noise=self.params["explo_noise"], 
                                  choice_eps=self.params["choice_eps"])
-        self.learning.start()
         self.experiment_name = rospy.get_param("/nips2016/experiment_name", "experiment")
         self.source_name = rospy.get_param("/nips2016/source_name", "experiment")
 
@@ -37,6 +37,19 @@ class LearningNode(object):
         self.focus = None
         self.set_iteration = -1
 
+        # Saved experiment files
+        self.dir = join(self.rospack.get_path('nips2016'), 'logs')
+        if not os.path.isdir(self.dir):
+            os.makedirs(self.dir)
+        self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        self.experiment_file = join(self.dir, self.stamp + '_' + self.experiment_name + '.pickle')
+        self.source_file = join(self.dir, self.source_name + '.pickle')
+
+        if self.source_name == "none":
+            self.learning.start()
+        else:
+            self.learning.restart_from_end_of_file(self.source_file)
+
         # Serving these services
         self.service_name_perceive = "/nips2016/learning/perceive"
         self.service_name_produce = "/nips2016/learning/produce"
@@ -49,9 +62,8 @@ class LearningNode(object):
         self.pub_ready = rospy.Publisher('/nips2016/learning/ready_for_interaction', Bool, queue_size=1, latch=True)
         self.pub_iteration = rospy.Publisher('/nips2016/iteration', UInt32, queue_size=1, latch=True)
 
-        self.dir = join(self.rospack.get_path('nips2016'), 'logs')
-        if not os.path.isdir(self.dir):
-            os.makedirs(self.dir)
+
+
 
         # Using these services
         self.service_name_get_perception = "/nips2016/perception/get"
@@ -68,29 +80,31 @@ class LearningNode(object):
         rospy.loginfo("Learning is up!")
 
         rate = rospy.Rate(self.params['publish_rate'])
-        while not rospy.is_shutdown():
-            publish = False
-            with self.lock_iteration:
-                if self.next_iteration:
-                    publish = True
-                    self.next_iteration = False
-            if publish:
-                self.publish()
-            rate.sleep()
+        try:
+            while not rospy.is_shutdown():
+                publish = False
+                with self.lock_iteration:
+                    if self.next_iteration:
+                        publish = True
+                        self.next_iteration = False
+                if publish:
+                    self.publish()
+                self.pub_ready.publish(Bool(data=self.ready_for_interaction))
+                rate.sleep()
+        finally:
+            rospy.loginfo("Saving file before exit into {}".format(self.experiment_file))
+            self.learning.save(self.experiment_file)
 
-    def save(self):
-        self.learning.save(self.dir, self.experiment_name)
 
     def publish(self):
-        interests_list = self.learning.get_normalized_interests_evolution()
+        interests_array = self.learning.get_normalized_interests_evolution()
         interests = Interests()
         interests.names = self.learning.get_space_names()
-        interests.num_iterations = UInt32(len(interests_list))
-        interests.interests = [Float32(val) for sublist in interests_list for val in sublist]
+        interests.num_iterations = UInt32(len(interests_array))
+        interests.interests = [Float32(val) for val in interests_array.flatten()]
 
         self.pub_interests.publish(interests)
         self.pub_focus.publish(String(data=self.learning.get_last_focus()))
-        self.pub_ready.publish(Bool(data=self.ready_for_interaction))
         self.pub_iteration.publish(UInt32(data=self.learning.get_iterations()))
 
 
@@ -98,11 +112,17 @@ class LearningNode(object):
     def cb_set_iteration(self, request):
         if self.ready_for_interaction:
             self.set_iteration = request.iteration.data
+            self.ready_for_interaction = False
+            self.learning.save(self.experiment_file)
+            rospy.loginfo("Saving file before time travel into {}".format(self.experiment_file))
+            self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            self.experiment_file = join(self.dir, self.stamp + '_set_iteration_' + self.experiment_name + '.pickle')
         return SetIterationResponse()
 
     def cb_set_focus(self, request):
         if self.ready_for_interaction:
             self.focus = request.space
+            self.ready_for_interaction = False
         return SetFocusResponse()
 
     def cb_perceive(self, request):
@@ -120,13 +140,16 @@ class LearningNode(object):
 
         # Regularly overwrite the results
         if self.learning.get_iterations() % self.params['save_every'] == 0:
-            self.save()
+            self.learning.save(self.experiment_file)
+            rospy.loginfo("Saving file (periodic save) into {}".format(self.experiment_file))
+
 
         # This turn is over, check if we have a time travel pending...
         with self.lock_iteration:
+            self.ready_for_interaction = True
             if self.set_iteration > -1:
                 rospy.logwarn("Applying time travel to iteration {}".format(self.set_iteration))
-                self.learning.restart_from_file(self.dir, self.source_name, self.set_iteration)
+                self.learning.restart_from_file(self.source_file, self.set_iteration)
                 self.set_iteration = -1
         return PerceiveResponse()
 
@@ -135,6 +158,7 @@ class LearningNode(object):
         state = self.get_state(GetSensorialStateRequest()).state
         rospy.loginfo("Learning node is producing...")
         w = self.learning.produce(self.translator.get_context(state), self.focus)
+        self.focus = None
         trajectory_matrix = self.translator.w_to_trajectory(w)
         trajectory_msg = self.translator.matrix_to_trajectory_msg(trajectory_matrix)
         with self.lock_iteration:
