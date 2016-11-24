@@ -43,7 +43,7 @@ if __name__ == "__main__":
     
     print
     print "Saving current data to file"
-    learning.save("../../../../../data", "test")
+    learning.save("../../../../../data/test.pickle")
     
 #     print "Data before saving"
 #     print learning.agent.t
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         learning.perceive(s)
     
     print "Rebuilding agent from file"
-    learning.restart_from_file("../../../../../data", "test", 2001)
+    learning.restart_from_file("../../../../../data/test.pickle", 2001)
         
 #     print "Data after rebuilding"
 #     print learning.agent.t

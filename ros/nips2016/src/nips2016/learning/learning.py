@@ -235,20 +235,15 @@ class Learning(object):
         return self.agent.inverse("mod7", [-1., -1., 0., 1., 1., 1., 1., 0., -1., -1.], context)
         
     
-    def get_data_from_file(self, log_dir, name):
-        filename = os.path.join(log_dir, name + ".pickle")
-        with open(filename, 'r') as f:
+    def get_data_from_file(self, file_path):
+        with open(file_path, 'r') as f:
             data = pickle.load(f)
         return data
                 
-    def save(self, log_dir, name, log_normalized_interests=True):        
+    def save(self, file_path):        
         data = self.agent.save() 
-        filename = os.path.join(log_dir, name + ".pickle")
-        with open(filename, 'w') as f:
+        with open(file_path, 'w') as f:
             pickle.dump(data, f)
-        if log_normalized_interests:
-            with open(os.path.join(log_dir, name + "_interests" + ".pickle"), 'w') as f:
-                pickle.dump(data["normalized_interests_evolution"], f)
     
     def start(self):
         self.agent = Supervisor(self.config, 
@@ -256,14 +251,13 @@ class Learning(object):
                                 explo_noise=self.explo_noise, 
                                 choice_eps=self.choice_eps)
         
-    def restart_from_end_of_file(self, log_dir, name):
-        data = self.get_data_from_file(log_dir, name)
+    def restart_from_end_of_file(self, file_path):
+        data = self.get_data_from_file(file_path)
         self.start()
         self.agent.forward(data, len(data["chosen_modules"]))
     
-    def restart_from_file(self, log_dir, name, iteration):
-        #self.save(log_dir, name + "_log-restart_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), log_normalized_interests=False)
-        data = self.get_data_from_file(log_dir, name)
+    def restart_from_file(self, file_path, iteration):
+        data = self.get_data_from_file(file_path)
         self.start()
         self.agent.forward(data, iteration)
 
