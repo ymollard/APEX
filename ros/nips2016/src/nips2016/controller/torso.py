@@ -11,9 +11,9 @@ class Torso(object):
             rospy.wait_for_service(service['name'])
             service['call'] = rospy.ServiceProxy(service['name'], service['type'])
 
-    def reset(self):
+    def reset(self, slow):
         call = self.services['reset_torso']['call']
-        return call(ResetRequest())
+        return call(ResetRequest(slow=slow))
 
     def execute_trajectory(self, trajectory):
         call = self.services['exec_torso']['call']

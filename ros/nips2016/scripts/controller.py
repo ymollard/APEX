@@ -24,22 +24,23 @@ class Controller(object):
     def _cb_iteration(self, msg):
         self.iteration = msg.data
 
-    def reset(self):
-        self.torso.reset()
+    def reset(self, slow=False):
+        self.torso.reset(slow)
 
     def run(self):
         nb_iterations = rospy.get_param('/nips2016/iterations')
         while not rospy.is_shutdown() and self.iteration < nb_iterations:
             rospy.loginfo("#### Iteration {}/{}".format(self.iteration + 1, nb_iterations))
-            self.reset()
             if self.perception.help_pressed():
                 rospy.sleep(1.5)  # Wait for the robot to fully stop
                 recording = self.perception.record(human_demo=True, nb_points=self.params['nb_points'])
+                self.reset(slow=True)
                 self.learning.perceive(recording.torso_demonstration, recording.sensorial_demonstration)
             else:
                 trajectory = self.learning.produce().torso_trajectory
                 self.torso.execute_trajectory(trajectory)  # TODO: blocking, non-blocking, action server?
                 recording = self.perception.record(human_demo=False, nb_points=self.params['nb_points'])
+                self.reset()
                 self.learning.perceive(JointTrajectory(), recording.sensorial_demonstration)  # TODO non-blocking
             # Many blocking calls: No sleep?
 

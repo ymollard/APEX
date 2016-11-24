@@ -1,5 +1,6 @@
 import rospy
 import json
+from os import system
 from nips2016.srv import *
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import JointState
@@ -134,9 +135,17 @@ class Torso(object):
             m.compliant = compliant
 
     def _cb_reset(self, request):
-        rospy.loginfo("Resetting Torso...")
-        with self.robot_lock:
-            self.left_arm_compliant(False)
-            self.go_to_rest(False)
+        rospy.loginfo("Resetting Torso{}...".format(" in slow mode" if request.slow else ""))
+
+        if request.slow:
+            with self.robot_lock:
+                self.left_arm_compliant(False)
+                system('beep')
+                rospy.sleep(1)
+                self.go_to_rest(True)
+        else:
+            with self.robot_lock:
+                self.left_arm_compliant(False)
+                self.go_to_rest(False)
         return ResetResponse()
 
