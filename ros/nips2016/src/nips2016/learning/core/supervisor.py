@@ -254,6 +254,227 @@ class Supervisor(object):
             self.interests_evolution[mid].append(self.modules[mid].interest())
     
         return True
+    
+    
+    def produce_goal(self, context, goal):
+        if goal == "hand_up":
+            self.m = self.move_hand(context, "up")
+        elif goal == "hand_forward":
+            self.m = self.move_hand(context, "forward")
+        elif goal == "hand_right":
+            self.m = self.move_hand(context, "right")
+        elif goal == "hand_left":
+            self.m = self.move_hand(context, "left")
+        elif goal == "joystick_1_forward":        
+            self.m = self.motor_move_joystick_1(context, "forward")
+        elif goal == "joystick_1_right":
+            self.m = self.motor_move_joystick_1(context, "right")
+        elif goal == "joystick_1_left":
+            self.m = self.motor_move_joystick_1(context, "left")
+        elif goal == "joystick_2_forward":
+            self.m = self.motor_move_joystick_2(context, "forward")
+        elif goal == "joystick_2_right":
+            self.m = self.motor_move_joystick_2(context, "right")
+        elif goal == "joystick_2_left":
+            self.m = self.motor_move_joystick_2(context, "left")
+        elif goal == "ergo_right":
+            self.m = self.motor_move_ergo(context, "right")
+        elif goal == "ergo_left":
+            self.m = self.motor_move_ergo(context, "left")
+        elif goal == "ball_right":
+            self.m = self.motor_move_ball(context, "right")
+        elif goal == "ball_left":
+            self.m = self.motor_move_ball(context, "left")
+        elif goal == "light":
+            self.m = self.motor_make_light(context)
+        elif goal == "sound":
+            self.m = self.motor_make_sound(context)
+        return self.m
+    
+    def move_hand(self, context, direction="up"):
+        if direction=="up":
+            return self.inverse("mod1", [0., 0., 0.,
+                                               0., 0., 0., 
+                                               0., 0., 0.5,
+                                               0., 0., 0.5,
+                                               0., 0., 1.,
+                                               0., 0., 1., 
+                                               0., 0., 1.,
+                                               0., 0., 1.,
+                                               0., 0., 1., 
+                                               0., 0., 1.], context)
+        elif direction=="forward":
+            return self.inverse("mod1", [0., 0., 0., 
+                                               0., 0., 0., 
+                                               0.5, 0., 0., 
+                                               0.5, 0., 0., 
+                                               1., 0., 0., 
+                                               1., 0., 0., 
+                                               1., 0., 0., 
+                                               1., 0., 0., 
+                                               1., 0., 0., 
+                                               1., 0., 0.,], context)
+        elif direction=="right":
+            return self.inverse("mod1", [0., 0., 0., 
+                                               0., 0., 0., 
+                                               0., -0.5, 0., 
+                                               0., -0.5, 0., 
+                                               0., -1., 0., 
+                                               0., -1., 0., 
+                                               0., -1., 0., 
+                                               0., -1., 0., 
+                                               0., -1., 0., 
+                                               0., -1., 0.,], context)
+        elif direction=="left":
+            return self.inverse("mod1", [0., 0., 0., 
+                                               0., 0., 0., 
+                                               0., 0.5, 0., 
+                                               0., 0.5, 0., 
+                                               0., 1., 0., 
+                                               0., 1., 0., 
+                                               0., 1., 0., 
+                                               0., 1., 0., 
+                                               0., 1., 0., 
+                                               0., 1., 0.,], context)
+        else:
+            raise NotImplementedError
+            
+        
+    def motor_move_joystick_1(self, context, direction="forward"):
+        if direction=="forward":
+            return self.inverse("mod2", [-1., 0., 
+                                               -1., 0., 
+                                               0., 0., 
+                                               1., 0., 
+                                               1., 0., 
+                                               1., 0., 
+                                               1., 0., 
+                                               0., 0., 
+                                               -1., 0., 
+                                               -1., 0.], context)
+        elif direction=="right":
+            return self.inverse("mod2", [-1., 0., 
+                                               -1., 0., 
+                                               -1., 0., 
+                                               -1., 1., 
+                                               -1., 1., 
+                                               -1., 1., 
+                                               -1., 1., 
+                                               -1., 0., 
+                                               -1., 0., 
+                                               -1., 0.], context)
+        elif direction=="left":
+            return self.inverse("mod2", [-1., 0., 
+                                               -1., 0., 
+                                               -1., 0., 
+                                               -1., -1., 
+                                               -1., -1., 
+                                               -1., -1., 
+                                               -1., -1., 
+                                               -1., 0., 
+                                               -1., 0., 
+                                               -1., 0.], context)  
+        else:
+            raise NotImplementedError
+              
+    def motor_move_joystick_2(self, context, direction="forward"):
+        if direction=="forward":
+            return self.inverse("mod3", [0., -1., 
+                                               0., -1., 
+                                               0., 0., 
+                                               0., 1., 
+                                               0., 1., 
+                                               0., 1., 
+                                               0., 1., 
+                                               0., 0., 
+                                               0., -1., 
+                                               0., -1.], context)
+        elif direction=="right":
+            return self.inverse("mod3", [0., -1., 
+                                               0., -1., 
+                                               0., -1., 
+                                               1., -1., 
+                                               1., -1., 
+                                               1., -1., 
+                                               1., -1., 
+                                               0., -1., 
+                                               0., -1., 
+                                               0., -1.], context)
+        elif direction=="left":
+            return self.inverse("mod3", [0., -1., 
+                                               0., -1., 
+                                               0., -1., 
+                                               -1., -1., 
+                                               -1., -1., 
+                                               -1., -1., 
+                                               -1., -1., 
+                                               0., -1., 
+                                               0., -1., 
+                                               0., -1.], context)
+        else:
+            raise NotImplementedError
+    
+    def motor_move_ergo(self, context, direction="right"):
+        angle = context[0]
+        if direction=="right":
+            return self.inverse("mod4", [angle, -1.,
+                                               angle, -1.,
+                                               ((angle+1.+0.25) % 2.)- 1., 0.,
+                                               ((angle+1.+0.50) % 2.)- 1., 1.,
+                                               ((angle+1.+0.75) % 2.)- 1., 1.,
+                                               ((angle+1.+1.00) % 2.)- 1., 1.,
+                                               ((angle+1.+1.25) % 2.)- 1., 1.,
+                                               ((angle+1.+1.75) % 2.)- 1., 0.,
+                                               ((angle+1.+2.) % 2.)- 1., -1.,
+                                               ((angle+1.+2.) % 2.)- 1., -1.], context)
+        elif direction=="left":
+            return self.inverse("mod4", [angle, -1.,
+                                               angle, -1.,
+                                               ((angle+1.-0.25) % 2.)- 1., 0.,
+                                               ((angle+1.-0.50) % 2.)- 1., 1.,
+                                               ((angle+1.-0.75) % 2.)- 1., 1.,
+                                               ((angle+1.-1.00) % 2.)- 1., 1.,
+                                               ((angle+1.-1.25) % 2.)- 1., 1.,
+                                               ((angle+1.-1.75) % 2.)- 1., 0.,
+                                               ((angle+1.-2.) % 2.)- 1., -1.,
+                                               ((angle+1.-2.) % 2.)- 1., -1.], context)
+        else:
+            raise NotImplementedError
+        
+    def motor_move_ball(self, context, direction="right"):
+        angle = context[1]
+        if direction=="right":
+            return self.inverse("mod5", [angle, -1.,
+                                               angle, -1.,
+                                               ((angle+1.+0.25) % 2.)- 1., 0.,
+                                               ((angle+1.+0.50) % 2.)- 1., 1.,
+                                               ((angle+1.+0.75) % 2.)- 1., 1.,
+                                               ((angle+1.+1.00) % 2.)- 1., 1.,
+                                               ((angle+1.+1.25) % 2.)- 1., 1.,
+                                               ((angle+1.+1.75) % 2.)- 1., 0.,
+                                               ((angle+1.+2.) % 2.)- 1., -1.,
+                                               ((angle+1.+2.) % 2.)- 1., -1.], context)
+        elif direction=="left":
+            return self.inverse("mod5", [angle, -1.,
+                                               angle, -1.,
+                                               ((angle+1.-0.25) % 2.)- 1., 0.,
+                                               ((angle+1.-0.50) % 2.)- 1., 1.,
+                                               ((angle+1.-0.75) % 2.)- 1., 1.,
+                                               ((angle+1.-1.00) % 2.)- 1., 1.,
+                                               ((angle+1.-1.25) % 2.)- 1., 1.,
+                                               ((angle+1.-1.75) % 2.)- 1., 0.,
+                                               ((angle+1.-2.) % 2.)- 1., -1.,
+                                               ((angle+1.-2.) % 2.)- 1., -1.], context)
+        else:
+            raise NotImplementedError
+            
+    
+    def motor_make_light(self, context):
+        return self.inverse("mod6", [-1., -1., 0., 1., 1., 1., 1., 0., -1., -1.], context)
+    
+    def motor_make_sound(self, context):
+        return self.inverse("mod7", [-1., -1., 0., 1., 1., 1., 1., 0., -1., -1.], context)
+        
 
     def get_normalized_interests_evolution(self):
         data = np.transpose(np.array([self.interests_evolution[mid] for mid in ["mod1", "mod2", "mod3", "mod4", "mod5", "mod6", "mod7"]]))

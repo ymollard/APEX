@@ -85,9 +85,10 @@ if __name__ == "__main__":
 
     context = environment.get_current_context()
     print "motor babbling", learning.motor_babbling()
-    print "motor_move_joystick_1", learning.motor_move_joystick_1(context, "forward")
-    print "motor_move_joystick_2", learning.motor_move_joystick_2(context, "forward")
-    print "motor_move_ergo", learning.motor_move_ergo(context, "right")
+    print "motor_move_joystick_1", learning.produce(context, goal="joystick_1_forward")
+    print "motor_move_joystick_1 again", learning.produce(context, goal="joystick_1_forward")
+    print "motor_move_joystick_2", learning.produce(context, goal="joystick_2_forward")
+    print "motor_move_ergo", learning.produce(context, goal="ergo_right")
         
     print "\nPloting interests..."
     learning.plot()

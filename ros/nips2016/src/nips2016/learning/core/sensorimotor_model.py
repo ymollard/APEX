@@ -18,7 +18,7 @@ class DemonstrableNN(NonParametric):
     
     def forward(self, data, iteration):
         self.model.imodel.fmodel.dataset.add_xy_batch(data[0], data[1])
-        self.t = iteration
+        self.t = len(self.model.imodel.fmodel.dataset)
 
     def infer(self, in_dims, out_dims, x):
         if self.t < max(self.model.imodel.fmodel.k, self.model.imodel.k):
@@ -73,5 +73,4 @@ class DemonstrableNN(NonParametric):
         self.t += 1
         if not self.bootstrapped_s and self.t > 1:
             if not (list(s[2:]) == list(self.model.imodel.fmodel.dataset.get_y(self.t - 2)[2:])):
-                #print "bootstrapped"
                 self.bootstrapped_s = True

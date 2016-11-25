@@ -93,8 +93,8 @@ class LearningModule(Agent):
         ms[self.mconf['s']] = s
         return ms          
     
-    def inverse(self, s):
-        m,_ = self.infer(self.conf.s_dims, self.conf.m_dims, s, pref='')
+    def inverse(self, s, explore=False):
+        m,_ = self.infer(self.conf.s_dims, self.conf.m_dims, s, pref='', explore=explore)
         return self.motor_primitive(m)
         
     def infer(self, expl_dims, inf_dims, x, pref='', n=1, explore=True):      

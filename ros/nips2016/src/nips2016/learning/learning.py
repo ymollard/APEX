@@ -19,11 +19,20 @@ class Learning(object):
         self.choice_eps = choice_eps
         self.agent = None
         
-    def produce(self, context, space=None):
+    def produce(self, context, space=None, goal=None):
         # context is the rotation of the ergo and the ball: "context = environment.get_current_context()"
         if space is None:
-            # Autonomous step
-            return self.agent.produce(context)
+            if goal is None:
+                # Autonomous step
+                return self.agent.produce(context)
+            else:
+                assert goal in ["hand_up", "hand_forward", "hand_right", "hand_left", 
+                                "joystick_1_forward", "joystick_1_right", "joystick_1_left",
+                                "joystick_2_forward", "joystick_2_right", "joystick_2_left",
+                                "ergo_right", "ergo_left",
+                                "ball_right", "ball_left",
+                                "light", "sound"]
+                return self.agent.produce_goal(context, goal=goal)
         else:
             # Force space
             assert space in ["s_hand", "s_joystick_1", "s_joystick_2", 's_ergo', "s_ball", "s_light", "s_sound"]
@@ -49,191 +58,6 @@ class Learning(object):
     def get_last_focus(self): return self.agent.get_last_focus()
     def get_space_names(self): return self.agent.get_space_names()
     def motor_babbling(self): return self.agent.motor_babbling()
-    
-    def move_hand(self, context, direction="up"):
-        if direction=="up":
-            return self.agent.inverse("mod1", [0., 0., 0.,
-                                               0., 0., 0., 
-                                               0., 0., 0.5,
-                                               0., 0., 0.5,
-                                               0., 0., 1.,
-                                               0., 0., 1., 
-                                               0., 0., 1.,
-                                               0., 0., 1.,
-                                               0., 0., 1., 
-                                               0., 0., 1.], context)
-        elif direction=="forward":
-            return self.agent.inverse("mod1", [0., 0., 0., 
-                                               0., 0., 0., 
-                                               0.5, 0., 0., 
-                                               0.5, 0., 0., 
-                                               1., 0., 0., 
-                                               1., 0., 0., 
-                                               1., 0., 0., 
-                                               1., 0., 0., 
-                                               1., 0., 0., 
-                                               1., 0., 0.,], context)
-        elif direction=="right":
-            return self.agent.inverse("mod1", [0., 0., 0., 
-                                               0., 0., 0., 
-                                               0., -0.5, 0., 
-                                               0., -0.5, 0., 
-                                               0., -1., 0., 
-                                               0., -1., 0., 
-                                               0., -1., 0., 
-                                               0., -1., 0., 
-                                               0., -1., 0., 
-                                               0., -1., 0.,], context)
-        elif direction=="left":
-            return self.agent.inverse("mod1", [0., 0., 0., 
-                                               0., 0., 0., 
-                                               0., 0.5, 0., 
-                                               0., 0.5, 0., 
-                                               0., 1., 0., 
-                                               0., 1., 0., 
-                                               0., 1., 0., 
-                                               0., 1., 0., 
-                                               0., 1., 0., 
-                                               0., 1., 0.,], context)
-        else:
-            raise NotImplementedError
-            
-        
-    def motor_move_joystick_1(self, context, direction="forward"):
-        if direction=="forward":
-            return self.agent.inverse("mod2", [-1., 0., 
-                                               -1., 0., 
-                                               0., 0., 
-                                               1., 0., 
-                                               1., 0., 
-                                               1., 0., 
-                                               1., 0., 
-                                               0., 0., 
-                                               -1., 0., 
-                                               -1., 0.], context)
-        elif direction=="right":
-            return self.agent.inverse("mod2", [-1., 0., 
-                                               -1., 0., 
-                                               -1., 0., 
-                                               -1., 1., 
-                                               -1., 1., 
-                                               -1., 1., 
-                                               -1., 1., 
-                                               -1., 0., 
-                                               -1., 0., 
-                                               -1., 0.], context)
-        elif direction=="left":
-            return self.agent.inverse("mod2", [-1., 0., 
-                                               -1., 0., 
-                                               -1., 0., 
-                                               -1., -1., 
-                                               -1., -1., 
-                                               -1., -1., 
-                                               -1., -1., 
-                                               -1., 0., 
-                                               -1., 0., 
-                                               -1., 0.], context)  
-        else:
-            raise NotImplementedError
-              
-    def motor_move_joystick_2(self, context, direction="forward"):
-        if direction=="forward":
-            return self.agent.inverse("mod3", [0., -1., 
-                                               0., -1., 
-                                               0., 0., 
-                                               0., 1., 
-                                               0., 1., 
-                                               0., 1., 
-                                               0., 1., 
-                                               0., 0., 
-                                               0., -1., 
-                                               0., -1.], context)
-        elif direction=="right":
-            return self.agent.inverse("mod3", [0., -1., 
-                                               0., -1., 
-                                               0., -1., 
-                                               1., -1., 
-                                               1., -1., 
-                                               1., -1., 
-                                               1., -1., 
-                                               0., -1., 
-                                               0., -1., 
-                                               0., -1.], context)
-        elif direction=="left":
-            return self.agent.inverse("mod3", [0., -1., 
-                                               0., -1., 
-                                               0., -1., 
-                                               -1., -1., 
-                                               -1., -1., 
-                                               -1., -1., 
-                                               -1., -1., 
-                                               0., -1., 
-                                               0., -1., 
-                                               0., -1.], context)
-        else:
-            raise NotImplementedError
-    
-    def motor_move_ergo(self, context, direction="right"):
-        angle = context[0]
-        if direction=="right":
-            return self.agent.inverse("mod4", [angle, -1.,
-                                               angle, -1.,
-                                               ((angle+1.+0.25) % 2.)- 1., 0.,
-                                               ((angle+1.+0.50) % 2.)- 1., 1.,
-                                               ((angle+1.+0.75) % 2.)- 1., 1.,
-                                               ((angle+1.+1.00) % 2.)- 1., 1.,
-                                               ((angle+1.+1.25) % 2.)- 1., 1.,
-                                               ((angle+1.+1.75) % 2.)- 1., 0.,
-                                               ((angle+1.+2.) % 2.)- 1., -1.,
-                                               ((angle+1.+2.) % 2.)- 1., -1.], context)
-        elif direction=="left":
-            return self.agent.inverse("mod4", [angle, -1.,
-                                               angle, -1.,
-                                               ((angle+1.-0.25) % 2.)- 1., 0.,
-                                               ((angle+1.-0.50) % 2.)- 1., 1.,
-                                               ((angle+1.-0.75) % 2.)- 1., 1.,
-                                               ((angle+1.-1.00) % 2.)- 1., 1.,
-                                               ((angle+1.-1.25) % 2.)- 1., 1.,
-                                               ((angle+1.-1.75) % 2.)- 1., 0.,
-                                               ((angle+1.-2.) % 2.)- 1., -1.,
-                                               ((angle+1.-2.) % 2.)- 1., -1.], context)
-        else:
-            raise NotImplementedError
-        
-    def motor_move_ball(self, context, direction="right"):
-        angle = context[1]
-        if direction=="right":
-            return self.agent.inverse("mod5", [angle, -1.,
-                                               angle, -1.,
-                                               ((angle+1.+0.25) % 2.)- 1., 0.,
-                                               ((angle+1.+0.50) % 2.)- 1., 1.,
-                                               ((angle+1.+0.75) % 2.)- 1., 1.,
-                                               ((angle+1.+1.00) % 2.)- 1., 1.,
-                                               ((angle+1.+1.25) % 2.)- 1., 1.,
-                                               ((angle+1.+1.75) % 2.)- 1., 0.,
-                                               ((angle+1.+2.) % 2.)- 1., -1.,
-                                               ((angle+1.+2.) % 2.)- 1., -1.], context)
-        elif direction=="left":
-            return self.agent.inverse("mod5", [angle, -1.,
-                                               angle, -1.,
-                                               ((angle+1.-0.25) % 2.)- 1., 0.,
-                                               ((angle+1.-0.50) % 2.)- 1., 1.,
-                                               ((angle+1.-0.75) % 2.)- 1., 1.,
-                                               ((angle+1.-1.00) % 2.)- 1., 1.,
-                                               ((angle+1.-1.25) % 2.)- 1., 1.,
-                                               ((angle+1.-1.75) % 2.)- 1., 0.,
-                                               ((angle+1.-2.) % 2.)- 1., -1.,
-                                               ((angle+1.-2.) % 2.)- 1., -1.], context)
-        else:
-            raise NotImplementedError
-            
-    
-    def motor_make_light(self, context):
-        return self.agent.inverse("mod6", [-1., -1., 0., 1., 1., 1., 1., 0., -1., -1.], context)
-    
-    def motor_make_sound(self, context):
-        return self.agent.inverse("mod7", [-1., -1., 0., 1., 1., 1., 1., 0., -1., -1.], context)
-        
     
     def get_data_from_file(self, file_path):
         with open(file_path, 'r') as f:
