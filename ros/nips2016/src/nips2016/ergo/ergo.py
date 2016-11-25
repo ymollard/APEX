@@ -122,16 +122,16 @@ class Ergo(object):
         self.servo_axis(x, 0)
 
     def servo_axis_elongation(self, x):
-        if x > 0.5:
+        if x > self.params['min_joy_elongation']:
             self.go_to_extended()
         else:
             self.go_to_rest()
 
     def servo_axis(self, x, id):
         p = self.ergo.motors[id].goal_position
-        new_x = p + self.params['speed']*x
+        new_x = max(self.params['bounds'][0], min(self.params['bounds'][1], p + self.params['speed']*x/self.params['publish_rate']))
         if self.limits[id][0] < new_x < self.limits[id][1]:
-            self.ergo.motors[id].goto_position(new_x, 0.1)
+            self.ergo.motors[id].goto_position(new_x, 1.1/self.params['publish_rate'])
 
     def servo_robot(self, x, y):
         self.servo_axis_rotation(-x)
