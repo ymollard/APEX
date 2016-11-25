@@ -390,13 +390,13 @@ class Supervisor(object):
                                                0., -1., 
                                                0., -1.], context)
         elif direction=="right":
-            return self.inverse("mod3", [0., -1., 
+            return self.inverse("mod3", [0., -1.,
+                                               0., -1.,
                                                0., -1., 
-                                               0., -1., 
-                                               1., -1., 
-                                               1., -1., 
-                                               1., -1., 
-                                               1., -1., 
+                                               -1., -1.,
+                                               -1., -1.,
+                                               -1., -1.,
+                                               -1., -1.,
                                                0., -1., 
                                                0., -1., 
                                                0., -1.], context)
@@ -404,10 +404,10 @@ class Supervisor(object):
             return self.inverse("mod3", [0., -1., 
                                                0., -1., 
                                                0., -1., 
-                                               -1., -1., 
-                                               -1., -1., 
-                                               -1., -1., 
-                                               -1., -1., 
+                                               1., -1.,
+                                               1., -1.,
+                                               1., -1.,
+                                               1., -1.,
                                                0., -1., 
                                                0., -1., 
                                                0., -1.], context)
@@ -416,28 +416,29 @@ class Supervisor(object):
     
     def motor_move_ergo(self, context, direction="right"):
         angle = context[0]
+        print "angle courant ergo", angle
         if direction=="right":
             return self.inverse("mod4", [angle, -1.,
                                                angle, -1.,
-                                               ((angle+1.+0.25) % 2.)- 1., 0.,
-                                               ((angle+1.+0.50) % 2.)- 1., 1.,
-                                               ((angle+1.+0.75) % 2.)- 1., 1.,
-                                               ((angle+1.+1.00) % 2.)- 1., 1.,
-                                               ((angle+1.+1.25) % 2.)- 1., 1.,
-                                               ((angle+1.+1.75) % 2.)- 1., 0.,
-                                               ((angle+1.+2.) % 2.)- 1., -1.,
-                                               ((angle+1.+2.) % 2.)- 1., -1.], context)
+                                               ((angle+1.) % 2.)- 1., 0.,
+                                               ((angle+1.-0.1) % 2.)- 1., 1.,
+                                               ((angle+1.-0.2) % 2.)- 1., 1.,
+                                               ((angle+1.-0.3) % 2.)- 1., 1.,
+                                               ((angle+1.-0.4) % 2.)- 1., 1.,
+                                               ((angle+1.-0.5) % 2.)- 1., 0.,
+                                               ((angle+1.-0.5) % 2.)- 1., -1.,
+                                               ((angle+1.-0.5) % 2.)- 1., -1.], context)
         elif direction=="left":
             return self.inverse("mod4", [angle, -1.,
                                                angle, -1.,
-                                               ((angle+1.-0.25) % 2.)- 1., 0.,
-                                               ((angle+1.-0.50) % 2.)- 1., 1.,
-                                               ((angle+1.-0.75) % 2.)- 1., 1.,
-                                               ((angle+1.-1.00) % 2.)- 1., 1.,
-                                               ((angle+1.-1.25) % 2.)- 1., 1.,
-                                               ((angle+1.-1.75) % 2.)- 1., 0.,
-                                               ((angle+1.-2.) % 2.)- 1., -1.,
-                                               ((angle+1.-2.) % 2.)- 1., -1.], context)
+                                               ((angle+1.) % 2.)- 1., 0.,
+                                               ((angle+1.+0.1) % 2.)- 1., 1.,
+                                               ((angle+1.+0.2) % 2.)- 1., 1.,
+                                               ((angle+1.+0.3) % 2.)- 1., 1.,
+                                               ((angle+1.+0.4) % 2.)- 1., 1.,
+                                               ((angle+1.+0.5) % 2.)- 1., 0.,
+                                               ((angle+1.+0.5) % 2.)- 1., -1.,
+                                               ((angle+1.+0.5) % 2.)- 1., -1.], context)
         else:
             raise NotImplementedError
         
@@ -446,34 +447,54 @@ class Supervisor(object):
         if direction=="right":
             return self.inverse("mod5", [angle, -1.,
                                                angle, -1.,
-                                               ((angle+1.+0.25) % 2.)- 1., 0.,
-                                               ((angle+1.+0.50) % 2.)- 1., 1.,
-                                               ((angle+1.+0.75) % 2.)- 1., 1.,
-                                               ((angle+1.+1.00) % 2.)- 1., 1.,
-                                               ((angle+1.+1.25) % 2.)- 1., 1.,
-                                               ((angle+1.+1.75) % 2.)- 1., 0.,
-                                               ((angle+1.+2.) % 2.)- 1., -1.,
-                                               ((angle+1.+2.) % 2.)- 1., -1.], context)
+                                               ((angle+1.) % 2.)- 1., 0.,
+                                               ((angle+1.+0.1) % 2.)- 1., 1.,
+                                               ((angle+1.+0.2) % 2.)- 1., 1.,
+                                               ((angle+1.+0.3) % 2.)- 1., 1.,
+                                               ((angle+1.+0.4) % 2.)- 1., 1.,
+                                               ((angle+1.+0.5) % 2.)- 1., 0.,
+                                               ((angle+1.+0.5) % 2.)- 1., -1.,
+                                               ((angle+1.+0.5) % 2.)- 1., -1.], context)
         elif direction=="left":
             return self.inverse("mod5", [angle, -1.,
                                                angle, -1.,
-                                               ((angle+1.-0.25) % 2.)- 1., 0.,
-                                               ((angle+1.-0.50) % 2.)- 1., 1.,
-                                               ((angle+1.-0.75) % 2.)- 1., 1.,
-                                               ((angle+1.-1.00) % 2.)- 1., 1.,
-                                               ((angle+1.-1.25) % 2.)- 1., 1.,
-                                               ((angle+1.-1.75) % 2.)- 1., 0.,
-                                               ((angle+1.-2.) % 2.)- 1., -1.,
-                                               ((angle+1.-2.) % 2.)- 1., -1.], context)
+                                               ((angle+1.) % 2.)- 1., 0.,
+                                               ((angle+1.+0.1) % 2.)- 1., 1.,
+                                               ((angle+1.+0.2) % 2.)- 1., 1.,
+                                               ((angle+1.+0.3) % 2.)- 1., 1.,
+                                               ((angle+1.+0.4) % 2.)- 1., 1.,
+                                               ((angle+1.+0.5) % 2.)- 1., 0.,
+                                               ((angle+1.+0.5) % 2.)- 1., -1.,
+                                               ((angle+1.+0.5) % 2.)- 1., -1.], context)
         else:
             raise NotImplementedError
             
     
     def motor_make_light(self, context):
-        return self.inverse("mod6", [-1., -1., 0., 1., 1., 1., 1., 0., -1., -1.], context)
+        current_light = context[1]
+        return self.inverse("mod6", [((current_light+1.)%2.) - 1.,
+                                     ((current_light+1.)%2.) - 1.,
+                                     ((current_light+1.)%2.) - 1.,
+                                     ((current_light+1.+0.25)%2.) - 1.,
+                                     ((current_light+1.+0.5)%2.) - 1.,
+                                     ((current_light+1.+0.5)%2.) - 1.,
+                                     ((current_light+1.+0.5)%2.) - 1.,
+                                     ((current_light+1.+0.5)%2.) - 1.,
+                                     ((current_light+1.+0.5)%2.) - 1.,
+                                     ((current_light+1.+0.5)%2.) - 1.], context)
     
     def motor_make_sound(self, context):
-        return self.inverse("mod7", [-1., -1., 0., 1., 1., 1., 1., 0., -1., -1.], context)
+        current_sound = context[1]
+        return self.inverse("mod7", [((current_sound+1.)%2.) - 1.,
+                                     ((current_sound+1.)%2.) - 1.,
+                                     ((current_sound+1.)%2.) - 1.,
+                                     ((current_sound+1.+0.25)%2.) - 1.,
+                                     ((current_sound+1.+0.5)%2.) - 1.,
+                                     ((current_sound+1.+0.5)%2.) - 1.,
+                                     ((current_sound+1.+0.5)%2.) - 1.,
+                                     ((current_sound+1.+0.5)%2.) - 1.,
+                                     ((current_sound+1.+0.5)%2.) - 1.,
+                                     ((current_sound+1.+0.5)%2.) - 1.], context)
         
 
     def get_normalized_interests_evolution(self):

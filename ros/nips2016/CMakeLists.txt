@@ -71,6 +71,7 @@ add_service_files(
   SetupTorsoRecording.srv
   SetFocus.srv
   SetIteration.srv
+  Demonstrate.srv
 
 )
 
