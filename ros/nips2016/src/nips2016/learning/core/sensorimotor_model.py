@@ -14,11 +14,16 @@ class DemonstrableNN(NonParametric):
         
     def save(self):
         return [[self.model.imodel.fmodel.dataset.get_x(i) for i in range(len(self.model.imodel.fmodel.dataset))],
-                [self.model.imodel.fmodel.dataset.get_y(i) for i in range(len(self.model.imodel.fmodel.dataset))]]
+                [self.model.imodel.fmodel.dataset.get_y(i) for i in range(len(self.model.imodel.fmodel.dataset))],
+                self.bootstrapped_s]
     
     def forward(self, data, iteration):
         self.model.imodel.fmodel.dataset.add_xy_batch(data[0], data[1])
         self.t = len(self.model.imodel.fmodel.dataset)
+        if len(data) > 2:
+            self.bootstrapped_s = data[2]
+        else:
+            self.bootstrapped_s = True
 
     def infer(self, in_dims, out_dims, x):
         if self.t < max(self.model.imodel.fmodel.k, self.model.imodel.k):
@@ -72,5 +77,5 @@ class DemonstrableNN(NonParametric):
         self.model.add_xy(tuple(m), tuple(s))
         self.t += 1
         if not self.bootstrapped_s and self.t > 1:
-            if not (list(s[2:]) == list(self.model.imodel.fmodel.dataset.get_y(self.t - 2)[2:])):
+            if not (list(s[2:]) == list(self.model.imodel.fmodel.dataset.get_y(0)[2:])):
                 self.bootstrapped_s = True
