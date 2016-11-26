@@ -22,8 +22,18 @@ class LightController(object):
         self.led_pin = 18
         self.leds = Adafruit_NeoPixel(self.LED_COUNT, self.LED_PIN, self.LED_FREQ_HZ, self.LED_DMA, self.LED_INVERT, self.LED_BRIGHTNESS)
 
+    def cut_light_ranges(self, hue, disable_range):
+        x = disable_range[0]*255./(255 - disable_range[1] + disable_range[0])
+        if hue < x:
+            hue *= (255-disable_range[1] + disable_range[0])/255.
+        else:
+            hue = disable_range[1] + ((hue - x)*(255. - disable_range[1]))/(255. - x)
+        return hue
+
     def cb_light(self, msg):
-        hue = msg.data/255.  # Hue between (0., 1.)
+        disabled_range = [30, 100]
+        hue = self.cut_light_ranges(msg.data, disabled_range)
+        hue = hue/255.  # Hue between (0., 1.)
         r, g, b = map(int, hsv_to_rgb(hue, 1, 255))
         self.set_all(r, g, b)
 
