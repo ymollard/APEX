@@ -44,6 +44,8 @@ class Controller(object):
                     self.reset()
                     self.learning.perceive(JointTrajectory(), recording.sensorial_demonstration)  # TODO non-blocking
                 # Many blocking calls: No sleep?
+                if self.iteration % 20 == 19:
+                    self.ergo.reset()
 
 rospy.init_node("nips2016_controller")
 Controller().run()
