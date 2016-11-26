@@ -23,7 +23,8 @@ class LearningNode(object):
         self.learning = Learning(self.translator.config, 
                                  n_motor_babbling=self.params["n_motor_babbling"], 
                                  explo_noise=self.params["explo_noise"], 
-                                 choice_eps=self.params["choice_eps"])
+                                 choice_eps=self.params["choice_eps"], 
+                                 enable_hand=self.params["enable_hand"])
         self.experiment_name = rospy.get_param("/nips2016/experiment_name", "experiment")
         self.source_name = rospy.get_param("/nips2016/source_name", "experiment")
 

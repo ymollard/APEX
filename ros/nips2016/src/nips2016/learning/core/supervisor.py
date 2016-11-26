@@ -6,12 +6,13 @@ from learning_module import LearningModule
 
 
 class Supervisor(object):
-    def __init__(self, config, n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2):
+    def __init__(self, config, n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2, enable_hand=True):
         
         self.config = config
         self.n_motor_babbling = n_motor_babbling
         self.explo_noise = explo_noise
-        self.choice_eps = choice_eps
+        self.choice_eps = choice_eps,
+        self.enable_hand = enable_hand
         
         self.conf = make_configuration(**config)
         
@@ -134,7 +135,10 @@ class Supervisor(object):
     def choose_babbling_module(self, mode='prop'):
         interests = {}
         for mid in self.modules.keys():
-            interests[mid] = self.modules[mid].interest()
+            if not ((not self.enable_hand) and mid=="mod1"):
+                interests[mid] = self.modules[mid].interest()
+            else:
+                interests[mid] = 0.
         
         if mode == 'random':
             mid = np.random.choice(self.interests.keys())
@@ -152,13 +156,6 @@ class Supervisor(object):
         elif mode == 'prop':
             w = interests.values()
             mid = self.modules.keys()[prop_choice(w, eps=self.choice_eps)]
-            if (self.t + 1) % 1000 == 0:
-                print
-                print 'Iteration', self.t +1
-                print "Interests", np.array([self.modules[mid].interest() for mid in self.modules.keys()])
-                #print "im db n points", [len(self.modules[mid].interest_model.data_xc) for mid in self.modules.keys()]
-                #print self.chosen_modules
-            #self.interests_evolution.append(w)
         
         self.chosen_modules.append(mid)
         return mid
@@ -251,7 +248,11 @@ class Supervisor(object):
         
         for mid in self.modules.keys():
             self.progresses_evolution[mid].append(self.modules[mid].progress())
-            self.interests_evolution[mid].append(self.modules[mid].interest())
+            if not ((not self.enable_hand) and mid=="mod1"):
+                self.interests_evolution[mid].append(self.modules[mid].interest())
+            else:
+                self.interests_evolution[mid].append(0.)
+                
     
         return True
     
@@ -506,7 +507,11 @@ class Supervisor(object):
     def get_normalized_interests(self):
         interests = {}
         for mid in self.modules.keys():
-            interests[mid] = self.modules[mid].interest()
+            if not ((not self.enable_hand) and mid=="mod1"):
+                interests[mid] = self.modules[mid].interest()
+            else:
+                interests[mid] = 0.
+            
         s = sum(interests.values())
         if s > 0:
             for mid in self.modules.keys():
