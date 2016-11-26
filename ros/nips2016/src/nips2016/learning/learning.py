@@ -47,7 +47,7 @@ class Learning(object):
             return self.agent.perceive(s, m_demo=m_demo)
         elif j_demo:
             assert len(s) == 132, len(s)
-            return self.agent.perceive(s[30:], j_demo=True)
+            return self.agent.perceive(list(s[:2]) + list(s[32:]), j_demo=True)
         else:
             # Perception of environment when m was produced
             assert len(s) == 132, len(s)
