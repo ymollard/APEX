@@ -128,6 +128,7 @@ class Ergo(object):
             self.go_to_rest()
 
     def servo_axis(self, x, id):
+        x = x if abs(x) > self.params['sensitivity_joy'] else 0
         p = self.ergo.motors[id].goal_position
         new_x = max(self.params['bounds'][0], min(self.params['bounds'][1], p + self.params['speed']*x/self.params['publish_rate']))
         if self.limits[id][0] < new_x < self.limits[id][1]:

@@ -1,6 +1,7 @@
 {
   "publish_rate": 10,
   "speed": 100,
+  "sensitivity_joy": 0.1,
   "button_pin": 21,
   "auto_standby_duration": 600,
   "min_joy_elongation": 0.75,
