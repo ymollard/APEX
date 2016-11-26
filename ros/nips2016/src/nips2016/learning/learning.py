@@ -46,8 +46,8 @@ class Learning(object):
             # Demonstration of a torso arm trajectory converted to weights with "m_demo = environment.torsodemo2m(m_traj)"
             return self.agent.perceive(s, m_demo=m_demo)
         elif j_demo:
-            assert len(s) == 102, len(s) # [context, s_joystick,...] (no hand trajectory in s)
-            return self.agent.perceive(s, j_demo=True)
+            assert len(s) == 132, len(s)
+            return self.agent.perceive(s[30:], j_demo=True)
         else:
             # Perception of environment when m was produced
             assert len(s) == 132, len(s)
