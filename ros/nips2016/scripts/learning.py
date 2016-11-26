@@ -131,12 +131,13 @@ class LearningNode(object):
         return DemonstrateResponse()
 
     def cb_perceive(self, request):
+        joystick_demo = len(request.torso_demonstration.points) == 0
         s = self.translator.sensory_trajectory_msg_to_list(request.sensorial_demonstration)
         if len(request.torso_demonstration.points) > 0:
             torso_traj = self.translator.trajectory_msg_to_matrix(request.torso_demonstration)
             torso_traj_w = self.translator.trajectory_to_w(torso_traj)
             rospy.loginfo("Learning node is perceiving sensory + torso trajectories")
-            if not self.learning.perceive(s, m_demo=torso_traj_w):
+            if not self.learning.perceive(s, m_demo=torso_traj_w, j_demo=joystick_demo):
                 rospy.logerr("Learner could not perceive these trajectories")
         else:
             rospy.loginfo("Learning node is perceiving sensory trajectory only")
