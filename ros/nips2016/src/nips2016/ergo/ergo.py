@@ -39,8 +39,6 @@ class Ergo(object):
         self.extended = False
         self.standby = False
         self.last_activity = rospy.Time.now()
-        self.limits = []
-        
         if pygame.joystick.get_count() < 2:
             rospy.logerr("Ergo: Expecting 2 joysticks but found only {}, exiting".format(pygame.joystick.get_count()))
             sys.exit(0)
@@ -56,12 +54,12 @@ class Ergo(object):
         self.go_to([0.0, -15.4, 35.34, -8.06, -15.69, 71.99], 1)
 
     def go_to_extended(self):
-        extended = {'m2': 60, 'm3': -37, 'm4': 0, 'm5': -50, 'm6': 96}
+        extended = {'m2': 60, 'm3': -37, 'm5': -50, 'm6': 96}
         self.ergo.goto_position(extended, 0.5)
         self.extended = True
 
     def go_to_rest(self):
-        rest = {'m2': -26, 'm3': 59, 'm4': 0, 'm5': -30, 'm6': 78}
+        rest = {'m2': -26, 'm3': 59, 'm5': -30, 'm6': 78}
         self.ergo.goto_position(rest, 0.5)
         self.extended = False
 
@@ -93,7 +91,6 @@ class Ergo(object):
             rospy.logerr("Ergo hardware failed to init: {}".format(e))
             return None
 
-        self.limits = [self.ergo.config['motors'][motor]['angle_limit'] for motor in ['m1', 'm2', 'm3', 'm4', 'm5', 'm6']]
         self.ergo.compliant = False
         self.go_to_start()
         self.last_activity = rospy.Time.now()
@@ -117,9 +114,23 @@ class Ergo(object):
             self.publish_joy(x, y, self.joy_pub2)
             self.rate.sleep()
         self.ergo.compliant = True
+        self.ergo.close()
 
     def servo_axis_rotation(self, x):
-        self.servo_axis(x, 0)
+        x = x if abs(x) > self.params['sensitivity_joy'] else 0
+        p = self.ergo.motors[0].goal_position
+        min_x = self.params['bounds'][0][0] + self.params['bounds'][3][0]
+        max_x = self.params['bounds'][0][1] + self.params['bounds'][3][1]
+        new_x = min(max(min_x, p + self.params['speed']*x/self.params['publish_rate']), max_x)
+        if new_x > self.params['bounds'][0][1]:
+            new_x_m3 = new_x - self.params['bounds'][0][1]
+        elif new_x < self.params['bounds'][0][0]:
+            new_x_m3 = new_x - self.params['bounds'][0][0]
+        else:
+            new_x_m3 = 0
+        new_x_m3 = max(min(new_x_m3, self.params['bounds'][3][1]), self.params['bounds'][3][0])
+        self.ergo.motors[0].goto_position(new_x, 1.1/self.params['publish_rate'])
+        self.ergo.motors[3].goto_position(new_x_m3, 1.1/self.params['publish_rate'])
 
     def servo_axis_elongation(self, x):
         if x > self.params['min_joy_elongation']:
@@ -130,8 +141,8 @@ class Ergo(object):
     def servo_axis(self, x, id):
         x = x if abs(x) > self.params['sensitivity_joy'] else 0
         p = self.ergo.motors[id].goal_position
-        new_x = max(self.params['bounds'][0], min(self.params['bounds'][1], p + self.params['speed']*x/self.params['publish_rate']))
-        if self.limits[id][0] < new_x < self.limits[id][1]:
+        new_x = p + self.params['speed']*x/self.params['publish_rate']
+        if self.params['bounds'][id][0] < new_x < self.params['bounds'][id][1]:
             self.ergo.motors[id].goto_position(new_x, 1.1/self.params['publish_rate'])
 
     def servo_robot(self, x, y):
