@@ -9,6 +9,7 @@ from flask_cors import CORS
 from rospkg import RosPack
 from rospy import ServiceException
 from nips2016.user import UserServices
+from threading import Thread
 
 
 class UserNode(object):
@@ -101,8 +102,10 @@ class UserNode(object):
 
     def run(self):
         rospy.loginfo("User node is serving the Web app")
-        self.app.run()
-        # rospy.spin()
+        thread = Thread(target=lambda: self.app.run(host='0.0.0.0'))
+        thread.daemon = True
+        thread.start()
+        rospy.spin()
 
 if __name__ == '__main__':
     rospy.init_node('user')
