@@ -22,7 +22,7 @@ class Perception(object):
 
     def _cb_help_pressed(self, msg):
         if msg.data and rospy.Time.now() - self.last_press > rospy.Duration(self.params['duration_between_presses']):
-            rospy.loginfo("Button pressed, demand queued!")
+            rospy.logwarn("User demonstration requested, wait till the end of this iteration...")
             self.button_pressed = True
             self.last_press = rospy.Time.now()
 

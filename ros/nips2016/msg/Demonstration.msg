@@ -1,0 +1,7 @@
+trajectory_msgs/JointTrajectory torso_demonstration
+nips2016/SensorialTrajectory sensorial_demonstration
+
+uint8 type_demo
+uint8 TYPE_DEMO_NORMAL=0
+uint8 TYPE_DEMO_ARM=1
+uint8 TYPE_DEMO_JOYSTICK=2

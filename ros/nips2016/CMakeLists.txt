@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 2.8.3)
 project(nips2016)
 
@@ -55,6 +56,7 @@ add_message_files(
   SensorialState.msg
   SensorialTrajectory.msg
   Interests.msg
+  Demonstration.msg
 
 )
 

@@ -7,7 +7,7 @@ import datetime
 from os.path import join
 from rospkg.rospack import RosPack
 from nips2016.srv import *
-from nips2016.msg import Interests
+from nips2016.msg import Interests, Demonstration
 from nips2016.learning import EnvironmentTranslator, Learning
 from std_msgs.msg import String, Bool, UInt32, Float32
 from threading import RLock
@@ -131,24 +131,27 @@ class LearningNode(object):
         return DemonstrateResponse()
 
     def cb_perceive(self, request):
-        joystick_demo = len(request.torso_demonstration.points) == 0
-        s = self.translator.sensory_trajectory_msg_to_list(request.sensorial_demonstration)
-        if len(request.torso_demonstration.points) > 0:
-            torso_traj = self.translator.trajectory_msg_to_matrix(request.torso_demonstration)
+        s = self.translator.sensory_trajectory_msg_to_list(request.demo.sensorial_demonstration)
+        if request.demo.type_demo == Demonstration.TYPE_DEMO_ARM:
+            torso_traj = self.translator.trajectory_msg_to_matrix(request.demo.torso_demonstration)
             torso_traj_w = self.translator.trajectory_to_w(torso_traj)
-            rospy.loginfo("Learning node is perceiving sensory + torso trajectories")
-            if not self.learning.perceive(s, m_demo=torso_traj_w, j_demo=joystick_demo):
-                rospy.logerr("Learner could not perceive these trajectories")
+            rospy.loginfo("Learning node is perceiving sensory + torso trajectories for an arm demo")
+            success = self.learning.perceive(s, m_demo=torso_traj_w)
+        elif request.demo.type_demo == Demonstration.TYPE_DEMO_JOYSTICK:
+
+            rospy.loginfo("Learning node is perceiving sensory + torso trajectories for a joystick demo")
+            success = self.learning.perceive(s, j_demo=True)
         else:
-            rospy.loginfo("Learning node is perceiving sensory trajectory only")
-            if not self.learning.perceive(s):
-                rospy.logerr("Learner could not perceive this trajectory")
+            rospy.loginfo("Learning node is perceiving sensory trajectory only for a normal demo")
+            success = self.learning.perceive(s)
+
+        if not success:
+            rospy.logerr("Learner could not perceive this trajectory")
 
         # Regularly overwrite the results
         if self.learning.get_iterations() % self.params['save_every'] == 0:
             self.learning.save(self.experiment_file)
             rospy.loginfo("Saving file (periodic save) into {}".format(self.experiment_file))
-
 
         # This turn is over, check if we have a time travel pending...
         with self.lock_iteration:

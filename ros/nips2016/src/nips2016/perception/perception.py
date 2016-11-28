@@ -5,7 +5,7 @@ from os.path import join
 from os import system
 from rospkg.rospack import RosPack
 from nips2016.srv import *
-from nips2016.msg import SensorialState
+from nips2016.msg import SensorialState, Demonstration
 from .aggregator import TopicAggregator
 from ..tools import joints
 
@@ -87,13 +87,21 @@ class Perception(object):
             if rospy.is_shutdown():
                 break
             if point % self.params["divider_nb_points_sensory"] == 0:
-                response.sensorial_demonstration.points.append(self.get())
+                response.demo.sensorial_demonstration.points.append(self.get())
             if not is_joystick_demo:
-                response.torso_demonstration.points.append(joints.state_to_jtp(self.topics.torso_l_j))
+                response.demo.torso_demonstration.points.append(joints.state_to_jtp(self.topics.torso_l_j))
             self.rate.sleep()
 
         if not is_joystick_demo:
             self.set_torso_compliant_srv(SetTorsoCompliantRequest(compliant=False))
+
+        if is_joystick_demo:
+            response.demo.type_demo = Demonstration.TYPE_DEMO_JOYSTICK
+        elif request.human_demo.data:
+            response.demo.type_demo = Demonstration.TYPE_DEMO_ARM
+        else:
+            response.demo.type_demo = Demonstration.TYPE_DEMO_NORMAL
+
 
         rospy.loginfo("Recorded!")
         return response

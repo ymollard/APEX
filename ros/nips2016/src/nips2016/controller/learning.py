@@ -12,10 +12,9 @@ class Learning(object):
             rospy.wait_for_service(service['name'])
             service['call'] = rospy.ServiceProxy(service['name'], service['type'])
 
-    def perceive(self, torso_demonstration, sensorial_demonstration):
+    def perceive(self, demonstration):
         call = self.services['perceive']['call']
-        return call(PerceiveRequest(torso_demonstration=torso_demonstration,
-                                    sensorial_demonstration=sensorial_demonstration))
+        return call(PerceiveRequest(demo=demonstration))
 
     def produce(self, space_to_explore=0):
         call = self.services['produce']['call']
