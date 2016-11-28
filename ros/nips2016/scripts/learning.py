@@ -62,6 +62,7 @@ class LearningNode(object):
         # Publishing these topics
         self.pub_interests = rospy.Publisher('/nips2016/learning/interests', Interests, queue_size=1, latch=True)
         self.pub_focus = rospy.Publisher('/nips2016/learning/current_focus', String, queue_size=1, latch=True)
+        self.pub_user_focus = rospy.Publisher('/nips2016/learning/user_focus', String, queue_size=1, latch=True)
         self.pub_ready = rospy.Publisher('/nips2016/learning/ready_for_interaction', Bool, queue_size=1, latch=True)
         self.pub_iteration = rospy.Publisher('/nips2016/iteration', UInt32, queue_size=1, latch=True)
 
@@ -91,6 +92,7 @@ class LearningNode(object):
                 if publish:
                     self.publish()
                 self.pub_ready.publish(Bool(data=self.ready_for_interaction))
+                self.pub_user_focus.publish(String(data=self.focus if self.focus is not None else ""))
                 rate.sleep()
         finally:
             rospy.loginfo("Saving file before exit into {}".format(self.experiment_file))
@@ -110,7 +112,9 @@ class LearningNode(object):
 
     ################################# Service callbacks
     def cb_set_iteration(self, request):
-        if self.ready_for_interaction:
+        if self.source_name == "none":
+            rospy.logerr("Not implemented: Cannot time travel without source file")
+        elif self.ready_for_interaction:
             self.set_iteration = request.iteration.data
             self.ready_for_interaction = False
             self.learning.save(self.experiment_file)
@@ -120,9 +124,8 @@ class LearningNode(object):
         return SetIterationResponse()
 
     def cb_set_focus(self, request):
-        if self.ready_for_interaction:
-            self.focus = request.space
-            self.ready_for_interaction = False
+        # space is "" or e.g. "s_hand" to toggle focus on/off
+        self.focus = request.space if len(request.space) > 0 else None
         return SetFocusResponse()
 
     def cb_demonstrate(self, request):
@@ -170,7 +173,6 @@ class LearningNode(object):
             if self.demonstrate is None:
                 rospy.loginfo("Learning node is producing...")
                 w = self.learning.produce(self.translator.get_context(state), self.focus)
-                self.focus = None
             else:
                 rospy.loginfo("Learning node is demonstrating its abilities {}...".format(self.demonstrate))
                 context = self.translator.get_context(state)

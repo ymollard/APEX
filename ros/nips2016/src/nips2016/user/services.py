@@ -13,10 +13,12 @@ class UserServices(object):
 
         rospy.Subscriber('/nips2016/learning/interests', Interests, self._cb_interests)
         rospy.Subscriber('/nips2016/learning/current_focus', String, self._cb_focus)
+        rospy.Subscriber('/nips2016/learning/user_focus', String, self._cb_user_focus)
         rospy.Subscriber('/nips2016/learning/ready_for_interaction', Bool, self._cb_ready)
 
         self.interests = {}
         self.current_focus = ""
+        self.user_focus = ""
         self.ready_for_interaction = False
 
         for service_name, service in self.services.items():
@@ -31,6 +33,9 @@ class UserServices(object):
 
     def _cb_focus(self, msg):
         self.current_focus = msg.data
+
+    def _cb_user_focus(self, msg):
+        self.user_focus = msg.data
 
     def _cb_ready(self, msg):
         self.ready_for_interaction = msg.data

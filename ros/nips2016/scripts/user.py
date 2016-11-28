@@ -10,6 +10,7 @@ from rospkg import RosPack
 from rospy import ServiceException
 from nips2016.user import UserServices
 from threading import Thread
+from copy import copy
 
 
 class UserNode(object):
@@ -41,6 +42,7 @@ class UserNode(object):
     def experiment_status(self):
         """ Returns default experiment status. """
         scores = self.services.interests
+        user_focus = copy(self.services.user_focus)
 
         def get_last(interest):
             try:
@@ -50,6 +52,7 @@ class UserNode(object):
 
         return json.dumps({
             'isBusy': not self.services.ready_for_interaction,
+            'focusedInterest': user_focus if len(user_focus) > 0 else None,
             'interests': [
                 {'interestId': 's_hand', 'value': get_last('s_hand'), 'title': 'Hand'},
                 {'interestId': 's_joystick_1', 'value': get_last('s_joystick_1'), 'title': 'Joystick Left'},
@@ -65,16 +68,28 @@ class UserNode(object):
                     'data': scores['s_hand']
                 },
                 {
-                    'interestId': 's_ball',
-                    'data': scores['s_ball']
-                },
-                {
                     'interestId': 's_joystick_1',
                     'data': scores['s_joystick_1']
                 },
                 {
                     'interestId': 's_joystick_2',
                     'data': scores['s_joystick_2']
+                },
+                {
+                    'interestId': 's_ergo',
+                    'data': scores['s_ergo']
+                },
+                {
+                    'interestId': 's_ball',
+                    'data': scores['s_ball']
+                },
+                {
+                    'interestId': 's_light',
+                    'data': scores['s_light']
+                },
+                {
+                    'interestId': 's_sound',
+                    'data': scores['s_sound']
                 }
             ]
         })
