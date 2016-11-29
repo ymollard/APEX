@@ -57,7 +57,7 @@ class LearningNode(object):
         self.service_name_produce = "/nips2016/learning/produce"
         self.service_name_set_interest = "/nips2016/learning/set_interest"
         self.service_name_set_iteration = "/nips2016/learning/set_iteration"
-        self.service_name_demonstrate = "/nips2016/learning/demonstrate"
+        self.service_name_demonstrate = "/nips2016/learning/assess"
 
         # Publishing these topics
         self.pub_interests = rospy.Publisher('/nips2016/learning/interests', Interests, queue_size=1, latch=True)
@@ -78,7 +78,7 @@ class LearningNode(object):
         rospy.Service(self.service_name_produce, Produce, self.cb_produce)
         rospy.Service(self.service_name_set_interest, SetFocus, self.cb_set_focus)
         rospy.Service(self.service_name_set_iteration, SetIteration, self.cb_set_iteration)
-        rospy.Service(self.service_name_demonstrate, Demonstrate, self.cb_demonstrate)
+        rospy.Service(self.service_name_demonstrate, Assess, self.cb_assess)
         rospy.loginfo("Learning is up!")
 
         rate = rospy.Rate(self.params['publish_rate'])
@@ -128,10 +128,10 @@ class LearningNode(object):
         self.focus = request.space if len(request.space) > 0 else None
         return SetFocusResponse()
 
-    def cb_demonstrate(self, request):
+    def cb_assess(self, request):
         with self.lock_iteration:
             self.demonstrate = request.goal
-        return DemonstrateResponse()
+        return AssessResponse()
 
     def cb_perceive(self, request):
         s = self.translator.sensory_trajectory_msg_to_list(request.demo.sensorial_demonstration)
@@ -176,6 +176,8 @@ class LearningNode(object):
             else:
                 rospy.loginfo("Learning node is demonstrating its abilities {}...".format(self.demonstrate))
                 context = self.translator.get_context(state)
+                if self.demonstrate is not None:
+                    rospy.logwarn("Assessing {}".format(self.demonstrate))
                 w = self.learning.produce(context, goal=self.demonstrate)
                 self.demonstrate = None
 

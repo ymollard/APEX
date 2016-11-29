@@ -120,7 +120,7 @@ class UserNode(object):
         """ Updates assessment. """
         try:
             assessment_id = request.form['assessmentId']
-            # TODO set assessment
+            self.services.assess(assessment_id)
         except ServiceException as e:
             rospy.logerr("Cannot set assessment. " + repr(e))
         return '', 204

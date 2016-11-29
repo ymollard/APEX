@@ -73,7 +73,7 @@ add_service_files(
   SetTorsoCompliant.srv
   SetFocus.srv
   SetIteration.srv
-  Demonstrate.srv
+  Assess.srv
 
 )
 
