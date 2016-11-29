@@ -9,7 +9,10 @@
       "upper": [110, 255, 255]
     },
     "buffer_size": 32,
-    "ring_divider": 1.5
+    "ring_divider": 1.35
   },
-  "rate": 15
+  "rate": 15,
+  "sound": {
+    "freq": [100, 2000]
+  }
 }
