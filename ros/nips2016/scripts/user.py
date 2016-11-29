@@ -26,6 +26,7 @@ class UserNode(object):
         self.app.route('/api/focus', methods=['POST'])(self.update_focus)
         self.app.route('/api/time-travel', methods=['POST'])(self.time_travel)
         self.app.route('/api/reset', methods=['POST'])(self.reset)
+        self.app.route('/api/assessment', methods=['POST'])(self.update_assessment)
 
     # def generate_dummy_scores(self, num_interests=7):
     #     max_score = 1
@@ -114,6 +115,15 @@ class UserNode(object):
 
     def reset(self, arg):
         pass
+
+    def update_assessment(self):
+        """ Updates assessment. """
+        try:
+            assessment_id = request.form['assessmentId']
+            # TODO set assessment
+        except ServiceException as e:
+            rospy.logerr("Cannot set assessment. " + repr(e))
+        return '', 204
 
     def run(self):
         rospy.loginfo("User node is serving the Web app")
