@@ -164,7 +164,7 @@ class Ergo(object):
 
     def publish_state(self):
         # TODO We might want a better state here, get the arena center, get EEF and do the maths as in environment/get_state
-        angle = self.ergo.motors[0].present_position
+        angle = self.ergo.motors[0].present_position + self.ergo.motors[3].present_position
         self.state_pub.publish(CircularState(angle=angle, extended=self.extended))
 
     def publish_joy(self, x, y, publisher):
