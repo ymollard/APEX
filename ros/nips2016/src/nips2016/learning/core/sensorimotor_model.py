@@ -18,7 +18,7 @@ class DemonstrableNN(NonParametric):
                 self.bootstrapped_s]
     
     def forward(self, data, iteration):
-        self.model.imodel.fmodel.dataset.add_xy_batch(data[0], data[1])
+        self.model.imodel.fmodel.dataset.add_xy_batch(data[0][:iteration], data[1][:iteration])
         self.t = len(self.model.imodel.fmodel.dataset)
         if len(data) > 2:
             self.bootstrapped_s = data[2]
