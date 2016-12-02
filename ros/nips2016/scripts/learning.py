@@ -11,6 +11,7 @@ from nips2016.msg import Interests, Demonstration
 from nips2016.learning import EnvironmentTranslator, Learning
 from std_msgs.msg import String, Bool, UInt32, Float32
 from threading import RLock
+from copy import copy
 
 
 class LearningNode(object):
@@ -31,9 +32,8 @@ class LearningNode(object):
         rospy.loginfo("Learning node will write {}".format(self.experiment_name))
         rospy.loginfo("Learning node will read {}".format(self.source_name))
 
-        # User control
+        # User control and critical resources
         self.lock_iteration = RLock()
-        self.next_iteration = True
         self.ready_for_interaction = True
         self.focus = None
         self.set_iteration = -1
@@ -84,27 +84,25 @@ class LearningNode(object):
         rate = rospy.Rate(self.params['publish_rate'])
         try:
             while not rospy.is_shutdown():
-                publish = False
-                with self.lock_iteration:
-                    if self.next_iteration:
-                        publish = True
-                        self.next_iteration = False
-                if publish:
-                    self.publish()
-                self.pub_ready.publish(Bool(data=self.ready_for_interaction))
-                self.pub_user_focus.publish(String(data=self.focus if self.focus is not None else ""))
+                self.publish()
                 rate.sleep()
         finally:
             rospy.loginfo("Saving file before exit into {}".format(self.experiment_file))
             self.learning.save(self.experiment_file)
 
     def publish(self):
+        with self.lock_iteration:
+            focus = copy(self.focus)
+            ready = copy(self.ready_for_interaction)
+
         interests_array = self.learning.get_normalized_interests_evolution()
         interests = Interests()
         interests.names = self.learning.get_space_names()
         interests.num_iterations = UInt32(len(interests_array))
         interests.interests = [Float32(val) for val in interests_array.flatten()]
 
+        self.pub_ready.publish(Bool(data=ready))
+        self.pub_user_focus.publish(String(data=focus if focus is not None else ""))
         self.pub_interests.publish(interests)
         self.pub_focus.publish(String(data=self.learning.get_last_focus()))
         self.pub_iteration.publish(UInt32(data=self.learning.get_iterations()))
@@ -114,23 +112,30 @@ class LearningNode(object):
     def cb_set_iteration(self, request):
         if self.source_name == "none":
             rospy.logerr("Not implemented: Cannot time travel without source file")
-        elif self.ready_for_interaction:
-            self.set_iteration = request.iteration.data
-            self.ready_for_interaction = False
-            self.learning.save(self.experiment_file)
-            rospy.loginfo("Saving file before time travel into {}".format(self.experiment_file))
-            self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            self.experiment_file = join(self.dir, self.stamp + '_set_iteration_' + self.experiment_name + '.pickle')
+        else:
+            with self.lock_iteration:
+                ready = copy(self.ready_for_interaction)
+                self.ready_for_interaction = False
+                self.set_iteration = request.iteration.data
+
+            if ready:
+                self.learning.save(self.experiment_file)
+                rospy.loginfo("Saving file before time travel into {}".format(self.experiment_file))
+                self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                self.experiment_file = join(self.dir, self.stamp + '_set_iteration_' + self.experiment_name + '.pickle')
         return SetIterationResponse()
 
     def cb_set_focus(self, request):
-        # space is "" or e.g. "s_hand" to toggle focus on/off
-        self.focus = request.space if len(request.space) > 0 else None
+        with self.lock_iteration:
+            # space is "" or e.g. "s_hand" to toggle focus on/off
+            self.focus = request.space if len(request.space) > 0 else None
+            self.ready_for_interaction = False
         return SetFocusResponse()
 
     def cb_assess(self, request):
         with self.lock_iteration:
             self.demonstrate = request.goal
+            self.ready_for_interaction = False
         return AssessResponse()
 
     def cb_perceive(self, request):
@@ -158,34 +163,36 @@ class LearningNode(object):
 
         # This turn is over, check if we have a time travel pending...
         with self.lock_iteration:
-            self.ready_for_interaction = True
-            if self.set_iteration > -1:
-                rospy.logwarn("Applying time travel to iteration {}".format(self.set_iteration))
-                self.learning.restart_from_file(self.source_file, self.set_iteration)
-                self.set_iteration = -1
+            set_iteration = copy(self.set_iteration)
+            self.set_iteration = -1
+
+        if set_iteration > -1:
+            rospy.logwarn("Applying time travel to iteration {}".format(set_iteration))
+            self.learning.restart_from_file(self.source_file, set_iteration)
+
         return PerceiveResponse()
 
     def cb_produce(self, request):
+        with self.lock_iteration:
+            focus = copy(self.focus)
+            demonstrate = copy(self.demonstrate)
+            self.demonstrate = None
+
         rospy.loginfo("Learning node is requesting the current state")
         state = self.get_state(GetSensorialStateRequest()).state
 
-        with self.lock_iteration:
-            if self.demonstrate is None:
-                rospy.loginfo("Learning node is producing...")
-                w = self.learning.produce(self.translator.get_context(state), self.focus)
-            else:
-                rospy.loginfo("Learning node is demonstrating its abilities {}...".format(self.demonstrate))
-                context = self.translator.get_context(state)
-                if self.demonstrate is not None:
-                    rospy.logwarn("Assessing {}".format(self.demonstrate))
-                w = self.learning.produce(context, goal=self.demonstrate)
-                self.demonstrate = None
+        if demonstrate is None:
+            rospy.loginfo("Learning node is producing...")
+            w = self.learning.produce(self.translator.get_context(state), focus)
+        else:
+            rospy.logwarn("Assessing {}...".format(demonstrate))
+            context = self.translator.get_context(state)
+            w = self.learning.produce(context, goal=demonstrate)
 
         trajectory_matrix = self.translator.w_to_trajectory(w)
         trajectory_msg = self.translator.matrix_to_trajectory_msg(trajectory_matrix)
 
-        with self.lock_iteration:
-            self.next_iteration = True
+        self.ready_for_interaction = True
 
         response = ProduceResponse(torso_trajectory=trajectory_msg)
         return response
