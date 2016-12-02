@@ -9,7 +9,17 @@ log_file = '/home/sforesti/scm/Flowers/NIPS2016/data/2016-11-30_11-17-25_v5_with
 
 import brewer2mpl
 bmap = brewer2mpl.get_map('Dark2', 'qualitative', 7)
-colors = bmap.mpl_colors
+bmap2 = brewer2mpl.get_map('Paired', 'qualitative', 12)
+colors = {}
+colors["s_hand"] = bmap2.mpl_colors[0]
+colors["s_joystick_1"] = bmap.mpl_colors[3]
+colors["s_joystick_2"] = bmap.mpl_colors[4]
+colors["s_ergo"] = bmap.mpl_colors[1]
+colors["s_ball"] = bmap.mpl_colors[2]
+colors["s_light"] = bmap.mpl_colors[5]
+colors["s_sound"] = bmap.mpl_colors[0]
+
+
 
 
 with open(log_file, 'r') as f:
@@ -56,10 +66,10 @@ def runningMeanFast(x, sw):
 def compute_explo(data, mins, maxs, checkpoints=None):
     if checkpoints is None:
         checkpoints = [len(data)]
-    n = len(mins)
-    assert len(data[0]) == n
+    n_dims = len(mins)
+    assert len(data[0]) == n_dims
     epss = (maxs - mins) / gs
-    grid = np.zeros([gs] * n)
+    grid = np.zeros([gs] * n_dims)
     #print np.size(grid), mins, maxs
     res = [0]
     for c in range(1, len(checkpoints)):
@@ -90,7 +100,7 @@ fig, ax = plt.subplots()
 i = 0
 for space in ["s_hand", "s_joystick_1", "s_joystick_2", "s_ergo", "s_ball", "s_light", "s_sound"]:
     explo = compute_explo(s_data[space], mins, maxs, x)
-    ax.plot(x, explo, label=space_names[space], lw=4, color=colors[i])
+    ax.plot(x, explo, label=space_names[space], lw=4, color=colors[space])
     i += 1
     
 plt.legend(loc="top_left", fontsize=16)

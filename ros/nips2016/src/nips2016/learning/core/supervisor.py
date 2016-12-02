@@ -199,6 +199,7 @@ class Supervisor(object):
     def produce(self, context, space=None):
         if self.t < self.n_motor_babbling:
             self.mid_control = None
+            self.chosen_modules.append("motor_babbling")
             return self.motor_babbling()
         else:
             if space is None:
@@ -221,6 +222,7 @@ class Supervisor(object):
         else:
             s = np.array(s)
         self.mid_control = None
+        self.chosen_modules.append("inverse_" + mid)
         self.m = self.modules[mid].inverse(s)
         return self.m
     
