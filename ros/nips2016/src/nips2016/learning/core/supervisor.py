@@ -198,6 +198,10 @@ class Supervisor(object):
         for mid in self.modules.keys():
             self.modules[mid].update_sm(self.modules[mid].get_m(ms), self.modules[mid].get_s(ms))
         
+    def increase_interest(self, mid):
+        self.modules[mid].interest_model.current_progress = self.modules[mid].interest_model.current_progress * 1.05
+        self.modules[mid].interest_model.current_interest = abs(self.modules[mid].interest_model.current_progress) 
+    
     def produce(self, context, space=None):
         if self.t < self.n_motor_babbling:
             self.mid_control = None
@@ -215,6 +219,7 @@ class Supervisor(object):
             else:
                 mid = self.space2mid[space]
                 self.chosen_modules.append("forced_" + mid)
+                self.increase_interest(mid)
             self.mid_control = mid
             
             j_sm = self.modules["mod2"].sensorimotor_model
