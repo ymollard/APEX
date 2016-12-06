@@ -23,6 +23,7 @@ class Supervisor(object):
         self.progresses_evolution = {}
         self.interests_evolution = {}
         
+        self.have_to_replay_arm_demo = None
             
         self.mid_control = ''
         
@@ -204,6 +205,12 @@ class Supervisor(object):
             return self.motor_babbling()
         else:
             if space is None:
+                if self.have_to_replay_arm_demo is not None:
+                    self.m = self.have_to_replay_arm_demo
+                    self.have_to_replay_arm_demo = None
+                    self.chosen_modules.append("replay_arm_demo")
+                    self.mid_control = None
+                    return self.m
                 mid = self.choose_babbling_module()
             else:
                 mid = self.space2mid[space]
@@ -232,6 +239,7 @@ class Supervisor(object):
         if m_demo is not None:
             ms = self.set_ms(m_demo, s)
             self.update_sensorimotor_models(ms)
+            self.have_to_replay_arm_demo = m_demo
             self.chosen_modules.append("m_demo")
         elif j_demo:
             m0 = [0]*self.conf.m_ndims
