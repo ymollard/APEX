@@ -25,6 +25,7 @@ class MiscRandomInterest(RandomInterest):
         
         RandomInterest.__init__(self, conf, expl_dims)
         
+        self.conf = conf
         self.win_size = win_size
         self.competence_mode = competence_mode
         self.dist_max = np.linalg.norm(self.bounds[0,:] - self.bounds[1,:])
