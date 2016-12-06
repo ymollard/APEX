@@ -6,13 +6,14 @@ from learning_module import LearningModule
 
 
 class Supervisor(object):
-    def __init__(self, config, n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2, enable_hand=True):
+    def __init__(self, config, n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2, enable_hand=True, normalize_interests=True):
         
         self.config = config
         self.n_motor_babbling = n_motor_babbling
         self.explo_noise = explo_noise
         self.choice_eps = choice_eps,
         self.enable_hand = enable_hand
+        self.normalize_interests = normalize_interests
         
         self.conf = make_configuration(**config)
         
@@ -61,13 +62,13 @@ class Supervisor(object):
         
 
         # Create the 6 learning modules:
-        self.modules['mod1'] = LearningModule("mod1", self.m_space, self.s_hand, self.conf, explo_noise=self.explo_noise)
-        self.modules['mod2'] = LearningModule("mod2", self.m_space, self.s_joystick_1, self.conf, explo_noise=self.explo_noise)
-        self.modules['mod3'] = LearningModule("mod2", self.m_space, self.s_joystick_2, self.conf, explo_noise=self.explo_noise)
-        self.modules['mod4'] = LearningModule("mod3", self.m_space, [self.c_dims[0]] + self.s_ergo, self.conf, context_mode=dict(mode='mcs', context_n_dims=1, context_sensory_bounds=[[-1.],[1.]]), explo_noise=self.explo_noise)
-        self.modules['mod5'] = LearningModule("mod4", self.m_space, self.c_dims + self.s_ball, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise)
-        self.modules['mod6'] = LearningModule("mod5", self.m_space, self.c_dims + self.s_light, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise)
-        self.modules['mod7'] = LearningModule("mod6", self.m_space, self.c_dims + self.s_sound, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise)
+        self.modules['mod1'] = LearningModule("mod1", self.m_space, self.s_hand, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod2'] = LearningModule("mod2", self.m_space, self.s_joystick_1, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod3'] = LearningModule("mod2", self.m_space, self.s_joystick_2, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod4'] = LearningModule("mod3", self.m_space, [self.c_dims[0]] + self.s_ergo, self.conf, context_mode=dict(mode='mcs', context_n_dims=1, context_sensory_bounds=[[-1.],[1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod5'] = LearningModule("mod4", self.m_space, self.c_dims + self.s_ball, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod6'] = LearningModule("mod5", self.m_space, self.c_dims + self.s_light, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod7'] = LearningModule("mod6", self.m_space, self.c_dims + self.s_sound, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
     
         self.space2mid = dict(s_hand="mod1", 
                              s_joystick_1="mod2", 

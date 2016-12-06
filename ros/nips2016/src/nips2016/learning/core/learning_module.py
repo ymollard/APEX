@@ -12,7 +12,7 @@ from interest_model import MiscRandomInterest, ContextRandomInterest
 
 
 class LearningModule(Agent):
-    def __init__(self, mid, m_space, s_space, env_conf, explo_noise=0.1, context_mode=None):
+    def __init__(self, mid, m_space, s_space, env_conf, explo_noise=0., normalize_interests=True, context_mode=None):
 
 
         self.conf = make_configuration(env_conf.m_mins[m_space], 
@@ -151,7 +151,8 @@ class LearningModule(Agent):
         
     def competence(self): return self.interest_model.competence()
     def progress(self): return self.interest_model.progress()
-    def interest(self): return self.interest_model.interest()
+    def interest(self): return self.interest_model.interest() / (len(self.conf.s_dims) - self.context_mode["context_n_dims"]) if self.context_mode else self.interest_model.interest() / (len(self.conf.s_dims))
+    
 
     def perceive(self, m, s):
         self.update_sm(m, s)

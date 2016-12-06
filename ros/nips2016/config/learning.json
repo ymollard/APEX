@@ -4,5 +4,6 @@
   "explo_noise": 0.1,
   "choice_eps": 0.2,
   "publish_rate": 4,
-  "enable_hand": true
+  "enable_hand": true,
+  "normalize_interests": true
 }

@@ -12,12 +12,13 @@ from core.supervisor import Supervisor
 
 
 class Learning(object):
-    def __init__(self, config, n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2, enable_hand=True):
+    def __init__(self, config, n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2, enable_hand=True, normalize_interests=True):
         self.config = config
         self.n_motor_babbling = n_motor_babbling
         self.explo_noise = explo_noise
         self.choice_eps = choice_eps
         self.enable_hand = enable_hand
+        self.normalize_interests = normalize_interests
         self.agent = None
         
     def produce(self, context, space=None, goal=None):
@@ -75,7 +76,8 @@ class Learning(object):
                                 n_motor_babbling=self.n_motor_babbling, 
                                 explo_noise=self.explo_noise, 
                                 choice_eps=self.choice_eps,
-                                enable_hand=self.enable_hand)
+                                enable_hand=self.enable_hand,
+                                normalize_interests=self.normalize_interests)
         
     def restart_from_end_of_file(self, file_path):
         data = self.get_data_from_file(file_path)
