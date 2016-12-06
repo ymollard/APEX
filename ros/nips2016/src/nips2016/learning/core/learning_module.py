@@ -151,7 +151,7 @@ class LearningModule(Agent):
         
     def competence(self): return self.interest_model.competence()
     def progress(self): return self.interest_model.progress()
-    def interest(self): return self.interest_model.interest() / (len(self.conf.s_dims) - self.context_mode["context_n_dims"]) if self.context_mode else self.interest_model.interest() / (len(self.conf.s_dims))
+    def interest(self): return self.interest_model.interest()
     
 
     def perceive(self, m, s):

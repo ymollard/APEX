@@ -57,6 +57,7 @@ class MiscRandomInterest(RandomInterest):
         self.data_sr.add_xy(x)
         
     def update_interest(self, i):
+        i = i / len(self.conf.s_dims)
         self.current_progress += (1. / self.win_size) * (i - self.current_progress)
         self.current_interest = abs(self.current_progress)
 
