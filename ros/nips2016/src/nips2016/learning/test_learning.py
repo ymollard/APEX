@@ -1,4 +1,4 @@
-
+import numpy as np
 from environment_explauto.environment import TestEnvironment
 from learning import Learning
 
@@ -23,16 +23,24 @@ if __name__ == "__main__":
         s = environment.update(m)
         learning.perceive(s)
         
-#     print "Do 1 arm demonstration"
-#     m_demo_traj = np.zeros((25, 4)) + 0.001
-#     m_demo = environment.torsodemo2m(m_demo_traj)
-#     s = environment.update(m_demo)
-#     learning.perceive(s, m_demo=m_demo)
+    print "Do 1 arm demonstration"
+    m_demo_traj = np.zeros((25, 4)) + 0.001
+    m_demo = environment.torsodemo2m(m_demo_traj)
+    print "m_demo", m_demo
+    s = environment.update(m_demo)
+    learning.perceive(s, m_demo=m_demo)
+    
+    print "Should replay arm demo:" 
+    context = environment.get_current_context()
+    m = learning.produce(context)
+    print "m", m
+    s = environment.update(m)
+    learning.perceive(s)
     
     print
     print "Do 1 joystick demonstration to show how to produce light"
     j_demo = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.2, 0.001, 0., 0., 0., 0., 0.]
-    s = environment.get_current_context() + j_demo + [0.]*20 + [0.2]*20 + [0.2]*20 + [0.1]*10 + [0.]*10
+    s = environment.get_current_context() + [0.] * 30 + j_demo + [0.]*20 + [0.2]*20 + [0.2]*20 + [0.1]*10 + [0.]*10
     #print "j_demo", s
     learning.perceive(s, j_demo=True)
     
