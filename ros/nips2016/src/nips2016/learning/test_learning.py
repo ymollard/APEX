@@ -17,7 +17,7 @@ if __name__ == "__main__":
     
     print
     print "Do 500 autonomous steps:" 
-    for i in range(500):
+    for i in range(100):
         context = environment.get_current_context()
         m = learning.produce(context)
         s = environment.update(m)
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     print "Do 1 joystick demonstration to show how to produce light"
     j_demo = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.2, 0.001, 0., 0., 0., 0., 0.]
     s = environment.get_current_context() + [0.] * 30 + j_demo + [0.]*20 + [0.2]*20 + [0.2]*20 + [0.1]*10 + [0.]*10
-    #print "j_demo", s
+    #print "j_demo", s, len(s)
     learning.perceive(s, j_demo=True)
     
     print "Now ask to produce light..."

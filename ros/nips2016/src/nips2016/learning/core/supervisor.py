@@ -107,7 +107,8 @@ class Supervisor(object):
                 "chosen_modules":self.chosen_modules,
                 "progresses_evolution":self.progresses_evolution,
                 "interests_evolution":self.interests_evolution,
-                "normalized_interests_evolution":self.get_normalized_interests_evolution()}
+                "normalized_interests_evolution":self.get_normalized_interests_evolution(),
+                "normalize_interests":self.normalize_interests}
 
         
     def forward(self, data, iteration):
@@ -123,6 +124,8 @@ class Supervisor(object):
             self.progresses_evolution[mid] = self.progresses_evolution[mid][:iteration]
             self.interests_evolution[mid] = self.interests_evolution[mid][:iteration]
         self.t = iteration
+        if data.has_key("normalize_interests"):
+            self.normalize_interests = data["normalize_interests"]
         if iteration > 0:
             for mid in self.modules.keys():
                 if mid == "mod1":
@@ -249,7 +252,8 @@ class Supervisor(object):
     
     def perceive(self, s, m_demo=None, j_demo=False):
         s = self.sensory_primitive(s)
-        if self.ball_moves(s[92:112]):
+        #print "perceive len(s)", len(s), s[92:112]
+        if j_demo or self.ball_moves(s[92:112]):
             time.sleep(2)
         if m_demo is not None:
             ms = self.set_ms(m_demo, s)
