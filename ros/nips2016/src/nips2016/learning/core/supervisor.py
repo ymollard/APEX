@@ -202,10 +202,7 @@ class Supervisor(object):
             self.modules[mid].update_sm(self.modules[mid].get_m(ms), self.modules[mid].get_s(ms))
         
     def increase_interest(self, mid):
-        if self.modules[mid].interest_model.current_interest > 0:
-            self.modules[mid].interest_model.current_progress = self.modules[mid].interest_model.current_progress * 1.05 
-        else:
-            self.modules[mid].interest_model.current_progress = sum(self.get_normalized_interests().values())/ 100.
+        self.modules[mid].interest_model.current_progress = self.modules[mid].interest_model.current_progress * 1.05
         self.modules[mid].interest_model.current_interest = abs(self.modules[mid].interest_model.current_progress)
             
             
