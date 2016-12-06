@@ -1,5 +1,5 @@
 import numpy as np
-
+import time
 from explauto.utils import rand_bounds, bounds_min_max, softmax_choice, prop_choice
 from explauto.utils.config import make_configuration
 from learning_module import LearningModule
@@ -65,11 +65,11 @@ class Supervisor(object):
         # Create the 6 learning modules:
         self.modules['mod1'] = LearningModule("mod1", self.m_space, self.s_hand, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
         self.modules['mod2'] = LearningModule("mod2", self.m_space, self.s_joystick_1, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
-        self.modules['mod3'] = LearningModule("mod2", self.m_space, self.s_joystick_2, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
-        self.modules['mod4'] = LearningModule("mod3", self.m_space, [self.c_dims[0]] + self.s_ergo, self.conf, context_mode=dict(mode='mcs', context_n_dims=1, context_sensory_bounds=[[-1.],[1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
-        self.modules['mod5'] = LearningModule("mod4", self.m_space, self.c_dims + self.s_ball, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
-        self.modules['mod6'] = LearningModule("mod5", self.m_space, self.c_dims + self.s_light, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
-        self.modules['mod7'] = LearningModule("mod6", self.m_space, self.c_dims + self.s_sound, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod3'] = LearningModule("mod3", self.m_space, self.s_joystick_2, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod4'] = LearningModule("mod4", self.m_space, [self.c_dims[0]] + self.s_ergo, self.conf, context_mode=dict(mode='mcs', context_n_dims=1, context_sensory_bounds=[[-1.],[1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod5'] = LearningModule("mod5", self.m_space, self.c_dims + self.s_ball, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod6'] = LearningModule("mod6", self.m_space, self.c_dims + self.s_light, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod7'] = LearningModule("mod7", self.m_space, self.c_dims + self.s_sound, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
     
         self.space2mid = dict(s_hand="mod1", 
                              s_joystick_1="mod2", 
@@ -234,8 +234,18 @@ class Supervisor(object):
         self.m = self.modules[mid].inverse(s)
         return self.m
     
+    def dist_angle(self, a1, a2): return min(abs(a1 - a2), 2 - abs(a1 - a2))
+    
+    def ball_moves(self, s):
+        a1 = s[16]
+        a2 = s[18]
+        print "ball end angular speed", self.dist_angle(a1, a2)
+        return self.dist_angle(a1, a2) > 0.1
+    
     def perceive(self, s, m_demo=None, j_demo=False):
         s = self.sensory_primitive(s)
+        if self.ball_moves(s[92:112]):
+            time.sleep(2)
         if m_demo is not None:
             ms = self.set_ms(m_demo, s)
             self.update_sensorimotor_models(ms)
