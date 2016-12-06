@@ -248,14 +248,14 @@ class Supervisor(object):
     def ball_moves(self, s):
         a1 = s[16]
         a2 = s[18]
-        print "ball end angular speed", self.dist_angle(a1, a2)
+        # print "ball end angular speed", self.dist_angle(a1, a2)
         return self.dist_angle(a1, a2) > 0.1
     
     def perceive(self, s, m_demo=None, j_demo=False):
         s = self.sensory_primitive(s)
         #print "perceive len(s)", len(s), s[92:112]
         if j_demo or self.ball_moves(s[92:112]):
-            time.sleep(2)
+            time.sleep(3)
         if m_demo is not None:
             ms = self.set_ms(m_demo, s)
             self.update_sensorimotor_models(ms)
