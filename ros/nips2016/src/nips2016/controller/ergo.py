@@ -11,6 +11,6 @@ class Ergo(object):
             rospy.wait_for_service(service['name'])
             service['call'] = rospy.ServiceProxy(service['name'], service['type'])
 
-    def reset(self):
+    def reset(self, slow=True):
         call = self.services['reset_ergo']['call']
-        return call(ResetRequest())
+        return call(ResetRequest(slow=slow))

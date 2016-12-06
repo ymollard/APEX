@@ -30,6 +30,8 @@ class Controller(object):
     def run(self):
         nb_iterations = rospy.get_param('/nips2016/iterations')
         while not rospy.is_shutdown() and self.iteration < nb_iterations:
+            if self.iteration % 40 == 1:
+                self.ergo.reset(True)
             if self.iteration != -1:
                 rospy.logwarn("#### Iteration {}/{}".format(self.iteration + 1, nb_iterations))
                 if self.perception.help_pressed():
@@ -44,8 +46,7 @@ class Controller(object):
                     self.reset()
                 self.learning.perceive(recording.demo)  # TODO non-blocking
                 # Many blocking calls: No sleep?
-                if self.iteration % 20 == 19:
-                    self.ergo.reset()
+
 
 rospy.init_node("nips2016_controller")
 Controller().run()

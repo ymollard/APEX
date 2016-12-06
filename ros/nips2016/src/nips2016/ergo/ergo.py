@@ -50,8 +50,8 @@ class Ergo(object):
             rospy.loginfo('Initialized Joystick 1: {}'.format(self.joystick.get_name()))
             rospy.loginfo('Initialized Joystick 2: {}'.format(self.joystick2.get_name()))
 
-    def go_to_start(self):
-        self.go_to([0.0, -15.4, 35.34, -8.06, -15.69, 71.99], 1)
+    def go_to_start(self, slow=True):
+        self.go_to([0.0, -15.4, 35.34, -8.06, -15.69, 71.99], 4 if slow else 1)
 
     def go_to_extended(self):
         extended = {'m2': 60, 'm3': -37, 'm5': -50, 'm6': 96}
@@ -180,6 +180,6 @@ class Ergo(object):
 
     def _cb_reset(self, request):
         rospy.loginfo("Resetting Ergo...")
-        self.go_to_start()
+        self.go_to_start(request.slow)
         return ResetResponse()
 
