@@ -50,6 +50,8 @@ class LearningNode(object):
 
         if self.source_name == "none":
             self.learning.start()
+            self.source_name = self.experiment_name
+            self.source_file = self.experiment_file
         else:
             self.learning.restart_from_end_of_file(self.source_file)
 
@@ -111,19 +113,16 @@ class LearningNode(object):
 
     ################################# Service callbacks
     def cb_set_iteration(self, request):
-        if self.source_name == "none":
-            rospy.logerr("Not implemented: Cannot time travel without source file")
-        else:
-            with self.lock_iteration:
-                ready = copy(self.ready_for_interaction)
-                self.ready_for_interaction = False
-                self.set_iteration = request.iteration.data
+        with self.lock_iteration:
+            ready = copy(self.ready_for_interaction)
+            self.ready_for_interaction = False
+            self.set_iteration = request.iteration.data
 
-            if ready:
-                self.learning.save(self.experiment_file)
-                rospy.loginfo("Saving file before time travel into {}".format(self.experiment_file))
-                self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                self.experiment_file = join(self.dir, self.stamp + '_set_iteration_' + self.experiment_name + '.pickle')
+        if ready:
+            self.learning.save(self.experiment_file)
+            rospy.loginfo("Saving file before time travel into {}".format(self.experiment_file))
+            self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            self.experiment_file = join(self.dir, self.stamp + '_set_iteration_' + self.experiment_name + '.pickle')
         return SetIterationResponse()
 
     def cb_set_focus(self, request):
