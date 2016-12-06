@@ -33,7 +33,7 @@ class MyDMP(object):
         self.dmp.w = self.motor[self.dmp.dmps:-self.dmp.dmps].reshape(self.dmp.dmps, self.dmp.bfs)
         return self.dmp.rollout(timesteps=self.timesteps)
 
-    def imitate(self, traj, maxfun=1500):
+    def imitate(self, traj, maxfun=2500):
         """
             Imitate a given trajectory with parameter optimization (less than 1 second).
             
