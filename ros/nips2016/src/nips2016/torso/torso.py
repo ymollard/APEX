@@ -43,7 +43,8 @@ class Torso(object):
             self.set_torque_limits(60)
             self.torso.goto_position({'l_shoulder_y': 13, 'l_shoulder_x': 20, 'l_elbow_y': -25}, duration)
             rospy.sleep(duration)
-            self.go_to([90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], duration)
+            self.go_to([90, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0], duration)
+            self.torso.motors[4].compliant = True  # This motor overheats a lot
             self.in_rest_pose = True
             self.set_torque_limits()
 
