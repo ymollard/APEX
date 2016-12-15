@@ -30,7 +30,7 @@ class Controller(object):
     def run(self):
         nb_iterations = rospy.get_param('/nips2016/iterations')
         while not rospy.is_shutdown() and self.iteration < nb_iterations:
-            if self.iteration % 40 == 1:
+            if self.iteration % self.params['ergo_reset'] == 1:
                 self.ergo.reset(True)
             if self.iteration != -1:
                 rospy.logwarn("#### Iteration {}/{}".format(self.iteration + 1, nb_iterations))
