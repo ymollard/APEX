@@ -12,6 +12,7 @@ from nips2016.learning import EnvironmentTranslator, Learning
 from std_msgs.msg import String, Bool, UInt32, Float32
 from threading import RLock
 from copy import copy
+from os.path import isfile
 
 
 class LearningNode(object):
@@ -28,10 +29,10 @@ class LearningNode(object):
                                  enable_hand=self.params["enable_hand"],
                                  normalize_interests=self.params["normalize_interests"])
         self.experiment_name = rospy.get_param("/nips2016/experiment_name", "experiment")
-        self.source_name = rospy.get_param("/nips2016/source_name", "experiment")
+        # self.source_name = rospy.get_param("/nips2016/source_name", "experiment")
 
         rospy.loginfo("Learning node will write {}".format(self.experiment_name))
-        rospy.loginfo("Learning node will read {}".format(self.source_name))
+        # rospy.loginfo("Learning node will read {}".format(self.source_name))
 
         # User control and critical resources
         self.lock_iteration = RLock()
@@ -44,16 +45,15 @@ class LearningNode(object):
         self.dir = join(self.rospack.get_path('nips2016'), 'logs')
         if not os.path.isdir(self.dir):
             os.makedirs(self.dir)
-        self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.experiment_file = join(self.dir, self.stamp + '_' + self.experiment_name + '.pickle')
-        self.source_file = join(self.dir, self.source_name + '.pickle')
+        # self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        # self.source_file = join(self.dir, self.source_name + '.pickle')
+        self.experiment_file = join(self.dir, self.experiment_name + '.pickle') # if self.source_name == "none" else self.source_file
+        self.main_experiment = True
 
-        if self.source_name == "none":
-            self.learning.start()
-            self.source_name = self.experiment_name
-            self.source_file = self.experiment_file
+        if isfile(self.experiment_file):
+            self.learning.restart_from_end_of_file(self.experiment_file)
         else:
-            self.learning.restart_from_end_of_file(self.source_file)
+            self.learning.start()
 
         # Serving these services
         self.service_name_perceive = "/nips2016/learning/perceive"
@@ -118,11 +118,17 @@ class LearningNode(object):
             self.ready_for_interaction = False
             self.set_iteration = request.iteration.data
 
+        into_past = request.iteration.data < self.learning.get_iterations()
         if ready:
-            self.learning.save(self.experiment_file)
-            rospy.loginfo("Saving file before time travel into {}".format(self.experiment_file))
-            self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            self.experiment_file = join(self.dir, self.stamp + '_set_iteration_' + self.experiment_name + '.pickle')
+            if into_past:
+                if self.main_experiment:
+                    self.learning.save(self.experiment_file)
+                self.main_experiment = False
+                rospy.loginfo("Saving file before time travel into {}".format(self.experiment_file))
+                #self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                #self.experiment_file = join(self.dir, self.stamp + '_set_iteration_' + self.experiment_name + '.pickle')
+            else:
+                self.main_experiment = True
         return SetIterationResponse()
 
     def cb_set_focus(self, request):
@@ -157,7 +163,7 @@ class LearningNode(object):
             rospy.logerr("Learner could not perceive this trajectory")
 
         # Regularly overwrite the results
-        if self.learning.get_iterations() % self.params['save_every'] == 0:
+        if self.main_experiment and self.learning.get_iterations() % self.params['save_every'] == 0:
             self.learning.save(self.experiment_file)
             rospy.loginfo("Saving file (periodic save) into {}".format(self.experiment_file))
 
@@ -168,7 +174,7 @@ class LearningNode(object):
 
         if set_iteration > -1:
             rospy.logwarn("Applying time travel to iteration {}".format(set_iteration))
-            self.learning.restart_from_file(self.source_file, set_iteration)
+            self.learning.restart_from_file(self.experiment_file, set_iteration)
 
         return PerceiveResponse()
 
