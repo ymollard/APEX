@@ -7,13 +7,17 @@ import time
 import datetime
 
 from core.supervisor import Supervisor
+from core.flat_goal_babbling import FGB
 
 
 
 
 class Learning(object):
-    def __init__(self, config, n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2, enable_hand=True, normalize_interests=True):
+    def __init__(self, config, condition="AMB", n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2, enable_hand=True, normalize_interests=True):
         self.config = config
+        if not condition in ["AMB", "RMB", "RmB", "FGB", "SG", "OPT"]:
+            raise NotImplementedError
+        self.condition = condition
         self.n_motor_babbling = n_motor_babbling
         self.explo_noise = explo_noise
         self.choice_eps = choice_eps
@@ -72,12 +76,29 @@ class Learning(object):
             pickle.dump(data, f)
     
     def start(self):
-        self.agent = Supervisor(self.config, 
+        if self.condition == "AMB":
+            self.agent = Supervisor(self.config, 
+                                    babbling_mode="active",
+                                    n_motor_babbling=self.n_motor_babbling, 
+                                    explo_noise=self.explo_noise, 
+                                    choice_eps=self.choice_eps,
+                                    enable_hand=self.enable_hand,
+                                    normalize_interests=self.normalize_interests)
+        elif self.condition == "RMB":
+            self.agent = Supervisor(self.config, 
+                                    babbling_mode="random",
+                                    n_motor_babbling=self.n_motor_babbling, 
+                                    explo_noise=self.explo_noise, 
+                                    choice_eps=self.choice_eps,
+                                    enable_hand=self.enable_hand,
+                                    normalize_interests=self.normalize_interests)
+        elif self.condition == "RmB":
+            self.agent = Supervisor(self.config, 
+                                    n_motor_babbling=np.inf)
+        elif self.condition == "FGB":
+            self.agent = FGB(self.config,
                                 n_motor_babbling=self.n_motor_babbling, 
-                                explo_noise=self.explo_noise, 
-                                choice_eps=self.choice_eps,
-                                enable_hand=self.enable_hand,
-                                normalize_interests=self.normalize_interests)
+                                explo_noise=self.explo_noise)
         
     def restart_from_end_of_file(self, file_path):
         data = self.get_data_from_file(file_path)

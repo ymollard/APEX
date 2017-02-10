@@ -6,9 +6,10 @@ from learning_module import LearningModule
 
 
 class Supervisor(object):
-    def __init__(self, config, n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2, enable_hand=True, normalize_interests=True):
+    def __init__(self, config, babbling_mode="active", n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2, enable_hand=True, normalize_interests=True):
         
         self.config = config
+        self.babbling_mode = "prop" if babbling_mode == "active" else "random"
         self.n_motor_babbling = n_motor_babbling
         self.explo_noise = explo_noise
         self.choice_eps = choice_eps,
@@ -219,7 +220,7 @@ class Supervisor(object):
                     self.chosen_modules.append("replay_arm_demo")
                     self.mid_control = None
                     return self.m
-                mid = self.choose_babbling_module()
+                mid = self.choose_babbling_module(self.babbling_mode)
             else:
                 mid = self.space2mid[space]
                 self.chosen_modules.append("forced_" + mid)
