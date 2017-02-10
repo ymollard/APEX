@@ -82,7 +82,6 @@ class Learning(object):
                                     n_motor_babbling=self.n_motor_babbling, 
                                     explo_noise=self.explo_noise, 
                                     choice_eps=self.choice_eps,
-                                    enable_hand=self.enable_hand,
                                     normalize_interests=self.normalize_interests)
         elif self.condition == "RMB":
             self.agent = Supervisor(self.config, 
@@ -90,7 +89,6 @@ class Learning(object):
                                     n_motor_babbling=self.n_motor_babbling, 
                                     explo_noise=self.explo_noise, 
                                     choice_eps=self.choice_eps,
-                                    enable_hand=self.enable_hand,
                                     normalize_interests=self.normalize_interests)
         elif self.condition == "RmB":
             self.agent = Supervisor(self.config, 

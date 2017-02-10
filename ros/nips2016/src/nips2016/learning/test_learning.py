@@ -12,11 +12,11 @@ if __name__ == "__main__":
     learning = Learning(dict(m_mins=environment.conf.m_mins,
                              m_maxs=environment.conf.m_maxs,
                              s_mins=environment.conf.s_mins,
-                             s_maxs=environment.conf.s_maxs))
+                             s_maxs=environment.conf.s_maxs), condition="AMB")
     learning.start()
     
     print
-    print "Do 500 autonomous steps:" 
+    print "Do 100 autonomous steps:" 
     for i in range(100):
         context = environment.get_current_context()
         m = learning.produce(context)
@@ -62,13 +62,13 @@ if __name__ == "__main__":
 #     print len(learning.agent.modules["mod2"].sensorimotor_model.model.imodel.fmodel.dataset)
 #     print learning.agent.modules["mod1"].interest_model.current_interest
     
-    print
-    print "Do 500 autonomous steps:" 
-    for i in range(500):
-        context = environment.get_current_context()
-        m = learning.produce(context)
-        s = environment.update(m)
-        learning.perceive(s)
+#     print
+#     print "Do 500 autonomous steps:" 
+#     for i in range(500):
+#         context = environment.get_current_context()
+#         m = learning.produce(context)
+#         s = environment.update(m)
+#         learning.perceive(s)
     
     print "Rebuilding agent from file"
     learning.restart_from_file("../../../../../data/test.pickle", 2001)
@@ -83,8 +83,8 @@ if __name__ == "__main__":
 #     print learning.agent.modules["mod1"].interest_model.current_interest
     
     print
-    print "Do 500 autonomous steps:" 
-    for i in range(500):
+    print "Do 100 autonomous steps:" 
+    for i in range(100):
         context = environment.get_current_context()
         m = learning.produce(context)
         s = environment.update(m)

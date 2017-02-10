@@ -6,14 +6,13 @@ from learning_module import LearningModule
 
 
 class Supervisor(object):
-    def __init__(self, config, babbling_mode="active", n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2, enable_hand=True, normalize_interests=True):
+    def __init__(self, config, babbling_mode="active", n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2, normalize_interests=True):
         
         self.config = config
         self.babbling_mode = "prop" if babbling_mode == "active" else "random"
         self.n_motor_babbling = n_motor_babbling
         self.explo_noise = explo_noise
         self.choice_eps = choice_eps,
-        self.enable_hand = enable_hand
         self.normalize_interests = normalize_interests
         
         self.conf = make_configuration(**config)
@@ -141,13 +140,10 @@ class Supervisor(object):
     def choose_babbling_module(self, mode='prop'):
         interests = {}
         for mid in self.modules.keys():
-            if not ((not self.enable_hand) and mid=="mod1"):
-                interests[mid] = self.modules[mid].interest()
-            else:
-                interests[mid] = 0.
+            interests[mid] = self.modules[mid].interest()
         
         if mode == 'random':
-            mid = np.random.choice(self.interests.keys())
+            mid = np.random.choice(interests.keys())
         elif mode == 'greedy':
             eps = 0.2
             if np.random.random() < eps:
@@ -280,10 +276,7 @@ class Supervisor(object):
         
         for mid in self.modules.keys():
             self.progresses_evolution[mid].append(self.modules[mid].progress())
-            if not ((not self.enable_hand) and mid=="mod1"):
-                self.interests_evolution[mid].append(self.modules[mid].interest())
-            else:
-                self.interests_evolution[mid].append(0.)
+            self.interests_evolution[mid].append(self.modules[mid].interest())
                 
     
         return True
@@ -539,10 +532,7 @@ class Supervisor(object):
     def get_normalized_interests(self):
         interests = {}
         for mid in self.modules.keys():
-            if not ((not self.enable_hand) and mid=="mod1"):
-                interests[mid] = self.modules[mid].interest()
-            else:
-                interests[mid] = 0.
+            interests[mid] = self.modules[mid].interest()
             
         s = sum(interests.values())
         if s > 0:

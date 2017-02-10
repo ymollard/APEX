@@ -6,15 +6,20 @@ from learning_module import LearningModule
 
 
 class FGB(object):
-    def __init__(self, config, n_motor_babbling=0, explo_noise=0.1):
+    def __init__(self, config, n_motor_babbling=0, explo_noise=0.1, normalize_interests=False):
         
         self.config = config
         self.n_motor_babbling = n_motor_babbling
         self.explo_noise = explo_noise
+        self.normalize_interests = normalize_interests
         
         self.conf = make_configuration(**config)
         
         self.t = 0
+        self.modules = {}
+        self.chosen_modules = []
+        self.progresses_evolution = {}
+        self.interests_evolution = {}
         self.mid_control = ""
             
         # Define motor and sensory spaces:
@@ -39,7 +44,6 @@ class FGB(object):
                              s_sound=self.s_sound)
         
         
-        self.modules = {}
         self.modules["mod"] = LearningModule("mod", self.m_space, self.c_dims + self.s_hand+self.s_joystick_1+self.s_joystick_2+self.s_ergo+self.s_ball+self.s_light+self.s_sound, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
 
         
@@ -129,7 +133,7 @@ class FGB(object):
             self.chosen_modules.append("motor_babbling")
             return self.motor_babbling()
         else:
-            mid = self.choose_babbling_module(self.babbling_mode)
+            mid = self.choose_babbling_module()
             self.mid_control = mid
             self.m = self.modules[mid].produce(context=np.array(context)[range(self.modules[mid].context_mode["context_n_dims"])])
             return self.m
