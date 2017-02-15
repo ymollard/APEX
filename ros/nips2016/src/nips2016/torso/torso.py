@@ -37,14 +37,18 @@ class Torso(object):
         self.in_rest_pose = False
         self.robot_lock = RLock()
 
+
+
     def go_to_rest(self, slow):
         with self.robot_lock:
-            duration = 2 if slow else 0.25
+            duration = 4 if slow else 0.5
             self.set_torque_limits(60)
-            self.torso.goto_position({'l_shoulder_y': 13, 'l_shoulder_x': 20, 'l_elbow_y': -25}, duration)
-            rospy.sleep(duration)
-            self.go_to([90, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0], duration)
+            #self.torso.goto_position({'l_shoulder_y': 13, 'l_shoulder_x': 20, 'l_elbow_y': -25}, duration)
+            #rospy.sleep(duration)
+            self.torso.goto_position({'l_shoulder_y': -25, 'l_shoulder_x': 40, 'l_arm_z': 30, 'l_elbow_y': 0}, duration)
             self.torso.motors[4].compliant = True  # This motor overheats a lot
+            rospy.sleep(duration)
+            rospy.sleep(0.5)
             self.in_rest_pose = True
             self.set_torque_limits()
 
@@ -64,6 +68,9 @@ class Torso(object):
         except IOError as e:
             rospy.logerr("Torso failed to init: {}".format(e))
             return None
+        else:
+            self.go_to([90, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0], 4)
+
 
         try:
             self.set_torque_limits()
