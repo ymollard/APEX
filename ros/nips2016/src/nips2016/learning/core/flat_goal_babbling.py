@@ -51,7 +51,7 @@ class FGB(object):
             self.progresses_evolution[mid] = []
             self.interests_evolution[mid] = []
     
-    def get_last_focus(self): return self.mid_to_space(self.mid_control) if self.mid_control else ""
+    def get_last_focus(self): return "all"
     def get_space_names(self): return ["all"]
     
     def save(self):
