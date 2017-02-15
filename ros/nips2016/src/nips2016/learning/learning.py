@@ -70,10 +70,11 @@ class Learning(object):
             data = pickle.load(f)
         return data
                 
-    def save(self, file_path):        
-        data = self.agent.save() 
-        with open(file_path, 'w') as f:
-            pickle.dump(data, f)
+    def save(self, file_path):    
+        if self.agent is not None:    
+            data = self.agent.save() 
+            with open(file_path, 'w') as f:
+                pickle.dump(data, f)
     
     def start(self):
         if self.condition == "AMB":
