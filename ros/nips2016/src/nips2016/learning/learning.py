@@ -15,7 +15,7 @@ from core.flat_goal_babbling import FGB
 class Learning(object):
     def __init__(self, config, condition="AMB", n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2, enable_hand=True, normalize_interests=True):
         self.config = config
-        if not condition in ["AMB", "RMB", "RmB", "FGB", "SG", "OPT"]:
+        if not condition in ["AMB", "RMB", "RmB", "FGB"]:
             raise NotImplementedError
         self.condition = condition
         self.n_motor_babbling = n_motor_babbling
@@ -97,6 +97,8 @@ class Learning(object):
             self.agent = FGB(self.config,
                                 n_motor_babbling=self.n_motor_babbling, 
                                 explo_noise=self.explo_noise)
+        else:
+            raise NotImplementedError
         
     def restart_from_end_of_file(self, file_path):
         data = self.get_data_from_file(file_path)
