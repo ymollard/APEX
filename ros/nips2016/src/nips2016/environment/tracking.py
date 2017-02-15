@@ -110,7 +110,7 @@ class BallTracking(object):
 
     def open(self, width=800, height=600):
         try:
-            self.camera = cv2.VideoCapture(1)
+            self.camera = cv2.VideoCapture(0)
         except:
             return False
         else:
