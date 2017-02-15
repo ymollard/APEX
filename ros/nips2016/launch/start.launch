@@ -13,5 +13,4 @@
   </include>
 
   <node name="controller" pkg="nips2016" type="controller.py" output="$(arg output)" required="true"/>
-  <rosparam command="dump" file="$(find nips2016)/config/experiment.yaml" param="/nips2016/experiment" />
 </launch>

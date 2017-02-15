@@ -40,6 +40,7 @@ class LearningNode(object):
         self.main_experiment = True
         self.experiment_name = ""
         self.condition = ""
+        self.trial = ""
         self.experiment_file = "/dev/null"
 
         # Serving these services
@@ -63,16 +64,21 @@ class LearningNode(object):
             rospy.wait_for_service(service)
         self.get_state = rospy.ServiceProxy(self.service_name_get_perception, GetSensorialState)
 
-        # Initiate the learner
-        self.update_learner()
-
     def update_learner(self):
         condition = rospy.get_param('/nips2016/experiment/current/condition')
+        trial = rospy.get_param('/nips2016/experiment/current/trial')
         experiment_name = rospy.get_param("/nips2016/experiment_name", "experiment")
 
-        if condition != self.condition:
-            rospy.logwarn("Switching from condition {} to {}...".format(self.condition, condition))
+        if condition != self.condition or trial != self.trial:
             with self.lock_iteration:
+                if self.trial != '' and self.condition != '':                
+                    rospy.logwarn("Learner closes and saves condition {} trial {}...".format(self.condition, self.trial+1))
+                    self.learning.save(self.experiment_file)
+
+                rospy.logwarn("Learner switches to condition {} trial {}...".format(condition, trial+1))
+                self.experiment_name = "{}_{}_{}".format(experiment_name, condition, trial)
+                self.experiment_file = join(self.dir, self.experiment_name + '.pickle') # if self.source_name == "none" else self.source_file
+
                 self.learning = Learning(self.translator.config,
                                          condition=condition,
                                          n_motor_babbling=self.params["n_motor_babbling"],
@@ -80,18 +86,17 @@ class LearningNode(object):
                                          choice_eps=self.params["choice_eps"],
                                          enable_hand=self.params["enable_hand"],
                                          normalize_interests=self.params["normalize_interests"])
-                self.experiment_name = "{}_{}".format(experiment_name, condition)
 
                 if isfile(self.experiment_file):
+                    rospy.loginfo("Learning node appends data to {}".format(self.experiment_file))
                     self.learning.restart_from_end_of_file(self.experiment_file)
                 else:
+                    rospy.loginfo("Learning node created {}".format(self.experiment_file))
                     self.learning.start()
 
             rospy.loginfo("Learner loaded with condition {}!".format(condition))
             self.condition = condition
-
-        self.experiment_file = join(self.dir, self.experiment_name + '.pickle') # if self.source_name == "none" else self.source_file
-        rospy.loginfo("Learning node will write {}".format(self.experiment_name))
+            self.trial = trial
 
     def run(self):
         rospy.Service(self.service_name_perceive, Perceive, self.cb_perceive)
@@ -111,21 +116,22 @@ class LearningNode(object):
             self.learning.save(self.experiment_file)
 
     def publish(self):
-        with self.lock_iteration:
-            focus = copy(self.focus)
-            ready = copy(self.ready_for_interaction)
-
-        interests_array = self.learning.get_normalized_interests_evolution()
-        interests = Interests()
-        interests.names = self.learning.get_space_names()
-        interests.num_iterations = UInt32(len(interests_array))
-        interests.interests = [Float32(val) for val in interests_array.flatten()]
-
-        self.pub_ready.publish(Bool(data=ready))
-        self.pub_user_focus.publish(String(data=focus if focus is not None else ""))
-        self.pub_interests.publish(interests)
-        self.pub_focus.publish(String(data=self.learning.get_last_focus()))
-        self.pub_iteration.publish(UInt32(data=self.learning.get_iterations()))
+        if self.learning is not None:
+            with self.lock_iteration:
+                focus = copy(self.focus)
+                ready = copy(self.ready_for_interaction)
+        
+            interests_array = self.learning.get_normalized_interests_evolution()
+            interests = Interests()
+            interests.names = self.learning.get_space_names()
+            interests.num_iterations = UInt32(len(interests_array))
+            interests.interests = [Float32(val) for val in interests_array.flatten()]
+        
+            self.pub_ready.publish(Bool(data=ready))
+            self.pub_user_focus.publish(String(data=focus if focus is not None else ""))
+            self.pub_interests.publish(interests)
+            self.pub_focus.publish(String(data=self.learning.get_last_focus()))
+            self.pub_iteration.publish(UInt32(data=self.learning.get_iterations()))
 
 
     ################################# Service callbacks
@@ -193,13 +199,13 @@ class LearningNode(object):
             rospy.logwarn("Applying time travel to iteration {}".format(set_iteration))
             self.learning.restart_from_file(self.experiment_file, set_iteration)
 
-        # Check if we need a new learner
-        self.update_learner()
-
         return PerceiveResponse()
 
     def cb_produce(self, request):
         with self.lock_iteration:
+            # Check if we need a new learner
+            self.update_learner()
+
             focus = copy(self.focus)
             demonstrate = copy(self.demonstrate)
             self.demonstrate = None

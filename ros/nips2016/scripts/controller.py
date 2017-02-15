@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import json
+import yaml
 from os.path import join
 from rospkg import RosPack
 from nips2016.controller import Perception, Learning, Torso, Ergo
@@ -21,13 +22,15 @@ class Controller(object):
         rospy.loginfo('Controller fully started!')
 
     def run(self):
-        condition = self.experiment['sequence'][self.experiment['current']['condition']]
-        start_trial = self.experiment['sequence'][self.experiment['current']['trial']]
-        start_iteration = self.experiment['sequence'][self.experiment['current']['iteration']]
-        while not rospy.is_shutdown() and self.experiment['current']['condition'] < len(self.experiment['sequence']):
+        start_condition_name = self.experiment['done']['condition']
+        start_condition_id = self.experiment['sequence'].index(start_condition_name)
+        start_trial = self.experiment['done']['trial']
+        start_iteration = self.experiment['done']['iteration']
+        for condition_id in range(start_condition_id, len(self.experiment['sequence'])):
+            condition = self.experiment['sequence'][condition_id]
             params = self.experiment['params'][condition]
-            for trial in range(start_trial, params[condition]['num_trials']):
-                for iteration in range(start_iteration, params[condition]['num_iterations']):
+            for trial in range(start_trial, params['num_trials']):
+                for iteration in range(start_iteration, params['num_iterations']):
                     try:
                         if rospy.is_shutdown():
                             return
@@ -35,17 +38,22 @@ class Controller(object):
                         if iteration % self.params['ergo_reset'] == 1:
                             self.ergo.reset(True)
 
-                        self.execute_iteration(iteration, trial, params[condition])
+                        self.experiment['current'] = {'condition': condition, 'iteration': iteration, 'trial': trial}
+                        rospy.set_param('/nips2016/experiment', self.experiment)
+                        self.execute_iteration(iteration, trial, params)
                     finally:
-                        updated_experiment = deepcopy(self.experiment)
-                        updated_experiment['condition'] = condition
-                        updated_experiment['trial'] = trial
-                        updated_experiment['iteration'] = iteration
-                        rospy.set_param('/nips2016/experiment', updated_experiment)
+                        self.experiment['done']['condition'] = condition
+                        self.experiment['done']['trial'] = trial
+                        self.experiment['done']['iteration'] = iteration
+                        rospy.set_param('/nips2016/experiment', self.experiment)
+                        dump_exp = deepcopy(self.experiment)
+                        del dump_exp['current']
+                        with open(join(self.rospack.get_path('nips2016'), 'config', 'experiment.yaml'), 'w') as f:
+                            yaml.dump(dump_exp, f)
 
     def execute_iteration(self, iteration, trial, params):
-        rospy.logwarn("#### Iteration {}/{} trial {}/{}".format(iteration, params['num_iterations'],
-                                                                trial, params['num_trials']))
+        rospy.logwarn("Controller starts iteration {}/{} trial {}/{}".format(iteration+1, params['num_iterations'],
+                                                                trial+1, params['num_trials']))
         if self.perception.help_pressed():
             rospy.sleep(1.5)  # Wait for the robot to fully stop
             recording = self.perception.record(human_demo=True, nb_points=self.params['nb_points'])
@@ -55,7 +63,7 @@ class Controller(object):
             self.torso.execute_trajectory(trajectory)  # TODO: blocking, non-blocking, action server?
             recording = self.perception.record(human_demo=False, nb_points=self.params['nb_points'])
             recording.demo.torso_demonstration = JointTrajectory()
-            self.torso.reset()
+            self.torso.reset(slow=False)
         self.learning.perceive(recording.demo)  # TODO non-blocking
 
 rospy.init_node("nips2016_controller")
