@@ -133,8 +133,10 @@ class Supervisor(object):
                 else:
                     self.modules[mid].sensorimotor_model.forward(data["sm_data"][mid], iteration)
                     
-                self.modules[mid].interest_model.forward(data["im_data"][mid], self.chosen_modules.count(mid), self.progresses_evolution[mid][-1], self.interests_evolution[mid][-1])
-    
+                if len(self.progresses_evolution[mid]) > 0:
+                    self.modules[mid].interest_model.forward(data["im_data"][mid], self.chosen_modules.count(mid), self.progresses_evolution[mid][-1], self.interests_evolution[mid][-1])
+                else:
+                    self.modules[mid].interest_model.forward(data["im_data"][mid], self.chosen_modules.count(mid), 0, 0)
         
         
     def choose_babbling_module(self, mode='prop'):
