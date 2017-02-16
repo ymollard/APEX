@@ -22,10 +22,10 @@ class Controller(object):
         rospy.loginfo('Controller fully started!')
 
     def run(self):
-        start_condition_name = self.experiment['done']['condition']
+        start_condition_name = self.experiment['current']['condition']
         start_condition_id = self.experiment['sequence'].index(start_condition_name)
-        start_trial = self.experiment['done']['trial']
-        start_iteration = self.experiment['done']['iteration']
+        start_trial = self.experiment['current']['trial']
+        start_iteration = self.experiment['current']['iteration']
         for condition_id in range(start_condition_id, len(self.experiment['sequence'])):
             condition = self.experiment['sequence'][condition_id]
             params = self.experiment['params'][condition]
@@ -35,21 +35,23 @@ class Controller(object):
                         if rospy.is_shutdown():
                             return
 
-                        if iteration % self.params['ergo_reset'] == 1:
+                        if iteration % self.params['ergo_reset'] == self.params['ergo_reset'] - 1:
                             self.ergo.reset(True)
 
                         self.experiment['current'] = {'condition': condition, 'iteration': iteration, 'trial': trial}
                         rospy.set_param('/nips2016/experiment', self.experiment)
                         self.execute_iteration(iteration, trial, params)
                     finally:
-                        self.experiment['done']['condition'] = condition
-                        self.experiment['done']['trial'] = trial
-                        self.experiment['done']['iteration'] = iteration
+                        self.experiment['current']['condition'] = condition
+                        self.experiment['current']['trial'] = trial
+                        self.experiment['current']['iteration'] = iteration
                         rospy.set_param('/nips2016/experiment', self.experiment)
                         dump_exp = deepcopy(self.experiment)
-                        del dump_exp['current']
+                        #del dump_exp['current']
                         with open(join(self.rospack.get_path('nips2016'), 'config', 'experiment.yaml'), 'w') as f:
                             yaml.dump(dump_exp, f)
+                start_iteration = 0
+            start_trial = 0
 
     def execute_iteration(self, iteration, trial, params):
         rospy.logwarn("Controller starts iteration {}/{} trial {}/{}".format(iteration+1, params['num_iterations'],

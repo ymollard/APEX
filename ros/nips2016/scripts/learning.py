@@ -75,7 +75,7 @@ class LearningNode(object):
                     rospy.logwarn("Learner closes and saves condition {} trial {}...".format(self.condition, self.trial+1))
                     self.learning.save(self.experiment_file)
 
-                rospy.logwarn("Learner switches to condition {} trial {}...".format(condition, trial+1))
+                rospy.logwarn("Learner opens condition {} trial {}...".format(condition, trial+1))
                 self.experiment_name = "{}_{}_{}".format(experiment_name, condition, trial)
                 self.experiment_file = join(self.dir, self.experiment_name + '.pickle') # if self.source_name == "none" else self.source_file
 
