@@ -1,9 +1,6 @@
-import os
 import rospy
 import rosnode
 import json
-import pygame
-import pygame.display
 from nips2016.srv import *
 from nips2016.msg import *
 from geometry_msgs.msg import PoseStamped
@@ -13,13 +10,6 @@ from poppy.creatures import PoppyErgoJr
 from rospkg import RosPack
 from os.path import join
 from .button import Button
-
-os.environ["SDL_VIDEODRIVER"] = "dummy"
-try:
-    pygame.display.init()
-except pygame.error:
-    raise pygame.error("Can't connect to the console, from ssh enable -X forwarding")
-pygame.joystick.init()
 
 
 class Ergo(object):
@@ -32,23 +22,27 @@ class Ergo(object):
         self.eef_pub = rospy.Publisher('/nips2016/ergo/end_effector_pose', PoseStamped, queue_size=1)
         self.state_pub = rospy.Publisher('/nips2016/ergo/state', CircularState, queue_size=1)
         self.button_pub = rospy.Publisher('/nips2016/ergo/button', Bool, queue_size=1)
-        self.joy_pub = rospy.Publisher('/nips2016/ergo/joysticks/1', Joy, queue_size=1)
-        self.joy_pub2 = rospy.Publisher('/nips2016/ergo/joysticks/2', Joy, queue_size=1)
+
+        self.joy1_x = 0.
+        self.joy1_y = 0.
+        self.joy2_x = 0.
+        self.joy2_y = 0.
+        rospy.Subscriber('/nips2016/sensors/joystick/1', Joy, self.cb_joy_1)
+        rospy.Subscriber('/nips2016/sensors/joystick/2', Joy, self.cb_joy_2)
+
         self.srv_reset = None
         self.ergo = None
         self.extended = False
         self.standby = False
         self.last_activity = rospy.Time.now()
-        if pygame.joystick.get_count() < 2:
-            rospy.logerr("Ergo: Expecting 2 joysticks but found only {}, exiting".format(pygame.joystick.get_count()))
-            sys.exit(0)
-        else:
-            self.joystick = pygame.joystick.Joystick(0)
-            self.joystick2 = pygame.joystick.Joystick(1)
-            self.joystick.init()
-            self.joystick2.init()
-            rospy.loginfo('Initialized Joystick 1: {}'.format(self.joystick.get_name()))
-            rospy.loginfo('Initialized Joystick 2: {}'.format(self.joystick2.get_name()))
+
+    def cb_joy_1(self, msg):
+        self.joy1_x = msg.axes[0]
+        self.joy1_y = msg.axes[1]
+
+    def cb_joy_2(self, msg):
+        self.joy2_x = msg.axes[0]
+        self.joy2_y = msg.axes[1]
 
     def go_to_start(self, slow=True):
         self.go_to([0.0, -15.4, 35.34, -8.06, -15.69, 71.99], 4 if slow else 1)
@@ -99,20 +93,17 @@ class Ergo(object):
 
         while not rospy.is_shutdown():
             self.go_or_resume_standby()
-            pygame.event.get()
-            x = self.joystick.get_axis(0)
-            y = self.joystick.get_axis(1)
-            self.servo_robot(y, x)
+            self.servo_robot(self.joy1_y, self.joy1_x)
             self.publish_eef()
             self.publish_state()
             self.publish_button()
 
-            # Publishers
-            self.publish_joy(x, y, self.joy_pub)
-            x = self.joystick2.get_axis(0)
-            y = self.joystick2.get_axis(1)
-            self.publish_joy(x, y, self.joy_pub2)
+            # Update the last activity
+            if abs(self.joy1_x) > self.params['min_joy_activity'] or abs(self.joy1_y) > self.params['min_joy_activity']:
+                self.last_activity = rospy.Time.now()
+
             self.rate.sleep()
+
         self.ergo.compliant = True
         self.ergo.close()
 
@@ -166,17 +157,6 @@ class Ergo(object):
         # TODO We might want a better state here, get the arena center, get EEF and do the maths as in environment/get_state
         angle = self.ergo.motors[0].present_position + self.ergo.motors[3].present_position
         self.state_pub.publish(CircularState(angle=angle, extended=self.extended))
-
-    def publish_joy(self, x, y, publisher):
-        # Update the alst activity
-        if abs(x) > self.params['min_joy_activity'] or abs(y) > self.params['min_joy_activity']:
-            self.last_activity = rospy.Time.now()
-
-        joy = Joy()
-        joy.header.stamp = rospy.Time.now()
-        joy.axes.append(x)
-        joy.axes.append(y)
-        publisher.publish(joy)
 
     def _cb_reset(self, request):
         rospy.loginfo("Resetting Ergo...")
