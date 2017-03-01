@@ -1,4 +1,4 @@
-#!/home/poppy/miniconda/bin/python
+#!/usr/bin/env python
 import rospy
 from std_msgs.msg import UInt8
 from colorsys import hsv_to_rgb

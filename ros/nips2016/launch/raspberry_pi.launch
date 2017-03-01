@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="output" default="screen"/> <!-- Set output="log" to mute the screen output -->
+  <arg name="light" default="false"/>
 
   <node name="ergo" pkg="nips2016" type="ergo.py" output="$(arg output)" respawn="true"/>
-  <node name="light_controller" pkg="nips2016" type="light.py" output="$(arg output)" respawn="true"/>
+  <node if="$(arg light)" name="light_controller" pkg="nips2016" type="light.py" launch-prefix="sudo -E PYTHONPATH=$(env PYTHONPATH)" output="$(arg output)" respawn="true"/>
 </launch>
