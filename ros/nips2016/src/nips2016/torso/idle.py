@@ -17,7 +17,7 @@ class UpperBodyIdleMotion(pypot.primitive.LoopPrimitive):
         self.all_sinus = [Sinus(self.robot, 50, **s) for s in sinus_args]
 
     def setup(self):
-        for m in self.robot.torso + self.robot.arms:
+        for m in self.robot.r_arm:
             m.compliant = False
 
         [all_sinus.start() for all_sinus in self.all_sinus]
