@@ -15,13 +15,15 @@ class Perception(object):
         self.rospack = RosPack()
         with open(join(self.rospack.get_path('nips2017'), 'config', 'perception.json')) as f:
             self.params = json.load(f)
+        with open(join(self.rospack.get_path('nips2017'), 'config', 'torso.json')) as f:
+            self.torso_params = json.load(f)
         self.rate = rospy.Rate(self.params['recording_rate'])
 
         # Serving these services
         self.service_name_get = "/nips2017/perception/get"
         self.service_name_record = "/nips2017/perception/record"
         # Using these services
-        self.service_name_set_compliant = "/nips2017/torso/set_compliant"
+        self.service_name_set_compliant = "/{}/left_arm/set_compliant".format(self.torso_params["robot_name"])
         self.topics = TopicAggregator()  # All topics are read and stored in that object
 
     def run(self):

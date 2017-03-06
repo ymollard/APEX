@@ -1,4 +1,5 @@
 {
+  "robot_name": "poppy_ergo_jr",
   "publish_rate": 20,
   "speed": 80,
   "delay_joy": 0.5,

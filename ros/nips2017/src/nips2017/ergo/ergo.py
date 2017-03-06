@@ -1,12 +1,12 @@
 import rospy
 import rosnode
 import json
-from nips2017.srv import *
-from nips2017.msg import *
-from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Joy
+from nips2016.srv import *
+from nips2016.msg import *
+from poppy_msgs.srv import ReachTarget, ReachTargetRequest, SetCompliant, SetCompliantRequest
+from sensor_msgs.msg import Joy, JointState
 from std_msgs.msg import Bool
-from poppy.creatures import PoppyErgoJr
 from rospkg import RosPack
 from os.path import join
 from .button import Button
@@ -19,24 +19,50 @@ class Ergo(object):
             self.params = json.load(f)
         self.button = Button(self.params)
         self.rate = rospy.Rate(self.params['publish_rate'])
-        self.eef_pub = rospy.Publisher('/nips2017/ergo/end_effector_pose', PoseStamped, queue_size=1)
-        self.state_pub = rospy.Publisher('/nips2017/ergo/state', CircularState, queue_size=1)
-        self.button_pub = rospy.Publisher('/nips2017/ergo/button', Bool, queue_size=1)
 
+        # Service callers
+        self.robot_reach_srv_name = '/{}/reach'.format(self.params['robot_name'])
+        self.robot_compliant_srv_name = '/{}/set_compliant'.format(self.params['robot_name'])
+        rospy.loginfo("Ergo node is waiting for poppy controllers...")
+        rospy.wait_for_service(self.robot_reach_srv_name)
+        rospy.wait_for_service(self.robot_compliant_srv_name)
+        self.reach_proxy = rospy.ServiceProxy(self.robot_reach_srv_name, ReachTarget)
+        self.compliant_proxy = rospy.ServiceProxy(self.robot_compliant_srv_name, SetCompliant)
+        rospy.loginfo("Controllers connected!")
+
+        self.state_pub = rospy.Publisher('/nips2016/ergo/state', CircularState, queue_size=1)
+        self.button_pub = rospy.Publisher('/nips2016/ergo/button', Bool, queue_size=1)
+
+        self.goals = []
         self.joy1_x = 0.
         self.joy1_y = 0.
         self.joy2_x = 0.
         self.joy2_y = 0.
         self.motion_started_joy = 0.
-        rospy.Subscriber('/nips2017/sensors/joystick/1', Joy, self.cb_joy_1)
-        rospy.Subscriber('/nips2017/sensors/joystick/2', Joy, self.cb_joy_2)
+        self.js = JointState()
+        rospy.Subscriber('/nips2016/sensors/joysticks/1', Joy, self.cb_joy_1)
+        rospy.Subscriber('/nips2016/sensors/joysticks/2', Joy, self.cb_joy_2)
+        rospy.Subscriber('/{}/joints'.format(self.params['robot_name']), JointState, self.cb_js)
 
         self.t = rospy.Time.now()
         self.srv_reset = None
-        self.ergo = None
         self.extended = False
         self.standby = False
         self.last_activity = rospy.Time.now()
+        self.delta_t = rospy.Time.now()
+
+    def cb_js(self, msg):
+        self.js = msg
+
+    def reach(self, target, duration):
+        js = JointState()
+        js.name = target.keys()
+        js.position = target.values()
+        self.reach_proxy(ReachTargetRequest(target=js,
+                                            duration=rospy.Duration(duration)))
+
+    def set_compliant(self, compliant):
+        self.compliant_proxy(SetCompliantRequest(compliant=compliant))
 
     def cb_joy_1(self, msg):
         self.joy1_x = msg.axes[0]
@@ -51,12 +77,12 @@ class Ergo(object):
 
     def go_to_extended(self):
         extended = {'m2': 60, 'm3': -37, 'm5': -50, 'm6': 96}
-        self.ergo.goto_position(extended, 0.5)
+        self.reach(extended, 0.5)
         self.extended = True
 
     def go_to_rest(self):
         rest = {'m2': -26, 'm3': 59, 'm5': -30, 'm6': 78}
-        self.ergo.goto_position(rest, 0.5)
+        self.reach(rest, 0.5)
         self.extended = False
 
     def is_controller_running(self):
@@ -66,34 +92,22 @@ class Ergo(object):
         recent_activity = rospy.Time.now() - self.last_activity < rospy.Duration(self.params['auto_standby_duration'])
         if recent_activity and self.standby:
             rospy.loginfo("Ergo is resuming from standby")
-            self.ergo.compliant = False
+            self.set_compliant(False)
             self.standby = False
         elif not self.standby and not recent_activity:
             rospy.loginfo("Ergo is entering standby mode")
             self.standby = True
-            self.ergo.compliant = True
+            self.set_compliant(True)
 
         if self.is_controller_running():
             self.last_activity = rospy.Time.now()
 
     def go_to(self, motors, duration):
-        self.ergo.goto_position(dict(zip(['m1', 'm2', 'm3', 'm4', 'm5', 'm6'], motors)), duration)
+        self.goals = motors
+        self.reach(dict(zip(['m1', 'm2', 'm3', 'm4', 'm5', 'm6'], motors)), duration)
         rospy.sleep(duration)
 
-    def force_speeds(self):
-        #pass
-        #print [m.goal_position for m in self.ergo.motors]
-        for m in self.ergo.motors:
-            m.moving_speed = 100
-
-    def run(self, dummy=False):
-        try:
-            self.ergo = PoppyErgoJr(use_http=True, simulator='poppy-simu' if dummy else None, camera='dummy')
-        except IOError as e:
-            rospy.logerr("Ergo hardware failed to init: {}".format(e))
-            return None
-
-        self.ergo.compliant = False
+    def run(self):
         self.go_to_start()
         self.last_activity = rospy.Time.now()
         self.srv_reset = rospy.Service('/nips2017/ergo/reset', Reset, self._cb_reset)
@@ -105,10 +119,8 @@ class Ergo(object):
             self.delta_t = (now - self.t).to_sec()
             self.t = now
 
-            self.force_speeds()
             self.go_or_resume_standby()
             self.servo_robot(self.joy1_y, self.joy1_x)
-            self.publish_eef()
             self.publish_state()
             self.publish_button()
 
@@ -118,12 +130,9 @@ class Ergo(object):
 
             self.rate.sleep()
 
-        self.ergo.compliant = True
-        self.ergo.close()
-
     def servo_axis_rotation(self, x):
         x = x if abs(x) > self.params['sensitivity_joy'] else 0
-        p = self.ergo.motors[0].goal_position
+        p = self.goals[0]
         min_x = self.params['bounds'][0][0] + self.params['bounds'][3][0]
         max_x = self.params['bounds'][0][1] + self.params['bounds'][3][1]
         new_x = min(max(min_x, p + self.params['speed']*x*self.delta_t), max_x)
@@ -134,8 +143,9 @@ class Ergo(object):
         else:
             new_x_m3 = 0
         new_x_m3 = max(min(new_x_m3, self.params['bounds'][3][1]), self.params['bounds'][3][0])
-        self.ergo.motors[0].goto_position(new_x, 1.1*self.delta_t)
-        self.ergo.motors[3].goto_position(new_x_m3, 1.1*self.delta_t)
+        self.reach({'m1': new_x, 'm4': new_x_m3}, 1.1/self.params['publish_rate'])
+        self.goals[0].goto_position(new_x, 1.1*self.delta_t)
+        self.goals[3].goto_position(new_x_m3, 1.1*self.delta_t)
 
     def servo_axis_elongation(self, x):
         if x > self.params['min_joy_elongation']:
@@ -160,23 +170,14 @@ class Ergo(object):
                 self.servo_axis_rotation(y)
                 self.servo_axis_elongation(x)
 
-    def publish_eef(self):
-        pose = PoseStamped()
-        pose.header.frame_id = 'ergo_base'
-        eef_pose = self.ergo.chain.end_effector
-        pose.header.stamp = rospy.Time.now()
-        pose.pose.position.x = eef_pose[0]
-        pose.pose.position.y = eef_pose[1]
-        pose.pose.position.z = eef_pose[2]
-        self.eef_pub.publish(pose)
-
     def publish_button(self):
         self.button_pub.publish(Bool(data=self.button.pressed))
 
     def publish_state(self):
         # TODO We might want a better state here, get the arena center, get EEF and do the maths as in environment/get_state
-        angle = self.ergo.motors[0].present_position + self.ergo.motors[3].present_position
-        self.state_pub.publish(CircularState(angle=angle, extended=self.extended))
+        if 'm1' in self.js.name and 'm4' in self.js.name:
+            angle = self.js.position[0] + self.js.position[3]
+            self.state_pub.publish(CircularState(angle=angle, extended=self.extended))
 
     def _cb_reset(self, request):
         rospy.loginfo("Resetting Ergo...")

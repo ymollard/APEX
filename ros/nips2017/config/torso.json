@@ -1,4 +1,5 @@
 {
+  "robot_name": "poppy_torso",
   "publish_rate": 30,
   "speed": 6,
   "torques": 20
