@@ -9,6 +9,7 @@ from threading import RLock
 from rospkg import RosPack
 from os.path import join
 from threading import Thread
+from .idle import UpperBodyIdleMotion, HeadIdleMotion
 
 
 class Torso(object):
@@ -31,6 +32,9 @@ class Torso(object):
         self.srv_reset = None
         self.srv_execute = None
         self.srv_set_compliant = None
+
+        self.primitive_head = None
+        self.primitive_right = None
 
         # Protected resources
         self.torso = None
@@ -81,6 +85,10 @@ class Torso(object):
             return None
         else:
             self.go_to_start()
+            self.primitive_head = UpperBodyIdleMotion(self.torso, 15)
+            self.primitive_right = HeadIdleMotion(self.torso, 15)
+            self.primitive_head.start()
+            self.primitive_right.start()
 
         try:
             self.set_torque_limits()
@@ -99,6 +107,8 @@ class Torso(object):
                 self.publish_js()
                 self.publish_rate.sleep()
         finally:
+            self.primitive_right.stop()
+            self.primitive_head.stop()
             self.torso.close()
 
     def publish_eef(self, eef_pose, publisher):
