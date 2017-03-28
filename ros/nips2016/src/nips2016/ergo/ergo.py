@@ -137,8 +137,13 @@ class Ergo(object):
             self.ergo.motors[id].goto_position(new_x, 1.1/self.params['publish_rate'])
 
     def servo_robot(self, x, y):
-        self.servo_axis_rotation(-x)
-        self.servo_axis_elongation(y)
+        if self.params['control_joystick_id'] == 2:
+            self.servo_axis_rotation(-x)
+            self.servo_axis_elongation(y)
+        else:
+            self.servo_axis_rotation(y)
+            self.servo_axis_elongation(x)
+
 
     def publish_eef(self):
         pose = PoseStamped()

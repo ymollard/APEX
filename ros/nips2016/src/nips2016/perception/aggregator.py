@@ -12,8 +12,8 @@ class TopicAggregator(object):
             "light": {"topic": "/nips2016/environment/light", "sub": None, "data": UInt8(), "type": UInt8},
             "sound": {"topic": "/nips2016/environment/sound", "sub": None, "data": Float32(), "type": Float32},
             "ergo_state": {"topic": "/nips2016/ergo/state", "sub": None, "data": CircularState(), "type": CircularState},
-            "joy1": {"topic": "/nips2016/ergo/joysticks/1", "sub": None, "data": Joy(), "type": Joy},
-            "joy2": {"topic": "/nips2016/ergo/joysticks/2", "sub": None, "data": Joy(), "type": Joy},
+            "joy1": {"topic": "/nips2016/sensors/joystick/1", "sub": None, "data": Joy(), "type": Joy},
+            "joy2": {"topic": "/nips2016/sensors/joystick/2", "sub": None, "data": Joy(), "type": Joy},
             "torso_l_j": {"topic": "/nips2016/torso/left_arm/joints", "sub": None, "data": JointState(), "type": JointState},
             "torso_l_eef": {"topic": "/nips2016/torso/left_arm/end_effector_pose", "sub": None, "data": PoseStamped(), "type": PoseStamped},
             "torso_r_eef": {"topic": "/nips2016/torso/right_arm/end_effector_pose", "sub": None, "data": PoseStamped(), "type": PoseStamped}
