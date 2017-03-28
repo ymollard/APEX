@@ -37,7 +37,23 @@ class Torso(object):
         self.in_rest_pose = False
         self.robot_lock = RLock()
 
-
+    def go_to_start(self, duration=5):
+        d = {"abs_z": 75,
+             "bust_y": 0,
+             "bust_x": 0,
+             "head_z": 0,
+             "head_y": -0,
+             "l_shoulder_y": 0,
+             "l_shoulder_x": 0,
+             "l_arm_z": 20,
+             "l_elbow_y": 0,
+             "r_shoulder_y": 0,
+             "r_shoulder_x": 0,
+             "r_arm_z": 0,
+             "r_elbow_y": 0}
+        self.torso.compliant = False
+        self.torso.goto_position(d, duration)
+        rospy.sleep(duration)
 
     def go_to_rest(self, slow):
         with self.robot_lock:
@@ -52,11 +68,6 @@ class Torso(object):
             self.in_rest_pose = True
             self.set_torque_limits()
 
-    def go_to(self, motors, duration):
-        motors_dict = dict(zip([m.name for m in self.torso.motors], motors))
-        self.torso.goto_position(motors_dict, duration)
-        rospy.sleep(duration)
-
     def set_torque_limits(self, value=None):
         for m in self.torso.l_arm:
             m.torque_limit = self.params['torques'] if value is None else value
@@ -69,8 +80,7 @@ class Torso(object):
             rospy.logerr("Torso failed to init: {}".format(e))
             return None
         else:
-            self.go_to([90, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0], 4)
-
+            self.go_to_start()
 
         try:
             self.set_torque_limits()
