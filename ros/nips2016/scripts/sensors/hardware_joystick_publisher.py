@@ -36,6 +36,12 @@ class HardwareJoystickPublisher(object):
             self.joystick2 = pygame.joystick.Joystick(1)
             self.joystick.init()
             self.joystick2.init()
+
+            if self.params['useless_joystick_id'] != int(self.joystick2.get_name()[-1]):
+                useless_joy = self.joystick
+                self.joystick = self.joystick2
+                self.joystick2 = useless_joy
+
             rospy.loginfo('Initialized Joystick 1: {}'.format(self.joystick.get_name()))
             rospy.loginfo('Initialized Joystick 2: {}'.format(self.joystick2.get_name()))
 
