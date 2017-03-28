@@ -10,7 +10,7 @@ class Supervisor(object):
         
         self.config = config
         self.babbling_mode = "prop" if babbling_mode == "active" else "random"
-        self.n_motor_babbling = n_motor_babbling
+        self.n_motor_babbling = 0.1
         self.explo_noise = explo_noise
         self.choice_eps = choice_eps,
         self.normalize_interests = normalize_interests
@@ -206,7 +206,7 @@ class Supervisor(object):
             
             
     def produce(self, context, space=None):
-        if self.t < self.n_motor_babbling:
+        if np.random.random() < self.n_motor_babbling:
             self.mid_control = None
             self.chosen_modules.append("motor_babbling")
             return self.motor_babbling()
