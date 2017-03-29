@@ -112,8 +112,9 @@ class LearningNode(object):
                 self.publish()
                 rate.sleep()
         finally:
-            rospy.loginfo("Saving file before exit into {}".format(self.experiment_file))
-            self.learning.save(self.experiment_file)
+            if self.learning is not None:
+                rospy.loginfo("Saving file before exit into {}".format(self.experiment_file))
+                self.learning.save(self.experiment_file)
 
     def publish(self):
         if self.learning is not None:

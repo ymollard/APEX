@@ -254,7 +254,7 @@ class Supervisor(object):
         s = self.sensory_primitive(s)
         #print "perceive len(s)", len(s), s[92:112]
         if j_demo or self.ball_moves(s[92:112]):
-            time.sleep(3)
+            time.sleep(5)
         if m_demo is not None:
             ms = self.set_ms(m_demo, s)
             self.update_sensorimotor_models(ms)

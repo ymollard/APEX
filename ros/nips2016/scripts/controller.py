@@ -26,6 +26,7 @@ class Controller(object):
         start_condition_id = self.experiment['sequence'].index(start_condition_name)
         start_trial = self.experiment['current']['trial']
         start_iteration = self.experiment['current']['iteration']
+        self.ergo.reset(True)
         for condition_id in range(start_condition_id, len(self.experiment['sequence'])):
             condition = self.experiment['sequence'][condition_id]
             params = self.experiment['params'][condition]
@@ -37,6 +38,7 @@ class Controller(object):
 
                         if iteration % self.params['ergo_reset'] == self.params['ergo_reset'] - 1:
                             self.ergo.reset(True)
+                            rospy.sleep(5)
 
                         self.experiment['current'] = {'condition': condition, 'iteration': iteration, 'trial': trial}
                         rospy.set_param('/nips2016/experiment', self.experiment)
