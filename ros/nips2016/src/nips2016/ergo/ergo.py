@@ -78,6 +78,12 @@ class Ergo(object):
         self.ergo.goto_position(dict(zip(['m1', 'm2', 'm3', 'm4', 'm5', 'm6'], motors)), duration)
         rospy.sleep(duration)
 
+    def force_speeds(self):
+        #pass
+        #print [m.goal_position for m in self.ergo.motors]
+        for m in self.ergo.motors:
+            m.moving_speed = 100
+
     def run(self, dummy=False):
         try:
             self.ergo = PoppyErgoJr(use_http=True, simulator='poppy-simu' if dummy else None, camera='dummy')
@@ -92,6 +98,7 @@ class Ergo(object):
         rospy.loginfo('Ergo is ready and starts joystick servoing...')
 
         while not rospy.is_shutdown():
+            self.force_speeds()
             self.go_or_resume_standby()
             self.servo_robot(self.joy1_y, self.joy1_x)
             self.publish_eef()

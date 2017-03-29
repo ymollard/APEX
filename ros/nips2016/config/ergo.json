@@ -1,5 +1,5 @@
 {
-  "publish_rate": 10,
+  "publish_rate": 20,
   "speed": 100,
   "sensitivity_joy": 0.1,
   "button_pin": 21,
