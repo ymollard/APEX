@@ -1,6 +1,7 @@
 {
   "publish_rate": 20,
   "speed": 100,
+  "delay_joy": 1.0,
   "sensitivity_joy": 0.1,
   "button_pin": 21,
   "control_joystick_id" : 1,

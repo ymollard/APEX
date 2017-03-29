@@ -27,6 +27,7 @@ class Ergo(object):
         self.joy1_y = 0.
         self.joy2_x = 0.
         self.joy2_y = 0.
+        self.motion_started_joy = 0.
         rospy.Subscriber('/nips2016/sensors/joystick/1', Joy, self.cb_joy_1)
         rospy.Subscriber('/nips2016/sensors/joystick/2', Joy, self.cb_joy_2)
 
@@ -144,13 +145,21 @@ class Ergo(object):
             self.ergo.motors[id].goto_position(new_x, 1.1/self.params['publish_rate'])
 
     def servo_robot(self, x, y):
-        if self.params['control_joystick_id'] == 2:
-            self.servo_axis_rotation(-x)
-            self.servo_axis_elongation(y)
-        else:
-            self.servo_axis_rotation(y)
-            self.servo_axis_elongation(x)
+        now = rospy.Time.now().to_sec()
+        max_abs = max(abs(y), abs(x))
+        if max_abs > self.params['sensitivity_joy'] and self.motion_started_joy == 0.:
+            self.motion_started_joy = now
 
+        elif max_abs < self.params['sensitivity_joy'] and self.motion_started_joy > 0.:
+            self.motion_started_joy = 0.
+
+        elif self.motion_started_joy > 0. and now - self.motion_started_joy > self.params['delay_joy']:
+            if self.params['control_joystick_id'] == 2:
+                self.servo_axis_rotation(-x)
+                self.servo_axis_elongation(y)
+            else:
+                self.servo_axis_rotation(y)
+                self.servo_axis_elongation(x)
 
     def publish_eef(self):
         pose = PoseStamped()
