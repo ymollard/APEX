@@ -8,6 +8,7 @@ from numpy import arctan2, sqrt, pi
 class EnvironmentConversions(object):
     def __init__(self):
         self.rospack = RosPack()
+        self.last_angle = None
         with open(join(self.rospack.get_path('nips2016'), 'config', 'environment.json')) as f:
             self.params = json.load(f)
 
@@ -24,12 +25,19 @@ class EnvironmentConversions(object):
         state.angle = theta
         return state
 
-    @staticmethod
-    def ball_to_color(state):
+    def ball_to_color(self, state):
         """
         Reduce the given 2D ball position in color
         :param state: the requested circular state of the ball
         :return: hue value designating the color in [0, 255]
         """
-        hue = min(255, max(0, int((state.angle + pi)*255/(2*pi))))
+        max_speed = 0.2
+        min_speed = 0.05
+        if self.last_angle is None:
+            hue = 0
+        else:
+            distance = abs(state.angle-self.last_angle)
+            speed = max(min_speed, min(max_speed, min(distance, 2*pi-distance)))
+            hue = int((speed - min_speed)/(max_speed - min_speed)*255)
+        self.last_angle = state.angle
         return hue
