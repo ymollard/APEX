@@ -31,8 +31,8 @@ class EnvironmentConversions(object):
         :param state: the requested circular state of the ball
         :return: hue value designating the color in [0, 255]
         """
-        max_speed = 0.2
-        min_speed = 0.05
+        max_speed = 0.25
+        min_speed = 0.07
         if self.last_angle is None:
             hue = 0
         else:

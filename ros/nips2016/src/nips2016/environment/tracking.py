@@ -57,8 +57,9 @@ class BallTracking(object):
                 cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
                 cv2.circle(frame, center, 5, (0, 0, 255), -1)
                 self.pts[name].appendleft(center)
-                return (int(np.mean([self.pts[name][i][0] for i in range(min(4, len(self.pts[name])))])),
-                        int(np.mean([self.pts[name][i][1] for i in range(min(4, len(self.pts[name])))]))), radius
+                smooth_points = 8
+                return (int(np.mean([self.pts[name][i][0] for i in range(min(smooth_points, len(self.pts[name])))])),
+                        int(np.mean([self.pts[name][i][1] for i in range(min(smooth_points, len(self.pts[name])))]))), radius
         return None, None
 
     def draw_images(self, frame, hsv, mask_ball, mask_arena, arena_center, arena_ring_radius=None):
