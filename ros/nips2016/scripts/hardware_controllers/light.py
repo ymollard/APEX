@@ -34,7 +34,8 @@ class LightController(object):
         disabled_range = [30, 100]
         hue = self.cut_light_ranges(msg.data, disabled_range)
         hue = hue/255.  # Hue between (0., 1.)
-        r, g, b = map(int, hsv_to_rgb(hue, 1, 255))
+        #r, g, b = map(int, hsv_to_rgb(hue, 1, 255))
+        r, g, b = map(int, hsv_to_rgb(0, 0, msg.data))
         self.set_all(r, g, b)
 
     def set_all(self, r, g, b):

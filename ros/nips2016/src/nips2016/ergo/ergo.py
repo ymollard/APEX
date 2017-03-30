@@ -31,6 +31,7 @@ class Ergo(object):
         rospy.Subscriber('/nips2016/sensors/joystick/1', Joy, self.cb_joy_1)
         rospy.Subscriber('/nips2016/sensors/joystick/2', Joy, self.cb_joy_2)
 
+        self.t = rospy.Time.now()
         self.srv_reset = None
         self.ergo = None
         self.extended = False
@@ -97,8 +98,13 @@ class Ergo(object):
         self.last_activity = rospy.Time.now()
         self.srv_reset = rospy.Service('/nips2016/ergo/reset', Reset, self._cb_reset)
         rospy.loginfo('Ergo is ready and starts joystick servoing...')
+        self.t = rospy.Time.now()
 
         while not rospy.is_shutdown():
+            now = rospy.Time.now()
+            self.delta_t = (now - self.t).to_sec()
+            self.t = now
+
             self.force_speeds()
             self.go_or_resume_standby()
             self.servo_robot(self.joy1_y, self.joy1_x)
@@ -120,7 +126,7 @@ class Ergo(object):
         p = self.ergo.motors[0].goal_position
         min_x = self.params['bounds'][0][0] + self.params['bounds'][3][0]
         max_x = self.params['bounds'][0][1] + self.params['bounds'][3][1]
-        new_x = min(max(min_x, p + self.params['speed']*x/self.params['publish_rate']), max_x)
+        new_x = min(max(min_x, p + self.params['speed']*x*self.delta_t), max_x)
         if new_x > self.params['bounds'][0][1]:
             new_x_m3 = new_x - self.params['bounds'][0][1]
         elif new_x < self.params['bounds'][0][0]:
@@ -128,21 +134,14 @@ class Ergo(object):
         else:
             new_x_m3 = 0
         new_x_m3 = max(min(new_x_m3, self.params['bounds'][3][1]), self.params['bounds'][3][0])
-        self.ergo.motors[0].goto_position(new_x, 1.1/self.params['publish_rate'])
-        self.ergo.motors[3].goto_position(new_x_m3, 1.1/self.params['publish_rate'])
+        self.ergo.motors[0].goto_position(new_x, 1.1*self.delta_t)
+        self.ergo.motors[3].goto_position(new_x_m3, 1.1*self.delta_t)
 
     def servo_axis_elongation(self, x):
         if x > self.params['min_joy_elongation']:
             self.go_to_extended()
         else:
             self.go_to_rest()
-
-    def servo_axis(self, x, id):
-        x = x if abs(x) > self.params['sensitivity_joy'] else 0
-        p = self.ergo.motors[id].goal_position
-        new_x = p + self.params['speed']*x/self.params['publish_rate']
-        if self.params['bounds'][id][0] < new_x < self.params['bounds'][id][1]:
-            self.ergo.motors[id].goto_position(new_x, 1.1/self.params['publish_rate'])
 
     def servo_robot(self, x, y):
         now = rospy.Time.now().to_sec()
