@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
-log_file = '/home/sforesti/scm/Flowers/NIPS2016/data/2016-11-30_11-17-25_v5_with_hand.pickle'
+log_file = '/home/sforesti/scm/Flowers/NIPS2017/data/2016-11-30_11-17-25_v5_with_hand.pickle'
 
 
 import brewer2mpl

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="output" default="screen"/> <!-- Set output="log" to mute the screen output -->
+  <arg name="debug" default="True"/> <!-- Enable debugging information and pictures -->
+  <arg name="source" default="none"/> <!-- Source of pre-planned data for this experiment -->
+  <arg name="name" default="experiment"/> <!-- Name of the experiment -->
+
+  <param name="/nips2017/perception/debug" value="$(arg debug)" />
+  <param name="/nips2017/experiment_name" value="$(arg name)" />
+  <param name="/nips2017/source_name" value="$(arg source)" />
+
+  <rosparam command="load" param="/nips2017/experiment" file="$(find nips2017)/config/experiment.yaml" />
+
+  <node name="environment" pkg="nips2017" type="environment.py" output="$(arg output)"/>
+  <node name="perception" pkg="nips2017" type="perception.py" output="$(arg output)"/>
+  <node name="torso" pkg="nips2017" type="torso.py" output="$(arg output)" respawn="true"/>
+  <node name="learning" pkg="nips2017" type="learning.py" output="$(arg output)" required="true"/>
+  <node name="user" pkg="nips2017" type="user.py" output="$(arg output)" respawn="true"/>
+  <node name="sound" pkg="nips2017" type="sound.py" output="$(arg output)" respawn="true"/>
+</launch>

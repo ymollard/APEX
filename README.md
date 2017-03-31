@@ -1,4 +1,4 @@
-# NIPS2016
+# NIPS2017
 Autonomous exploration, active learning and human guidance with open-source Poppy humanoid robot platform and Explauto library.
 The folder [ros](ros) contains a ROS package to be symlinked to your ROS workspace.
 
@@ -9,7 +9,7 @@ The folder [ros](ros) contains a ROS package to be symlinked to your ROS workspa
   - clone https://github.com/ros/common_msgs.git
   - Set `export LC_ALL=C` in bashrc to prevent `terminate called after throwing an instance of 'std::runtime_error'   what():  locale::facet::_S_create_c_locale name not valid` errors 
   - Add the NIPS package to ros_ws/src now
-  -  `catkin_make_isolated --pkg nips2016` 
+  -  `catkin_make_isolated --pkg nips2017` 
   - `sudo apt-get install swig scons`
   - `pip install RPi.GPIO`
   - `cd ~/Repos && git clone https://github.com/ymollard/rpi_ws281x.git`
@@ -21,7 +21,7 @@ The folder [ros](ros) contains a ROS package to be symlinked to your ROS workspa
 ```
 sudo apt-get install python-pyaudio
 sudo pip install flask flask-cors
-ln -s ~/NIPS2016/ros/workstation.sh ~/catkin_ws/fuzz.sh
+ln -s ~/NIPS2017/ros/workstation.sh ~/catkin_ws/fuzz.sh
 ```
 
 # Launch the process
@@ -31,7 +31,7 @@ ln -s ~/NIPS2016/ros/workstation.sh ~/catkin_ws/fuzz.sh
 ssh root@fuzz.local -X
 cd /home/poppy/ros_ws/
 ./fuzz.sh
-roslaunch nips2016 raspberry_pi.launch
+roslaunch nips2017 raspberry_pi.launch
 ```
 
 ## Workstation part
@@ -45,13 +45,13 @@ Then choose to start either the services/publishers OR the full experiment (serv
 
 ### Services and publishers only
 ```
-roslaunch nips2016 workstation.launch
+roslaunch nips2017 workstation.launch
 ```
 You are then able to monitor topics and call services of all nodes running on the workstation:
 
 ### Full experiment: services, publishers and controller
 ```
-roslaunch nips2016 start.launch
+roslaunch nips2017 start.launch
 ```
 You can also pass the following arguments:
  - `source:=string` that will be used as a source experiment in case of time travel
@@ -60,10 +60,10 @@ You can also pass the following arguments:
  
  For example:
 ```
-roslaunch nips2016 start.launch name:=new_experiment old:=2016-11-29_14-48-12_old_experiment iterations:=6000
+roslaunch nips2017 start.launch name:=new_experiment old:=2016-11-29_14-48-12_old_experiment iterations:=6000
 ```
 ### Results folder
 ```
-roscd nips2016/logs
+roscd nips2017/logs
 ```
 This command will bring you to the folder containing recored experiments, if any.
