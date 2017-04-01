@@ -11,8 +11,8 @@ bmap = brewer2mpl.get_map('Dark2', 'qualitative', 8)
 colors = {
       "motor_babbling":bmap.mpl_colors[0], 
       "Hand": bmap.mpl_colors[1], 
-      "Joystick_1": bmap.mpl_colors[2], 
-      "Joystick_2":bmap.mpl_colors[3], 
+      "Joystick_L": bmap.mpl_colors[2], 
+      "Joystick_R":bmap.mpl_colors[3], 
       "Ergo":bmap.mpl_colors[4], 
       "Ball":bmap.mpl_colors[5], 
       "Light":bmap.mpl_colors[6], 
@@ -39,11 +39,14 @@ def discovery(data):
     result = [0.]
     for i in range(1, n):
         x = data[i]
-        min_dist = np.inf
-        for j in range(i):
-            y = data[j]
-            min_dist = min(min_dist, np.linalg.norm(np.array(x) - np.array(y)))
-        result.append(min_dist)    
+        if np.linalg.norm(np.array(x)[::2] - np.mean(np.array(x)[::2])) < 0.01 and np.linalg.norm(np.array(x)[1::2] - np.mean(np.array(x)[1::2])) < 0.01:
+            result.append(0.)
+        else:
+            min_dist = np.inf
+            for j in range(i):
+                y = data[j]
+                min_dist = min(min_dist, np.linalg.norm(np.array(x) - np.array(y)))
+            result.append(min_dist)    
     return result
 
 def dist(x, grid):
@@ -54,7 +57,7 @@ def dist(x, grid):
               
     
 
-if False:
+if True:
 
     
     explo = {}
@@ -62,16 +65,16 @@ if False:
     explo_discovery = {}
     
     explo['Hand'] = {}
-    explo['Joystick_1'] = {}
-    explo['Joystick_2'] = {}
+    explo['Joystick_L'] = {}
+    explo['Joystick_R'] = {}
     explo['Ergo'] = {}
     explo['Ball'] = {}
     explo['Light'] = {}
     explo['Sound'] = {}
     
     explo_gain['Hand'] = {}
-    explo_gain['Joystick_1'] = {}
-    explo_gain['Joystick_2'] = {}
+    explo_gain['Joystick_L'] = {}
+    explo_gain['Joystick_R'] = {}
     explo_gain['Ergo'] = {}
     explo_gain['Ball'] = {}
     explo_gain['Light'] = {}
@@ -82,16 +85,16 @@ if False:
         
     
         explo['Hand'][config] = {}
-        explo['Joystick_1'][config] = {}
-        explo['Joystick_2'][config] = {}
+        explo['Joystick_L'][config] = {}
+        explo['Joystick_R'][config] = {}
         explo['Ergo'][config] = {}
         explo['Ball'][config] = {}
         explo['Light'][config] = {}
         explo['Sound'][config] = {}
         
         explo_gain['Hand'][config] = {}
-        explo_gain['Joystick_1'][config] = {}
-        explo_gain['Joystick_2'][config] = {}
+        explo_gain['Joystick_L'][config] = {}
+        explo_gain['Joystick_R'][config] = {}
         explo_gain['Ergo'][config] = {}
         explo_gain['Ball'][config] = {}
         explo_gain['Light'][config] = {}
@@ -115,16 +118,16 @@ if False:
             
             dims = {"motor_babbling":"motor_babbling",
                     "Hand":"mod1",
-                        "Joystick_1":"mod2",
-                        "Joystick_2":"mod3",
-                        "Ergo":"mod4",
-                        "Ball":"mod5",
-                        "Light":"mod6",
-                        "Sound":"mod7"}
+                    "Joystick_L":"mod3",
+                    "Joystick_R":"mod2",
+                    "Ergo":"mod4",
+                    "Ball":"mod5",
+                    "Light":"mod6",
+                    "Sound":"mod7"}
             
             cdims = dict(Hand=0,
-                        Joystick_1=0,
-                        Joystick_2=0,
+                        Joystick_L=0,
+                        Joystick_R=0,
                         Ergo=1,
                         Ball=2,
                         Light=2,
@@ -143,25 +146,34 @@ if False:
                     explo_discovery[config][trial][s_space1][s_space2] = np.zeros(10)
                     
             for i in range(1,n-1):
+#                 if abs(log["sm_data"]["mod4"][1][i][0] - log["sm_data"]["mod4"][1][i][-2]) > 0.1 or i in [321, 322]:
+#                     print i, "\nJ1:", log["sm_data"]["mod2"][1][i]
+#                     print i, "\nJ2:", log["sm_data"]["mod3"][1][i]
+#                     print i, "\nErgo:", log["sm_data"]["mod4"][1][i]
+#                     print i, "\nBall:", log["sm_data"]["mod5"][1][i]
                 for s_space1 in explo_discovery[config][trial].keys():
                     mid = dims[s_space1]
                     if mid == log["chosen_modules"][i]:
                         for s_space2 in explo.keys():
                             #print
                             g = explo_gain[s_space2][config][trial][i]
-                            if g > 0.01:
+                            if g > 0 and s_space2 in ["Joystick_L", "Joystick_R", "Ergo"]:
                                 m = log["sm_data"]["mod1"][0][i]
-                                print "Iteration:", i, ", Chosen space:", s_space1, ", Gain in", s_space2, ":", g, m[:5]
+                                print "Iteration:", i, ", Chosen space:", s_space1, ", Gain in", s_space2, ":", g#, m[:5]
+#                                 print i, "\nJR:", log["sm_data"]["mod2"][1][i]
+#                                 print i, "\nJL:", log["sm_data"]["mod3"][1][i]
+#                                 print i, "\nErgo:", log["sm_data"]["mod4"][1][i]
+#                                 print i, "\nBall:", log["sm_data"]["mod5"][1][i]
                             if g > 0:
                                 explo_discovery[config][trial][s_space1][s_space2][i/(n/10)] += g
                     
                     
             for s_space1 in explo_discovery[config][trial].keys():
-                print trial, s_space1, [log["chosen_modules"][i*(n/10):(i+1)*(n/10)].count(dims[s_space1]) for i in range(10)]
+                #print trial, s_space1, [log["chosen_modules"][i*(n/10):(i+1)*(n/10)].count(dims[s_space1]) for i in range(10)]
                 for s_space2 in explo.keys():
                     explo_discovery[config][trial][s_space1][s_space2] /= [log["chosen_modules"][i*(n/10):(i+1)*(n/10)].count(dims[s_space1]) for i in range(10)]
-                    if s_space2 == "Hand":
-                        print "   ", s_space2, explo_discovery[config][trial][s_space1][s_space2]
+#                     if s_space2 == "Hand":
+#                         print "   ", s_space2, explo_discovery[config][trial][s_space1][s_space2]
                     
                     
     with open(path + 'analysis_explo_discovery.pickle', 'wb') as f:
@@ -179,8 +191,8 @@ else:
     labels = {
               "motor_babbling":"$Random$", 
               "Hand": "$Hand$", 
-              "Joystick_1": "$Joystick_1$", 
-              "Joystick_2":"$Joystick_2$", 
+              "Joystick_L": "$Joystick_L$", 
+              "Joystick_R":"$Joystick_R$", 
               "Ergo":"$Ergo$", 
               "Ball":"$Ball$", 
               "Light":"$Light$", 
@@ -190,16 +202,16 @@ else:
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
     
-    for s_space2 in ["Hand", "Joystick_1", "Joystick_2", "Ergo", "Ball"]:#, "Light", "Sound"]:
+    for s_space2 in ["Hand", "Joystick_L", "Joystick_R", "Ergo", "Ball"]:#, "Light", "Sound"]:
             
                 
         fig, ax = plt.subplots()
         fig.canvas.set_window_title(s_space2)
         plt.title("Discoveries in $"+s_space2+"$ space, while exploring...", fontsize=24)
 
-        total_explo_s_space2 = np.sum([[explo_discovery[config][trial][s_space1][s_space2] for trial in range(configs[config])] for s_space1 in ["motor_babbling", "Hand", "Joystick_1", "Joystick_2", "Ergo", "Ball", "Light", "Sound"]])
+        total_explo_s_space2 = np.sum([[explo_discovery[config][trial][s_space1][s_space2] for trial in range(configs[config])] for s_space1 in ["motor_babbling", "Hand", "Joystick_L", "Joystick_R", "Ergo", "Ball", "Light", "Sound"]])
             
-        for s_space1 in ["motor_babbling", "Hand", "Joystick_1", "Joystick_2", "Ergo", "Ball"]:#, "Light", "Sound"]:
+        for s_space1 in ["motor_babbling", "Hand", "Joystick_L", "Joystick_R", "Ergo", "Ball"]:#, "Light", "Sound"]:
 #             if s_space1 == "Hand" and s_space2 == "Ball":
 #                 print s_space1, s_space2, [explo_discovery[config][trial][s_space1][s_space2] for trial in range(configs[config])]
             plt.plot(np.linspace(n/10, n, 10), 100. * np.sum([explo_discovery[config][trial][s_space1][s_space2] for trial in range(configs[config])], axis=0) / total_explo_s_space2, lw=3, color=colors[s_space1], label=labels[s_space1])
