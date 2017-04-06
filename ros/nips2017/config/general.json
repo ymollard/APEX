@@ -1,4 +1,6 @@
 {
   "nb_points": 30,
-  "ergo_reset": 40
+  "ergo_reset": 40,
+  "recording_rate": 6,
+  "divider_nb_points_sensory": 3
 }

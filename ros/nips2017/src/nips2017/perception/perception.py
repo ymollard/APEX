@@ -13,7 +13,7 @@ from ..tools import joints
 class Perception(object):
     def __init__(self):
         self.rospack = RosPack()
-        with open(join(self.rospack.get_path('nips2017'), 'config', 'perception.json')) as f:
+        with open(join(self.rospack.get_path('nips2017'), 'config', 'general.json')) as f:
             self.params = json.load(f)
         with open(join(self.rospack.get_path('nips2017'), 'config', 'torso.json')) as f:
             self.torso_params = json.load(f)

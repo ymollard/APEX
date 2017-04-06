@@ -19,6 +19,8 @@ class EnvironmentTranslator(object):
         self.rospack = RosPack()
         with open(join(self.rospack.get_path('nips2017'), 'config', 'bounds.json')) as f:
             self.bounds = json.load(f)
+        with open(join(self.rospack.get_path('nips2017'), 'config', 'general.json')) as f:
+            self.params = json.load(f)
         self.bounds_motors_min = np.array([float(bound[0]) for bound in self.bounds['motors']['positions']])
         self.bounds_motors_max = np.array([float(bound[1]) for bound in self.bounds['motors']['positions']])
         self.bounds_sensory_min = [d for space in ['hand', 'joystick_1', 'joystick_2', 'ergo', 'ball', 'light', 'sound'] for d in [float(bound[0])for bound in self.bounds['sensory'][space]]*10]
@@ -96,7 +98,9 @@ class EnvironmentTranslator(object):
         traj = JointTrajectory()
         traj.header.stamp = rospy.Time.now()
         traj.joint_names = ['l_shoulder_y', 'l_shoulder_x', 'l_arm_z', 'l_elbow_y']
-        traj.points = [JointTrajectoryPoint(positions=list(matrix_traj[point])) for point in range(len(matrix_traj))]
+        for point in range(len(matrix_traj)):
+            traj.points.append(JointTrajectoryPoint(positions=list(matrix_traj[point]),
+                                                    time_from_start=rospy.Duration(float(point)/self.params['recording_rate'])))
         return traj
 
     def trajectory_msg_to_matrix(self, trajectory):
