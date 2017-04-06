@@ -2,8 +2,8 @@ import rospy
 import rosnode
 import json
 from sensor_msgs.msg import Joy
-from nips2016.srv import *
-from nips2016.msg import *
+from nips2017.srv import *
+from nips2017.msg import *
 from poppy_msgs.srv import ReachTarget, ReachTargetRequest, SetCompliant, SetCompliantRequest
 from sensor_msgs.msg import Joy, JointState
 from std_msgs.msg import Bool
@@ -30,8 +30,8 @@ class Ergo(object):
         self.compliant_proxy = rospy.ServiceProxy(self.robot_compliant_srv_name, SetCompliant)
         rospy.loginfo("Controllers connected!")
 
-        self.state_pub = rospy.Publisher('/nips2016/ergo/state', CircularState, queue_size=1)
-        self.button_pub = rospy.Publisher('/nips2016/ergo/button', Bool, queue_size=1)
+        self.state_pub = rospy.Publisher('/nips2017/ergo/state', CircularState, queue_size=1)
+        self.button_pub = rospy.Publisher('/nips2017/ergo/button', Bool, queue_size=1)
 
         self.goals = []
         self.joy1_x = 0.
@@ -40,8 +40,8 @@ class Ergo(object):
         self.joy2_y = 0.
         self.motion_started_joy = 0.
         self.js = JointState()
-        rospy.Subscriber('/nips2016/sensors/joysticks/1', Joy, self.cb_joy_1)
-        rospy.Subscriber('/nips2016/sensors/joysticks/2', Joy, self.cb_joy_2)
+        rospy.Subscriber('/nips2017/sensors/joystick/1', Joy, self.cb_joy_1)
+        rospy.Subscriber('/nips2017/sensors/joystick/2', Joy, self.cb_joy_2)
         rospy.Subscriber('/{}/joints'.format(self.params['robot_name']), JointState, self.cb_js)
 
         self.t = rospy.Time.now()
@@ -144,8 +144,6 @@ class Ergo(object):
             new_x_m3 = 0
         new_x_m3 = max(min(new_x_m3, self.params['bounds'][3][1]), self.params['bounds'][3][0])
         self.reach({'m1': new_x, 'm4': new_x_m3}, 1.1/self.params['publish_rate'])
-        self.goals[0].goto_position(new_x, 1.1*self.delta_t)
-        self.goals[3].goto_position(new_x_m3, 1.1*self.delta_t)
 
     def servo_axis_elongation(self, x):
         if x > self.params['min_joy_elongation']:
