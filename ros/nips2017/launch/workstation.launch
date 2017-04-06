@@ -4,6 +4,7 @@
   <arg name="debug" default="True"/> <!-- Enable debugging information and pictures -->
   <arg name="source" default="none"/> <!-- Source of pre-planned data for this experiment -->
   <arg name="name" default="experiment"/> <!-- Name of the experiment -->
+  <arg name="simulated" default="false"/> <!-- Ergo and Torso are simulated on the workstation -->
 
   <param name="/nips2017/perception/debug" value="$(arg debug)" />
   <param name="/nips2017/experiment_name" value="$(arg name)" />
@@ -17,4 +18,12 @@
   <node name="learning" pkg="nips2017" type="learning.py" output="$(arg output)" required="true"/>
   <node name="user" pkg="nips2017" type="user.py" output="$(arg output)" respawn="true"/>
   <node name="sound" pkg="nips2017" type="sound.py" output="$(arg output)" respawn="true"/>
+
+  <include file="$(find nips2017)/launch/controllers.launch">
+      <arg name="simulated" value="$(arg simulated)"/>
+  </include>
+
+  <!-- Simulation -->
+  <node if="$(arg simulated)" name="joysticks" pkg="nips2017" type="vrep_joystick_publisher.py" output="$(arg output)" respawn="true"/>
+  <node if="$(arg simulated)" name="ergo" pkg="nips2017" type="ergo.py" output="$(arg output)" respawn="true"/>
 </launch>
