@@ -5,10 +5,12 @@
   <include file="$(find poppy_ergo_jr_controllers)/launch/controllers.launch" >
     <arg name="simulated" value="$(arg simulated)"/>
     <arg name="vrep_port" value="19998"/>
+    <arg name="output" value="log"/>
   </include>
 
   <include file="$(find poppy_torso_controllers)/launch/controllers.launch" >
     <arg name="simulated" value="$(arg simulated)"/>
     <arg name="vrep_port" value="19999"/>
+    <arg name="output" value="log"/>
   </include>
 </launch>
