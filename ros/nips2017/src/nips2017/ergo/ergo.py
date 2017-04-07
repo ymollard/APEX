@@ -151,6 +151,7 @@ class Ergo(object):
 
         elif max_abs < self.params['sensitivity_joy'] and self.motion_started_joy > 0.:
             self.motion_started_joy = 0.
+            self.servo_axis_elongation(0)
 
         elif self.motion_started_joy > 0. and now - self.motion_started_joy > self.params['delay_joy']:
             if self.params['control_joystick_id'] == 2:
