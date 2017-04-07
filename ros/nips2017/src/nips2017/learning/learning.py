@@ -93,7 +93,7 @@ class Learning(object):
                                     normalize_interests=self.normalize_interests)
         elif self.condition == "RmB":
             self.agent = Supervisor(self.config, 
-                                    n_motor_babbling=np.inf)
+                                    n_motor_babbling=1.)
         elif self.condition == "FGB":
             self.agent = FGB(self.config,
                                 n_motor_babbling=self.n_motor_babbling, 
