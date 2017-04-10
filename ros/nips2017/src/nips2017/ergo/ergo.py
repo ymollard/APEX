@@ -34,6 +34,7 @@ class Ergo(object):
         self.button_pub = rospy.Publisher('/nips2017/ergo/button', Bool, queue_size=1)
 
         self.goals = []
+        self.goal = 0.
         self.joy1_x = 0.
         self.joy1_y = 0.
         self.joy2_x = 0.
@@ -42,7 +43,7 @@ class Ergo(object):
         self.js = JointState()
         rospy.Subscriber('/nips2017/sensors/joystick/1', Joy, self.cb_joy_1)
         rospy.Subscriber('/nips2017/sensors/joystick/2', Joy, self.cb_joy_2)
-        rospy.Subscriber('/{}/joints'.format(self.params['robot_name']), JointState, self.cb_js)
+        rospy.Subscriber('/{}/joint_state'.format(self.params['robot_name']), JointState, self.cb_js)
 
         self.t = rospy.Time.now()
         self.srv_reset = None
@@ -104,6 +105,7 @@ class Ergo(object):
 
     def go_to(self, motors, duration):
         self.goals = motors
+        self.goal = self.goals[0] - self.goals[3]
         self.reach(dict(zip(['m1', 'm2', 'm3', 'm4', 'm5', 'm6'], motors)), duration)
         rospy.sleep(duration)
 
@@ -132,18 +134,22 @@ class Ergo(object):
 
     def servo_axis_rotation(self, x):
         x = x if abs(x) > self.params['sensitivity_joy'] else 0
-        p = self.goals[0]
         min_x = self.params['bounds'][0][0] + self.params['bounds'][3][0]
         max_x = self.params['bounds'][0][1] + self.params['bounds'][3][1]
-        new_x = min(max(min_x, p + self.params['speed']*x*self.delta_t), max_x)
-        if new_x > self.params['bounds'][0][1]:
-            new_x_m3 = new_x - self.params['bounds'][0][1]
-        elif new_x < self.params['bounds'][0][0]:
-            new_x_m3 = new_x - self.params['bounds'][0][0]
+        self.goal = min(max(min_x, self.goal + self.params['speed']*x*self.delta_t), max_x)
+
+        if self.goal > self.params['bounds'][0][1]:
+            new_x_m3 = self.params['bounds'][0][1] - self.goal
+            new_x = self.params['bounds'][0][1]
+        elif self.goal < self.params['bounds'][0][0]:
+            new_x_m3 = self.params['bounds'][0][0] - self.goal
+            new_x = self.params['bounds'][0][0]
         else:
+            new_x = self.goal
             new_x_m3 = 0
+
         new_x_m3 = max(min(new_x_m3, self.params['bounds'][3][1]), self.params['bounds'][3][0])
-        self.reach({'m1': new_x, 'm4': new_x_m3}, 1.1/self.params['publish_rate'])
+        self.reach({'m1': new_x, 'm4': new_x_m3}, 0)  # Duration = 0 means joint teleportation
 
     def servo_axis_elongation(self, x):
         if x > self.params['min_joy_elongation']:
@@ -159,6 +165,7 @@ class Ergo(object):
 
         elif max_abs < self.params['sensitivity_joy'] and self.motion_started_joy > 0.:
             self.motion_started_joy = 0.
+            self.servo_axis_elongation(0)
 
         elif self.motion_started_joy > 0. and now - self.motion_started_joy > self.params['delay_joy']:
             if self.params['control_joystick_id'] == 2:
