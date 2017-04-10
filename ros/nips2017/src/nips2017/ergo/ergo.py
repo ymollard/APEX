@@ -73,7 +73,7 @@ class Ergo(object):
         self.joy2_y = msg.axes[1]
 
     def go_to_start(self, slow=True):
-        self.go_to([0.0, -15.4, 35.34, -8.06, -15.69, 71.99], 4 if slow else 1)
+        self.go_to([0.0, -15.4, 35.34, 0.0, -15.69, 71.99], 4 if slow else 1)
 
     def go_to_extended(self):
         extended = {'m2': 60, 'm3': -37, 'm5': -50, 'm6': 96}
