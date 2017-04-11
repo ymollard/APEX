@@ -56,49 +56,31 @@ def dist(x, grid):
         return 0.
               
     
+s_spaces = ["Hand", "Joystick_L", "Joystick_R", "Ergo", "Ball", "Light", "Sound"]
+
 
 if True:
 
-    
     explo = {}
     explo_gain = {}
     explo_discovery = {}
+    bootstrapped_s = {}
     
-    explo['Hand'] = {}
-    explo['Joystick_L'] = {}
-    explo['Joystick_R'] = {}
-    explo['Ergo'] = {}
-    explo['Ball'] = {}
-    explo['Light'] = {}
-    explo['Sound'] = {}
     
-    explo_gain['Hand'] = {}
-    explo_gain['Joystick_L'] = {}
-    explo_gain['Joystick_R'] = {}
-    explo_gain['Ergo'] = {}
-    explo_gain['Ball'] = {}
-    explo_gain['Light'] = {}
-    explo_gain['Sound'] = {}
+    for s_space in s_spaces:
+        explo[s_space] = {}
+        explo_gain[s_space] = {}
+        bootstrapped_s[s_space] = {}
+    
     
 
     for config in configs.keys():
         
     
-        explo['Hand'][config] = {}
-        explo['Joystick_L'][config] = {}
-        explo['Joystick_R'][config] = {}
-        explo['Ergo'][config] = {}
-        explo['Ball'][config] = {}
-        explo['Light'][config] = {}
-        explo['Sound'][config] = {}
-        
-        explo_gain['Hand'][config] = {}
-        explo_gain['Joystick_L'][config] = {}
-        explo_gain['Joystick_R'][config] = {}
-        explo_gain['Ergo'][config] = {}
-        explo_gain['Ball'][config] = {}
-        explo_gain['Light'][config] = {}
-        explo_gain['Sound'][config] = {}
+        for s_space in s_spaces:
+            explo[s_space][config] = {}
+            explo_gain[s_space][config] = {}
+            bootstrapped_s[s_space][config] = {}
     
         explo_discovery[config] = {}
 
@@ -138,8 +120,13 @@ if True:
                 #print "Analysis", s_space
                 
                 explo_gain[s_space][config][trial] = discovery([log["sm_data"][dims[s_space]][1][i][cdims[s_space]:] for i in range(n)])
+                bootstrapped_s[s_space][config][trial] = next((i for i, x in enumerate(explo_gain[s_space][config][trial]) if x), n)
                 #print s_space, explo[s_space][config][trial][:20]
                 
+            bootstrapped_s["motor_babbling"] = {}
+            bootstrapped_s["motor_babbling"][config] = {}
+            bootstrapped_s["motor_babbling"][config][trial] = 0
+            
             for s_space1 in explo.keys()+ ["motor_babbling"]:
                 explo_discovery[config][trial][s_space1] = {}
                 for s_space2 in explo.keys():
@@ -157,14 +144,14 @@ if True:
                         for s_space2 in explo.keys():
                             #print
                             g = explo_gain[s_space2][config][trial][i]
-                            if g > 0 and s_space2 in ["Joystick_L", "Joystick_R", "Ergo"]:
+                            if g > 0 and s_space2 in ["Joystick_R"]:
                                 m = log["sm_data"]["mod1"][0][i]
-                                print "Iteration:", i, ", Chosen space:", s_space1, ", Gain in", s_space2, ":", g#, m[:5]
+                                print "Iteration:", i, ", Chosen space:", s_space1, ", Gain in", s_space2, ":", g, "bootstrapped_s:", bootstrapped_s[s_space1][config][trial]
 #                                 print i, "\nJR:", log["sm_data"]["mod2"][1][i]
 #                                 print i, "\nJL:", log["sm_data"]["mod3"][1][i]
 #                                 print i, "\nErgo:", log["sm_data"]["mod4"][1][i]
 #                                 print i, "\nBall:", log["sm_data"]["mod5"][1][i]
-                            if g > 0:
+                            if g > 0 and bootstrapped_s[s_space1][config][trial] < i:
                                 explo_discovery[config][trial][s_space1][s_space2][i/(n/10)] += g
                     
                     
@@ -209,7 +196,7 @@ else:
         fig.canvas.set_window_title(s_space2)
         plt.title("Discoveries in $"+s_space2+"$ space, while exploring...", fontsize=24)
 
-        total_explo_s_space2 = np.sum([[explo_discovery[config][trial][s_space1][s_space2] for trial in range(configs[config])] for s_space1 in ["motor_babbling", "Hand", "Joystick_L", "Joystick_R", "Ergo", "Ball", "Light", "Sound"]])
+        total_explo_s_space2 = np.sum([[explo_discovery[config][trial][s_space1][s_space2] for trial in range(configs[config])] for s_space1 in s_spaces])
             
         for s_space1 in ["motor_babbling", "Hand", "Joystick_L", "Joystick_R", "Ergo", "Ball"]:#, "Light", "Sound"]:
 #             if s_space1 == "Hand" and s_space2 == "Ball":

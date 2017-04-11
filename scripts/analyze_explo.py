@@ -10,8 +10,8 @@ bmap = brewer2mpl.get_map('Dark2', 'qualitative', 4)
 colors = bmap.mpl_colors
 
 # PARAMS
-path = "/home/sforesti/scm/Flowers/NIPS2016/data/logs/"
-configs = dict(RMB=5)
+path = "/home/sforesti/scm/Flowers/NIPS2017/data/logs/"
+configs = dict(RmB=1)
 #configs = dict(RmB=1, AMB=5)
 
 config_colors = dict(AMB=colors[0], RmB=colors[1], FGB=colors[2], RMB=colors[3])
@@ -19,7 +19,7 @@ config_colors = dict(AMB=colors[0], RmB=colors[1], FGB=colors[2], RMB=colors[3])
 
 sw = 20
 n_logs = 1
-n = 3000
+n = 5000
 p = 100
 x = np.array(np.linspace(0,n,n/p+1), dtype=int)
 
@@ -86,24 +86,30 @@ if True:
             
             
             if not (config == "FGB"):
-                j_touch = 0
+                jl_touch = 0
+                jr_touch = 0
                 b_touch = 0
                 
                 for i in range(n):
-                    if i < 100:
+                    #if i < 100:
                         #print i, "Hand:", log["sm_data"]["mod1"][1][i]
                         #print i, "Ergo:", log["sm_data"]["mod4"][1][i]
-                        print i, "Ball:", log["sm_data"]["mod5"][1][i][[2+4, 2+5, 2+8, 2+9, 2+12, 2+13, 2+16, 2+17]]
+                        #print i, "Ball:", log["sm_data"]["mod5"][1][i][[2+4, 2+5, 2+8, 2+9, 2+12, 2+13, 2+16, 2+17]]
                         #print i, "Light:", log["sm_data"]["mod6"][1][i]
-                    if np.linalg.norm(log["sm_data"]["mod2"][1][i] - np.array([-1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1., 0., -1.,  0., -1.,  0., -1.,  0.])) > 0.01:
-                        j_touch += 1
-                        #print "joystick", list(log["sm_data"]["mod2"][1][i])
+                    #print i
+                    if np.linalg.norm(log["sm_data"]["mod2"][1][i] - np.array([-1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1., 0., -1.,  0., -1.,  0., -1.,  0.])) > 0.05:
+                        jr_touch += 1
+                        #print i, "joystick right", list(log["sm_data"]["mod2"][1][i])
+                    if np.linalg.norm(log["sm_data"]["mod3"][1][i] - np.array([0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1., 0., -1.,  0., -1.,  0., -1.])) > 0.05:
+                        jl_touch += 1
+                        #print i, "joystick left", list(log["sm_data"]["mod3"][1][i])
                         if abs(list(log["sm_data"]["mod5"][1][i])[2:][0] -  list(log["sm_data"]["mod5"][1][i])[2:][-2]) > 0.05:
                             #print "ball", list(log["sm_data"]["mod5"][1][i])[2:]
                             b_touch += 1
                 print
                 print "Motor Babbling Iterations:", n
-                print "Joystick touched:", j_touch, "percentage:", int(100. * j_touch / n), "%"
+                print "Joystick Left touched:", jl_touch, "percentage:", int(100. * jl_touch / n), "%"
+                print "Joystick Right touched:", jr_touch, "percentage:", int(100. * jr_touch / n), "%"
                 print "Ball touched:", b_touch, "percentage:", int(100. * b_touch / n), "%"
                 print
                 
@@ -193,5 +199,3 @@ else:
         plt.show(block=False)
     plt.show()
             
-        
-print explo
