@@ -14,9 +14,9 @@ class TopicAggregator(object):
             "ergo_state": {"topic": "/nips2017/ergo/state", "sub": None, "data": CircularState(), "type": CircularState},
             "joy1": {"topic": "/nips2017/sensors/joystick/1", "sub": None, "data": Joy(), "type": Joy},
             "joy2": {"topic": "/nips2017/sensors/joystick/2", "sub": None, "data": Joy(), "type": Joy},
-            "torso_l_j": {"topic": "/nips2017/torso/left_arm/joints", "sub": None, "data": JointState(), "type": JointState},
-            "torso_l_eef": {"topic": "/nips2017/torso/left_arm/end_effector_pose", "sub": None, "data": PoseStamped(), "type": PoseStamped},
-            "torso_r_eef": {"topic": "/nips2017/torso/right_arm/end_effector_pose", "sub": None, "data": PoseStamped(), "type": PoseStamped}
+            "torso_l_j": {"topic": "/{}/joint_state".format("poppy_torso"), "sub": None, "data": JointState(), "type": JointState},
+            "torso_l_eef": {"topic": "/{}/left_arm/end_effector_pose".format("poppy_torso"), "sub": None, "data": PoseStamped(), "type": PoseStamped},
+            "torso_r_eef": {"topic": "/{}/right_arm/end_effector_pose".format("poppy_torso"), "sub": None, "data": PoseStamped(), "type": PoseStamped}
         }
 
         self.topics["ball"]["sub"] = rospy.Subscriber(self.topics["ball"]["topic"], self.topics["ball"]["type"], self.cb_ball)
