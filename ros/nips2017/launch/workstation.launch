@@ -12,7 +12,7 @@
 
   <rosparam command="load" param="/nips2017/experiment" file="$(find nips2017)/config/experiment.yaml" />
 
-  <node name="environment" pkg="nips2017" type="environment.py" output="$(arg output)"/>
+  <node unless="$(arg simulated)" name="environment" pkg="nips2017" type="environment.py" output="$(arg output)"/>
   <node name="perception" pkg="nips2017" type="perception.py" output="$(arg output)"/>
   <node name="torso" pkg="nips2017" type="torso.py" output="$(arg output)" respawn="true"/>
   <node name="learning" pkg="nips2017" type="learning.py" output="$(arg output)" required="true"/>
@@ -24,6 +24,6 @@
   </include>
 
   <!-- Simulation -->
-  <node if="$(arg simulated)" name="joysticks" pkg="nips2017" type="vrep_joystick_publisher.py" output="$(arg output)" respawn="true"/>
+  <node if="$(arg simulated)" name="environment" pkg="nips2017" type="vrep_environment_publisher.py" output="$(arg output)" respawn="true"/>
   <node if="$(arg simulated)" name="ergo" pkg="nips2017" type="ergo.py" output="$(arg output)" respawn="true"/>
 </launch>

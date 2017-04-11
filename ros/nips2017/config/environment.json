@@ -6,7 +6,8 @@
     },
     "arena": {
       "lower": [95, 110, 150],
-      "upper": [110, 255, 255]
+      "upper": [110, 255, 255],
+      "radius": 0.225
     },
     "buffer_size": 32,
     "ring_divider": 1.35

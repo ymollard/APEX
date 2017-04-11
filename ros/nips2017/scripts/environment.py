@@ -28,10 +28,10 @@ class Environment(object):
         self.rate = rospy.Rate(self.params['rate'])
 
     def update_light(self, state):
-        self.light_pub.publish(UInt8(data=self.conversions.ball_to_color(state)))
+        self.light_pub.publish(UInt8(self.conversions.ball_to_color(state)))
 
     def update_sound(self, state):
-        self.sound_pub.publish(state.angle if state.extended else 0.)  # TODO rescale
+        self.sound_pub.publish(Float32(self.conversions.ball_to_sound(state)))  # TODO rescale
 
     def run(self):
         if not self.tracking.open():

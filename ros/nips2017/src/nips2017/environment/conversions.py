@@ -27,7 +27,7 @@ class EnvironmentConversions(object):
 
     def ball_to_color(self, state):
         """
-        Reduce the given 2D ball position in color
+        Reduce the given 2D ball position to color
         :param state: the requested circular state of the ball
         :return: hue value designating the color in [0, 255]
         """
@@ -41,3 +41,11 @@ class EnvironmentConversions(object):
             hue = int((speed - min_speed)/(max_speed - min_speed)*255)
         self.last_angle = state.angle
         return hue
+
+    def ball_to_sound(self, state):
+        """
+        Reduce the given 2D ball position to sound
+        :param state: the requested circular state of the ball
+        :return: sound float designating the color within the same range than the circular state angle
+        """
+        return state.angle if state.extended else 0.
