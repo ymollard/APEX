@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <launch>
+  <param if="$(arg simulated)" name="/use_sim_time" value="true" />
+
   <arg name="output" default="screen"/> <!-- Set output="log" to mute the screen output -->
   <arg name="debug" default="True"/> <!-- Enable debugging information and pictures -->
   <arg name="source" default="none"/> <!-- Source of pre-planned data for this experiment -->
