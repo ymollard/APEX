@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from sensor_msgs.msg import Joy
+from numpy import sin
 from rospkg import RosPack
 from os.path import join
 from nips2017.msg import CircularState
@@ -79,20 +80,19 @@ class VRepEnvironmentPublisher(object):
         self.simulation_id = vrep.simxStart('127.0.0.1', vrep_port, True, False, 5000, 5)
 
         # Object names in V-Rep
-        self.joystick_left_joints = ['Joystick_1_Axis_1', 'Joystick_1_Axis_2']
-        self.joystick_right_joints = ['Joystick_2_Axis_1', 'Joystick_2_Axis_2']
+        self.joystick_left_joints = ['Joystick_2_Axis_2', 'Joystick_2_Axis_1']
+        self.joystick_right_joints = ['Joystick_1_Axis_2', 'Joystick_1_Axis_1']
         self.ball_name = 'TennisBall'
         self.arena_name = 'Arena'
+
+        if self.ergo_params["control_joystick_id"] != 2:
+            useless_joy = self.joystick_left_joints
+            self.joystick_left_joints = self.joystick_right_joints
+            self.joystick_right_joints = useless_joy
 
         self.joints = JointTracker(self.joystick_left_joints + self.joystick_right_joints, self.simulation_id)
         self.objects = ObjectTracker([self.ball_name, self.arena_name], self.simulation_id)
         self.conversions = EnvironmentConversions()
-
-        swap = False
-        if swap:
-            useless_joy = self.joystick
-            self.joystick = self.joystick2
-            self.joystick2 = useless_joy
 
     def publish_joy(self, x, y, publisher):
         joy = Joy()
@@ -108,13 +108,17 @@ class VRepEnvironmentPublisher(object):
 
             joints = self.joints.get()
 
-            x = joints[self.joystick_left_joints[0]]['position']
-            y = joints[self.joystick_left_joints[1]]['position']
+            def map_joy(x):
+                h_joy = 2.
+                return min(max(h_joy*sin(x), -1), 1)
+
+            x = map_joy(joints[self.joystick_left_joints[0]]['position'])
+            y = map_joy(joints[self.joystick_left_joints[1]]['position'])
 
             # Publishers
             self.publish_joy(x, y, self.joy_pub)
-            x = joints[self.joystick_right_joints[0]]['position']
-            y = joints[self.joystick_right_joints[1]]['position']
+            x = map_joy(joints[self.joystick_right_joints[0]]['position'])
+            y = map_joy(joints[self.joystick_right_joints[1]]['position'])
             self.publish_joy(x, y, self.joy_pub2)
 
             objects = self.objects.get()
