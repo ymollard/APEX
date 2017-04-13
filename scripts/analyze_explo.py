@@ -11,7 +11,7 @@ colors = bmap.mpl_colors
 
 # PARAMS
 path = "/home/sforesti/scm/Flowers/NIPS2017/data/logs/"
-configs = dict(RmB=1)
+configs = dict(RmB=1, RMB=1)
 #configs = dict(RmB=1, AMB=5)
 
 config_colors = dict(AMB=colors[0], RmB=colors[1], FGB=colors[2], RMB=colors[3])
@@ -88,6 +88,7 @@ if True:
             if not (config == "FGB"):
                 jl_touch = 0
                 jr_touch = 0
+                e_touch = 0
                 b_touch = 0
                 
                 for i in range(n):
@@ -103,13 +104,17 @@ if True:
                     if np.linalg.norm(log["sm_data"]["mod3"][1][i] - np.array([0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1., 0., -1.,  0., -1.,  0., -1.])) > 0.05:
                         jl_touch += 1
                         #print i, "joystick left", list(log["sm_data"]["mod3"][1][i])
+                        if abs(list(log["sm_data"]["mod4"][1][i])[0] -  list(log["sm_data"]["mod4"][1][i])[1:][-2]) > 0.05:
+                            print "ergo", list(log["sm_data"]["mod4"][1][i])
+                            e_touch += 1
                         if abs(list(log["sm_data"]["mod5"][1][i])[2:][0] -  list(log["sm_data"]["mod5"][1][i])[2:][-2]) > 0.05:
                             #print "ball", list(log["sm_data"]["mod5"][1][i])[2:]
                             b_touch += 1
                 print
                 print "Motor Babbling Iterations:", n
-                print "Joystick Left touched:", jl_touch, "percentage:", int(100. * jl_touch / n), "%"
-                print "Joystick Right touched:", jr_touch, "percentage:", int(100. * jr_touch / n), "%"
+                print "Joystick Left touched:", jl_touch, "percentage:", 100. * jl_touch / n, "%"
+                print "Joystick Right touched:", jr_touch, "percentage:", 100. * jr_touch / n, "%"
+                print "Ergo touched:", e_touch, "percentage:", 100. * e_touch / n, "%"
                 print "Ball touched:", b_touch, "percentage:", int(100. * b_touch / n), "%"
                 print
                 

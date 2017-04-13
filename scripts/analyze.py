@@ -6,8 +6,7 @@ import numpy as np
 
 
 # PARAMS
-filename = "/home/sforesti/ros/home/ros/Repos/NIPS2016/ros/nips2016/logs/experiment.pickle"
-filename = "/home/sforesti/ros/home/ros/Repos/NIPS2016/ros/nips2016/logs/experiment_AMB_0.pickle"
+filename = "/home/sforesti/scm/Flowers/NIPS2017/data/logs/discovery_RmB_0.pickle"
 
 with open(filename, 'r') as f:
     log = cPickle.load(f)
