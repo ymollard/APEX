@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import rospy
 from explauto.utils import rand_bounds, bounds_min_max, softmax_choice, prop_choice
 from explauto.utils.config import make_configuration
 from learning_module import LearningModule
@@ -208,6 +209,7 @@ class Supervisor(object):
         if np.random.random() < self.n_motor_babbling:
             self.mid_control = None
             self.chosen_modules.append("motor_babbling")
+            rospy.loginfo("Random Motor Babbling")
             return self.motor_babbling()
         else:
             if space is None:
@@ -223,7 +225,7 @@ class Supervisor(object):
                 self.chosen_modules.append("forced_" + mid)
                 self.increase_interest(mid)
             self.mid_control = mid
-            
+            rospy.loginfo("Chosen module: {}".format(mid))
             j_sm = self.modules["mod2"].sensorimotor_model
             if self.modules[mid].context_mode is None:
                 self.m = self.modules[mid].produce(j_sm=j_sm)
