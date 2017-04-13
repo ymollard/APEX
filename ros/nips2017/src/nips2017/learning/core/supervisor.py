@@ -1,5 +1,5 @@
 import numpy as np
-import time
+import rospy
 from explauto.utils import rand_bounds, bounds_min_max, softmax_choice, prop_choice
 from explauto.utils.config import make_configuration
 from learning_module import LearningModule
@@ -110,10 +110,11 @@ class Supervisor(object):
                 "normalized_interests_evolution":self.get_normalized_interests_evolution(),
                 "normalize_interests":self.normalize_interests}
 
-        
     def forward(self, data, iteration):
         if iteration > len(data["chosen_modules"]):
-            print "\nWARNING: asked to restart from iteration", iteration, "but only", len(data["chosen_modules"]), "are available. Restarting from iteration", len(data["chosen_modules"]), "..."
+            max_it = len(data["chosen_modules"])
+            rospy.logwarn("Asked to restart from iteration {} but only {} are available. "
+                          "Restarting from iteration {}...".format(iteration, max_it, max_it))
             iteration = len(data["chosen_modules"])
         if iteration < 0:
             iteration = len(data["chosen_modules"])
@@ -254,7 +255,7 @@ class Supervisor(object):
         s = self.sensory_primitive(s)
         #print "perceive len(s)", len(s), s[92:112]
         if j_demo or self.ball_moves(s[92:112]):
-            time.sleep(5)
+            rospy.sleep(5)
         if m_demo is not None:
             ms = self.set_ms(m_demo, s)
             self.update_sensorimotor_models(ms)
@@ -444,7 +445,6 @@ class Supervisor(object):
     
     def motor_move_ergo(self, context, direction="right"):
         angle = context[0]
-        print "angle courant ergo", angle
         if direction=="right":
             return self.inverse("mod4", [angle, -1.,
                                                angle, -1.,
