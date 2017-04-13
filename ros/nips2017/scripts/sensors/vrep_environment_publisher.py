@@ -94,6 +94,11 @@ class VRepEnvironmentPublisher(object):
         self.objects = ObjectTracker([self.ball_name, self.arena_name], self.simulation_id)
         self.conversions = EnvironmentConversions()
 
+    def start_simulation(self):
+        vrep.simxStartSimulation(self.simulation_id, vrep.simx_opmode_oneshot)
+
+    def stop_simulation(self):
+        vrep.simxStopSimulation(self.simulation_id, vrep.simx_opmode_oneshot)
     def publish_joy(self, x, y, publisher):
         joy = Joy()
         joy.header.stamp = rospy.Time.now()
@@ -102,6 +107,8 @@ class VRepEnvironmentPublisher(object):
         publisher.publish(joy)
 
     def run(self):
+        self.start_simulation()
+
         while not rospy.is_shutdown():
             self.joints.update()
             self.objects.update()
@@ -136,7 +143,8 @@ class VRepEnvironmentPublisher(object):
                 self.sound_pub.publish(Float32(sound))
 
             self.rate.sleep()
-        vrep.simxGetPingTime(self.simulation_id)
+
+        self.stop_simulation()
         vrep.simxFinish(self.simulation_id)
 
 if __name__ == '__main__':
