@@ -33,14 +33,14 @@ class LearningModule(Agent):
         
         if context_mode is not None:
             im_cls, kwargs = (ContextRandomInterest, {
-                               'win_size': 1000,
+                               'win_size': 200,
                                'competence_mode': 'knn',
                                'k': 20,
                                'progress_mode': 'local',
                                'context_mode':context_mode})
         else:
             im_cls, kwargs = (MiscRandomInterest, {
-                               'win_size': 1000,
+                               'win_size': 200,
                                'competence_mode': 'knn',
                                'k': 20,
                                'progress_mode': 'local'})
