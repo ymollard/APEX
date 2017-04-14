@@ -49,6 +49,7 @@ class MiscRandomInterest(RandomInterest):
         self.current_interest = interest
     
     def competence_measure(self, sg, s, dist_max):
+        #return competence_dist(sg, s, dist_max=dist_max) / dist_max # Normalize
         return competence_dist(sg, s, dist_max=dist_max)
     
     def add_xc(self, x, c):
@@ -166,5 +167,6 @@ class ContextRandomInterest(MiscRandomInterest):
     def competence_measure(self, csg, cs, dist_max):
         s = cs[self.context_mode["context_n_dims"]:]
         sg = csg[self.context_mode["context_n_dims"]:]
+        #return competence_dist(s, sg, dist_max=dist_max) / dist_max # Normalize
         return competence_dist(s, sg, dist_max=dist_max)
         
