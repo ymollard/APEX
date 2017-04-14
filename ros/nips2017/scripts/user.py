@@ -56,8 +56,8 @@ class UserNode(object):
             'focusedInterest': user_focus if len(user_focus) > 0 else None,
             'interests': [
                 {'interestId': 's_hand', 'value': get_last('s_hand'), 'title': 'Hand'},
-                {'interestId': 's_joystick_1', 'value': get_last('s_joystick_2'), 'title': 'Joystick Left'},
-                {'interestId': 's_joystick_2', 'value': get_last('s_joystick_1'), 'title': 'Joystick Right'},
+                {'interestId': 's_joystick_2', 'value': get_last('s_joystick_2'), 'title': 'Joystick Left'},
+                {'interestId': 's_joystick_1', 'value': get_last('s_joystick_1'), 'title': 'Joystick Right'},
                 {'interestId': 's_ergo', 'value': get_last('s_ergo'), 'title': 'Ergo'},
                 {'interestId': 's_ball', 'value': get_last('s_ball'), 'title': 'Ball'},
                 {'interestId': 's_light', 'value': get_last('s_light'), 'title': 'Light'},
