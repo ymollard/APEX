@@ -26,12 +26,11 @@ configs = dict(RMB=3)
 #configs = dict(RmB=1, AMB=5)
 
 
-sw = 20
 n_logs = 1
-n = 5000
+n = 2000 # Iterations taken into account
+p = 20 # Number of checkpoints
 x = range(n)
 
-gss = [0, 1000, 100, 20, 10, 6, 5, 4, 3, 3]
 
 
 def discovery(data):
@@ -59,7 +58,7 @@ def dist(x, grid):
 s_spaces = ["Hand", "Joystick_L", "Joystick_R", "Ergo", "Ball", "Light", "Sound"]
 
 
-if True:
+if False:
 
     explo = {}
     explo_gain = {}
@@ -130,7 +129,7 @@ if True:
             for s_space1 in explo.keys()+ ["motor_babbling"]:
                 explo_discovery[config][trial][s_space1] = {}
                 for s_space2 in explo.keys():
-                    explo_discovery[config][trial][s_space1][s_space2] = np.zeros(10)
+                    explo_discovery[config][trial][s_space1][s_space2] = np.zeros(p)
                     
             for i in range(1,n-1):
 #                 if abs(log["sm_data"]["mod4"][1][i][0] - log["sm_data"]["mod4"][1][i][-2]) > 0.1 or i in [321, 322]:
@@ -152,13 +151,13 @@ if True:
 #                                 print i, "\nErgo:", log["sm_data"]["mod4"][1][i]
 #                                 print i, "\nBall:", log["sm_data"]["mod5"][1][i]
                             if g > 0 and bootstrapped_s[s_space1][config][trial] < i:
-                                explo_discovery[config][trial][s_space1][s_space2][i/(n/10)] += g
+                                explo_discovery[config][trial][s_space1][s_space2][i/(n/p)] += g
                     
                     
             for s_space1 in explo_discovery[config][trial].keys():
                 #print trial, s_space1, [log["chosen_modules"][i*(n/10):(i+1)*(n/10)].count(dims[s_space1]) for i in range(10)]
                 for s_space2 in explo.keys():
-                    explo_discovery[config][trial][s_space1][s_space2] /= [log["chosen_modules"][i*(n/10):(i+1)*(n/10)].count(dims[s_space1]) for i in range(10)]
+                    explo_discovery[config][trial][s_space1][s_space2] /= [log["chosen_modules"][i*(n/p):(i+1)*(n/p)].count(dims[s_space1]) for i in range(p)]
 #                     if s_space2 == "Hand":
 #                         print "   ", s_space2, explo_discovery[config][trial][s_space1][s_space2]
                     
@@ -173,7 +172,9 @@ else:
     f.close()
     
     config = "RMB"
-    print range(configs[config])
+    trials = range(configs[config])
+    trials = [1]
+    print trials
     
     labels = {
               "motor_babbling":"$Random$", 
@@ -196,12 +197,12 @@ else:
         fig.canvas.set_window_title(s_space2)
         plt.title("Discoveries in $"+s_space2+"$ space, while exploring...", fontsize=24)
 
-        total_explo_s_space2 = np.sum([[explo_discovery[config][trial][s_space1][s_space2] for trial in range(configs[config])] for s_space1 in s_spaces])
+        total_explo_s_space2 = np.sum([[explo_discovery[config][trial][s_space1][s_space2] for trial in trials] for s_space1 in s_spaces])
             
         for s_space1 in ["motor_babbling", "Hand", "Joystick_L", "Joystick_R", "Ergo", "Ball"]:#, "Light", "Sound"]:
 #             if s_space1 == "Hand" and s_space2 == "Ball":
 #                 print s_space1, s_space2, [explo_discovery[config][trial][s_space1][s_space2] for trial in range(configs[config])]
-            plt.plot(np.linspace(n/10, n, 10), 100. * np.sum([explo_discovery[config][trial][s_space1][s_space2] for trial in range(configs[config])], axis=0) / total_explo_s_space2, lw=3, color=colors[s_space1], label=labels[s_space1])
+            plt.plot(np.linspace(n/p, n, p), 100. * np.sum([explo_discovery[config][trial][s_space1][s_space2] for trial in trials], axis=0) / total_explo_s_space2, lw=3, color=colors[s_space1], label=labels[s_space1])
             
                 
         legend = plt.legend(frameon=True, fontsize=18)
