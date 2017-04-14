@@ -22,7 +22,7 @@ colors = {
 # PARAMS
 path = "/home/sforesti/scm/Flowers/NIPS2017/data/logs/"
 experiment_name = "discovery"
-configs = dict(RMB=1)
+configs = dict(RMB=3)
 #configs = dict(RmB=1, AMB=5)
 
 
@@ -144,7 +144,7 @@ if True:
                         for s_space2 in explo.keys():
                             #print
                             g = explo_gain[s_space2][config][trial][i]
-                            if g > 0 and s_space2 in ["Joystick_L", "Ergo"]:
+                            if g > 0:# and s_space2 in ["Joystick_L", "Ergo"]:
                                 m = log["sm_data"]["mod1"][0][i]
                                 print "Iteration:", i, ", Chosen space:", s_space1, ", Gain in", s_space2, ":", g, "bootstrapped_s:", bootstrapped_s[s_space1][config][trial]
 #                                 print i, "\nJR:", log["sm_data"]["mod2"][1][i]
