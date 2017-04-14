@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 
 from sensor_msgs.msg import Joy
-from numpy import sin
+from numpy import sin, array
+from numpy.linalg import norm
 from rospkg import RosPack
 from os.path import join
 from nips2017.msg import CircularState
 from nips2017.environment.conversions import EnvironmentConversions
 from std_msgs.msg import UInt8, Float32
+from std_srvs.srv import Empty, EmptyResponse
+from time import sleep
 import pypot.vrep.remoteApiBindings.vrep as vrep # Pypot has the path to V-Rep bindings, but that could also be a direct import
 import rospy
 import json
+import ctypes
 
 
 class JointTracker(object):
@@ -94,11 +98,29 @@ class VRepEnvironmentPublisher(object):
         self.objects = ObjectTracker([self.ball_name, self.arena_name], self.simulation_id)
         self.conversions = EnvironmentConversions()
 
+    def cb_reset_ball(self, req):
+        rospy.logwarn("Resetting dynamic object: ball")
+        self.reset_ball()
+        return EmptyResponse()
+
+    def _inject_lua_code(self, lua_code):
+        # This works with the according LUA script running on the client side
+        msg = (ctypes.c_ubyte * len(lua_code)).from_buffer_copy(lua_code.encode())
+        vrep.simxWriteStringStream(self.simulation_id, 'my_lua_code', msg, vrep.simx_opmode_oneshot)
+
     def start_simulation(self):
         vrep.simxStartSimulation(self.simulation_id, vrep.simx_opmode_oneshot)
 
     def stop_simulation(self):
         vrep.simxStopSimulation(self.simulation_id, vrep.simx_opmode_oneshot)
+
+    def reset_ball(self):
+        ball = self.objects.get()[self.ball_name]
+        if 'handle' in ball:
+            position = "{ 0.1759, -0.068, 0.7697 }"
+            self._inject_lua_code("simSetObjectPosition({}, -1 , {})".format(ball['handle'], position))
+            self._inject_lua_code("simResetDynamicObject({})".format(ball['handle']))
+
     def publish_joy(self, x, y, publisher):
         joy = Joy()
         joy.header.stamp = rospy.Time.now()
@@ -108,44 +130,52 @@ class VRepEnvironmentPublisher(object):
 
     def run(self):
         self.start_simulation()
+        rospy.Service('/nips2017/vrep/reset_ball', Empty, self.cb_reset_ball)
 
-        while not rospy.is_shutdown():
-            self.joints.update()
-            self.objects.update()
+        try:
+            self.reset_ball()
+            while not rospy.is_shutdown():
+                self.joints.update()
+                self.objects.update()
 
-            joints = self.joints.get()
+                joints = self.joints.get()
 
-            def map_joy(x):
-                h_joy = 2.
-                return min(max(h_joy*sin(x), -1), 1)
+                def map_joy(x):
+                    h_joy = 2.
+                    return min(max(h_joy*sin(x), -1), 1)
 
-            x = map_joy(joints[self.joystick_left_joints[0]]['position'])
-            y = map_joy(joints[self.joystick_left_joints[1]]['position'])
+                x = map_joy(joints[self.joystick_left_joints[0]]['position'])
+                y = map_joy(joints[self.joystick_left_joints[1]]['position'])
 
-            # Publishers
-            self.publish_joy(x, y, self.joy_pub)
-            x = map_joy(joints[self.joystick_right_joints[0]]['position'])
-            y = map_joy(joints[self.joystick_right_joints[1]]['position'])
-            self.publish_joy(x, y, self.joy_pub2)
+                # Publishers
+                self.publish_joy(x, y, self.joy_pub)
+                x = map_joy(joints[self.joystick_right_joints[0]]['position'])
+                y = map_joy(joints[self.joystick_right_joints[1]]['position'])
+                self.publish_joy(x, y, self.joy_pub2)
 
-            objects = self.objects.get()
-            if 'position' in objects[self.ball_name] and 'position' in objects[self.arena_name]:
-                ring_radius = self.env_params['tracking']['arena']['radius'] / self.env_params['tracking']['ring_divider']     # There is no visual tracking so the true arena diameter is assumed
-                ball_state = self.conversions.get_state(objects[self.ball_name]['position'],  # Although returned by V-Rep, dimension "z" is ignored
-                                                        objects[self.arena_name]['position'],
-                                                        ring_radius)
-                self.ball_pub.publish(ball_state)
+                objects = self.objects.get()
+                if 'position' in objects[self.ball_name] and 'position' in objects[self.arena_name]:
+                    ring_radius = self.env_params['tracking']['arena']['radius'] / self.env_params['tracking']['ring_divider']     # There is no visual tracking so the true arena diameter is assumed
+                    ball_state = self.conversions.get_state(objects[self.ball_name]['position'],  # Although returned by V-Rep, dimension "z" is ignored
+                                                            objects[self.arena_name]['position'],
+                                                            ring_radius)
+                    self.ball_pub.publish(ball_state)
 
-                color = self.conversions.ball_to_color(ball_state)
-                self.light_pub.publish(UInt8(color))
+                    color = self.conversions.ball_to_color(ball_state)
+                    self.light_pub.publish(UInt8(color))
 
-                sound = self.conversions.ball_to_sound(ball_state)
-                self.sound_pub.publish(Float32(sound))
+                    sound = self.conversions.ball_to_sound(ball_state)
+                    self.sound_pub.publish(Float32(sound))
 
-            self.rate.sleep()
+                    distance = norm(array(objects[self.ball_name]['position']) - array(objects[self.arena_name]['position']))
+                    if distance > 0.25:
+                        self.reset_ball()
 
-        self.stop_simulation()
-        vrep.simxFinish(self.simulation_id)
+                self.rate.sleep()
+        finally:
+            self.stop_simulation()
+            sleep(0.5)
+            vrep.simxFinish(self.simulation_id)
 
 if __name__ == '__main__':
     rospy.init_node('vrep_environment_publisher')
