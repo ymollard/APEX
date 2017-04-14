@@ -77,33 +77,37 @@ class Perception(object):
         response = RecordResponse()
         # TODO eventually keep trace of the last XX points to start recording prior to the start signal
 
-        is_joystick_demo = False
-        if request.human_demo.data:
-            # Blocking... Wait for the user's grasp before recording...
-            is_joystick_demo = self.wait_for_human_interaction()
+        try:
+            is_joystick_demo = False
+            if request.human_demo.data:
+                # Blocking... Wait for the user's grasp before recording...
+                is_joystick_demo = self.wait_for_human_interaction()
+                if not is_joystick_demo:
+                    self.set_torso_compliant_srv(SetTorsoCompliantRequest(compliant=True))
+
+            rospy.loginfo("Recording {}...".format("a joystick demo" if is_joystick_demo else "an arm demo"))
+            for point in range(request.nb_points.data):
+                if rospy.is_shutdown():
+                    break
+                if point % self.params["divider_nb_points_sensory"] == 0:
+                    response.demo.sensorial_demonstration.points.append(self.get())
+                if not is_joystick_demo:
+                    response.demo.torso_demonstration.points.append(joints.state_to_jtp(self.topics.torso_l_j))
+                self.rate.sleep()
+
             if not is_joystick_demo:
-                self.set_torso_compliant_srv(SetTorsoCompliantRequest(compliant=True))
+                self.set_torso_compliant_srv(SetTorsoCompliantRequest(compliant=False))
 
-        rospy.loginfo("Recording {}...".format("a joystick demo" if is_joystick_demo else "an arm demo"))
-        for point in range(request.nb_points.data):
-            if rospy.is_shutdown():
-                break
-            if point % self.params["divider_nb_points_sensory"] == 0:
-                response.demo.sensorial_demonstration.points.append(self.get())
-            if not is_joystick_demo:
-                response.demo.torso_demonstration.points.append(joints.state_to_jtp(self.topics.torso_l_j))
-            self.rate.sleep()
+            if is_joystick_demo:
+                response.demo.type_demo = Demonstration.TYPE_DEMO_JOYSTICK
+            elif request.human_demo.data:
+                response.demo.type_demo = Demonstration.TYPE_DEMO_ARM
+            else:
+                response.demo.type_demo = Demonstration.TYPE_DEMO_NORMAL
 
-        if not is_joystick_demo:
-            self.set_torso_compliant_srv(SetTorsoCompliantRequest(compliant=False))
-
-        if is_joystick_demo:
-            response.demo.type_demo = Demonstration.TYPE_DEMO_JOYSTICK
-        elif request.human_demo.data:
-            response.demo.type_demo = Demonstration.TYPE_DEMO_ARM
+        except rospy.exceptions.ROSInterruptException:
+            rospy.logwarn("recording aborted!")
         else:
-            response.demo.type_demo = Demonstration.TYPE_DEMO_NORMAL
+            rospy.loginfo("Recorded!")
 
-
-        rospy.loginfo("Recorded!")
         return response
