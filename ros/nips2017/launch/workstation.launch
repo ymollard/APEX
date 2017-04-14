@@ -26,6 +26,6 @@
   </include>
 
   <!-- Simulation -->
-  <node if="$(arg simulated)" name="environment" pkg="nips2017" type="vrep_environment_publisher.py" output="$(arg output)" respawn="true"/>
+  <node if="$(arg simulated)" name="environment" pkg="nips2017" type="vrep_environment_publisher.py" output="$(arg output)" required="true"/>
   <node if="$(arg simulated)" name="ergo" pkg="nips2017" type="ergo.py" output="$(arg output)" respawn="true"/>
 </launch>

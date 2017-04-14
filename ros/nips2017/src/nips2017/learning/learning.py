@@ -1,11 +1,11 @@
 
 import os
-import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import time
 import datetime
 
+import cPickle as pickle
 from core.supervisor import Supervisor
 from core.flat_goal_babbling import FGB
 
@@ -71,11 +71,11 @@ class Learning(object):
         return data
                 
     def save(self, file_path):    
-        if self.agent is not None:    
-            data = self.agent.save() 
+        if self.agent is not None:
+            data = self.agent.save()
             with open(file_path, 'w') as f:
-                pickle.dump(data, f)
-    
+                pickle.dump(data, f, -1)
+
     def start(self):
         if self.condition == "AMB":
             self.agent = Supervisor(self.config, 

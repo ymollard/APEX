@@ -188,8 +188,8 @@ class LearningNode(object):
 
         # Regularly overwrite the results
         if self.main_experiment and self.learning.get_iterations() % self.params['save_every'] == 0:
-            self.learning.save(self.experiment_file)
             rospy.loginfo("Saving file (periodic save) into {}".format(self.experiment_file))
+            self.learning.save(self.experiment_file)
 
         # This turn is over, check if we have a time travel pending...
         with self.lock_iteration:
