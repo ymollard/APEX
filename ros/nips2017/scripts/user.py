@@ -11,6 +11,7 @@ from rospy import ServiceException
 from nips2017.user import UserServices
 from threading import Thread
 from copy import copy
+from scipy.interpolate import interp1d
 
 
 class UserNode(object):
@@ -20,6 +21,8 @@ class UserNode(object):
         self.app = Flask(__name__, static_url_path='', static_folder=self.web_app_root)
         self.cors = CORS(self.app, resources={r'/api/*': {'origins': '*'}})
         self.services = UserServices()
+        self.window_length = 500
+        self.display_point_interval = 1
 
         self.app.route('/')(self.root)
         self.app.route('/api/interests', methods=['GET'])(self.experiment_status)
@@ -27,15 +30,6 @@ class UserNode(object):
         self.app.route('/api/time-travel', methods=['POST'])(self.time_travel)
         self.app.route('/api/reset', methods=['POST'])(self.reset)
         self.app.route('/api/assessment', methods=['POST'])(self.update_assessment)
-
-    # def generate_dummy_scores(self, num_interests=7):
-    #     max_score = 1
-    #     scores = []
-    #     for i in range(0, num_interests):
-    #         rdm_score = round(max_score * random.random(), 2)
-    #         scores.append(rdm_score)
-    #         max_score = max_score - rdm_score
-    #     return scores
 
     def root(self):
         return self.app.send_static_file('index.html')
@@ -51,6 +45,17 @@ class UserNode(object):
             except IndexError:
                 return 0.
 
+        def get_scores(interest):  # Return the scores
+            points = scores[interest]
+            if len(points) < self.window_length:
+                return points
+            else:
+                self.display_point_interval = len(points) / float(self.window_length)
+                f_points = interp1d(range(len(points)), points, kind='nearest')
+                x_points = [i*self.display_point_interval for i in range(self.window_length)]
+                window_points = f_points(x_points)
+                return list(window_points)
+
         return json.dumps({
             'isBusy': not self.services.ready_for_interaction,
             'focusedInterest': user_focus if len(user_focus) > 0 else None,
@@ -63,34 +68,36 @@ class UserNode(object):
                 {'interestId': 's_light', 'value': get_last('s_light'), 'title': 'Light'},
                 {'interestId': 's_sound', 'value': get_last('s_sound'), 'title': 'Sound'}
             ],
+            'pointInterval': self.display_point_interval,
+            'roundPointInterval': True,
             'dataset': [
                 {
                     'interestId': 's_hand',
-                    'data': scores['s_hand']
+                    'data': get_scores('s_hand')
                 },
                 {
                     'interestId': 's_joystick_2',
-                    'data': scores['s_joystick_2']
+                    'data': get_scores('s_joystick_2')
                 },
                 {
                     'interestId': 's_joystick_1',
-                    'data': scores['s_joystick_1']
+                    'data': get_scores('s_joystick_1')
                 },
                 {
                     'interestId': 's_ergo',
-                    'data': scores['s_ergo']
+                    'data': get_scores('s_ergo')
                 },
                 {
                     'interestId': 's_ball',
-                    'data': scores['s_ball']
+                    'data': get_scores('s_ball')
                 },
                 {
                     'interestId': 's_light',
-                    'data': scores['s_light']
+                    'data': get_scores('s_light')
                 },
                 {
                     'interestId': 's_sound',
-                    'data': scores['s_sound']
+                    'data': get_scores('s_sound')
                 }
             ]
         })
