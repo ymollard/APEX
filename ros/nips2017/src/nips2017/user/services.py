@@ -1,7 +1,6 @@
 import rospy
 from numpy import array
-from nips2017.srv import SetIteration, SetIterationRequest, SetFocus, SetFocusRequest, Assess, AssessRequest
-from nips2017.msg import Interests
+from nips2017.srv import SetIteration, SetIterationRequest, SetFocus, SetFocusRequest, Assess, AssessRequest, GetInterests, GetInterestsRequest
 from std_msgs.msg import String, Bool, UInt32
 
 
@@ -9,14 +8,13 @@ class UserServices(object):
     def __init__(self):
         self.services = {'set_iteration': {'name': '/nips2017/learning/set_iteration', 'type': SetIteration},
                          'set_focus': {'name': '/nips2017/learning/set_interest', 'type': SetFocus},
-                         'assess': {'name': '/nips2017/learning/assess', 'type': Assess}}
+                         'assess': {'name': '/nips2017/learning/assess', 'type': Assess},
+                         'get_interests': {'name': '/nips2017/learning/get_interests', 'type': GetInterests}}
 
-        rospy.Subscriber('/nips2017/learning/interests', Interests, self._cb_interests)
         rospy.Subscriber('/nips2017/learning/current_focus', String, self._cb_focus)
         rospy.Subscriber('/nips2017/learning/user_focus', String, self._cb_user_focus)
         rospy.Subscriber('/nips2017/learning/ready_for_interaction', Bool, self._cb_ready)
 
-        self.interests = {}
         self.current_focus = ""
         self.user_focus = ""
         self.ready_for_interaction = False
@@ -28,8 +26,12 @@ class UserServices(object):
 
         rospy.loginfo("User node started!")
 
-    def _cb_interests(self, msg):
-        self.interests = dict(zip(msg.names, array(map(lambda x: x.data, msg.interests)).reshape(msg.num_iterations.data, len(msg.names)).T.tolist()))
+    @property
+    def interests(self):
+        call = self.services['get_interests']['call']
+        response = call(GetInterestsRequest())
+        interests = dict(zip(response.names, array(map(lambda x: x.data, response.interests)).reshape(response.num_iterations.data, len(response.names)).T.tolist()))
+        return interests
 
     def _cb_focus(self, msg):
         self.current_focus = msg.data

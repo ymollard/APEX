@@ -7,7 +7,7 @@ import datetime
 from os.path import join
 from rospkg.rospack import RosPack
 from nips2017.srv import *
-from nips2017.msg import Interests, Demonstration
+from nips2017.msg import Demonstration
 from nips2017.learning import EnvironmentTranslator, Learning
 from std_msgs.msg import String, Bool, UInt32, Float32
 from threading import RLock
@@ -49,9 +49,9 @@ class LearningNode(object):
         self.service_name_set_interest = "/nips2017/learning/set_interest"
         self.service_name_set_iteration = "/nips2017/learning/set_iteration"
         self.service_name_demonstrate = "/nips2017/learning/assess"
+        self.service_name_interests = "/nips2017/learning/get_interests"
 
         # Publishing these topics
-        self.pub_interests = rospy.Publisher('/nips2017/learning/interests', Interests, queue_size=1, latch=True)
         self.pub_focus = rospy.Publisher('/nips2017/learning/current_focus', String, queue_size=1, latch=True)
         self.pub_user_focus = rospy.Publisher('/nips2017/learning/user_focus', String, queue_size=1, latch=True)
         self.pub_ready = rospy.Publisher('/nips2017/learning/ready_for_interaction', Bool, queue_size=1, latch=True)
@@ -98,12 +98,22 @@ class LearningNode(object):
             self.condition = condition
             self.trial = trial
 
+    def cb_get_interests(self, request):
+        interests_array = self.learning.get_normalized_interests_evolution()
+        interests = GetInterestsResponse()
+        if self.learning is not None:
+            interests.names = self.learning.get_space_names()
+            interests.num_iterations = UInt32(len(interests_array))
+            interests.interests = [Float32(val) for val in interests_array.flatten()]
+        return interests
+
     def run(self):
         rospy.Service(self.service_name_perceive, Perceive, self.cb_perceive)
         rospy.Service(self.service_name_produce, Produce, self.cb_produce)
         rospy.Service(self.service_name_set_interest, SetFocus, self.cb_set_focus)
         rospy.Service(self.service_name_set_iteration, SetIteration, self.cb_set_iteration)
         rospy.Service(self.service_name_demonstrate, Assess, self.cb_assess)
+        rospy.Service(self.service_name_interests, GetInterests, self.cb_get_interests)
         rospy.loginfo("Learning is up!")
 
         rate = rospy.Rate(self.params['publish_rate'])
@@ -121,16 +131,9 @@ class LearningNode(object):
             with self.lock_iteration:
                 focus = copy(self.focus)
                 ready = copy(self.ready_for_interaction)
-        
-            interests_array = self.learning.get_normalized_interests_evolution()
-            interests = Interests()
-            interests.names = self.learning.get_space_names()
-            interests.num_iterations = UInt32(len(interests_array))
-            interests.interests = [Float32(val) for val in interests_array.flatten()]
-        
+
             self.pub_ready.publish(Bool(data=ready))
             self.pub_user_focus.publish(String(data=focus if focus is not None else ""))
-            self.pub_interests.publish(interests)
             self.pub_focus.publish(String(data=self.learning.get_last_focus()))
             self.pub_iteration.publish(UInt32(data=self.learning.get_iterations()))
 

@@ -55,7 +55,6 @@ add_message_files(
   ErgoTrajectory.msg
   SensorialState.msg
   SensorialTrajectory.msg
-  Interests.msg
   Demonstration.msg
 
 )
@@ -65,6 +64,7 @@ add_service_files(
   FILES
   ExecuteErgoTrajectory.srv
   GetSensorialState.srv  
+  GetInterests.srv
   Produce.srv
   Reset.srv
   ExecuteTorsoTrajectory.srv
