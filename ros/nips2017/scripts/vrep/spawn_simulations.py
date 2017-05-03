@@ -33,6 +33,7 @@ class SimulationSpawner(object):
         self.vrep_bin_path = vrep_binary_path
         self.num_instances = num_instances
         self.initial_ros_master_port = 11311
+        self.initial_ui_port = 5000
         self.initial_vrep_port = 46400
         self.headless = headless
         self.children = []
@@ -51,11 +52,14 @@ class SimulationSpawner(object):
                 vrep_torso_port = self.initial_vrep_port + n*10 + 2
                 vrep_ergo_port = self.initial_vrep_port + n*10 + 3
 
+                ui_port = self.initial_ui_port + n
+
                 print("[ROS master URI] {}".format(ros_master_uri))
                 print("[VREP ports] clock : {} environment : {} torso : {} ergo : {}".format(vrep_clock_port,
                                                                                              vrep_env_port,
                                                                                              vrep_torso_port,
                                                                                              vrep_ergo_port))
+                print("[Web UI] port : {}".format(ui_port))
                 with open(self.vrep_con_path, 'w') as f:
                     f.write(get_vrep_api_file(vrep_clock_port, vrep_env_port, vrep_torso_port, vrep_ergo_port))
 
@@ -70,10 +74,10 @@ class SimulationSpawner(object):
                 name = 'instance_{}'.format(n)
                 process_str = 'roslaunch nips2017 start_sim.launch namespace:={} ' \
                               'clock_vrep_port:={} environment_vrep_port:={} torso_vrep_port:={} ' \
-                              'ergo_vrep_port:={}'.format(name, vrep_clock_port,
+                              'ergo_vrep_port:={} ui_port:={}'.format(name, vrep_clock_port,
                                                                 vrep_env_port,
                                                                 vrep_torso_port,
-                                                                vrep_ergo_port)
+                                                                vrep_ergo_port, ui_port)
                 print(process_str)
                 process = Popen(process_str.split(' '), env=environ)
                 self.children.append(process)

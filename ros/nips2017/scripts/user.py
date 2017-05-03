@@ -17,6 +17,7 @@ from scipy.interpolate import interp1d
 class UserNode(object):
     def __init__(self):
         self.rospack = RosPack()
+        self.port = rospy.get_param('ui_port', 5000)
         self.web_app_root = join(self.rospack.get_path('nips2017'), 'webapp', 'static')
         self.app = Flask(__name__, static_url_path='', static_folder=self.web_app_root)
         self.cors = CORS(self.app, resources={r'/api/*': {'origins': '*'}})
@@ -134,7 +135,7 @@ class UserNode(object):
 
     def run(self):
         rospy.loginfo("User node is serving the Web app")
-        thread = Thread(target=lambda: self.app.run(host='0.0.0.0'))
+        thread = Thread(target=lambda: self.app.run(host='0.0.0.0', port=self.port))
         thread.daemon = True
         thread.start()
         rospy.spin()
