@@ -4,15 +4,10 @@
   <arg name="debug" default="True"/> <!-- Enable debugging information and pictures -->
   <arg name="source" default="none"/> <!-- Source of pre-planned data for this experiment -->
   <arg name="namespace" default="apex"/> <!-- Unique name of the experiment -->
-  <arg name="simulated" default="false"/> <!-- Ergo and Torso are simulated on the workstation -->
 
-
-  <include file="$(find nips2017)/launch/workstation.launch" >
+  <include file="$(find nips2017)/launch/services_hw.launch" >
     <arg name="output" value="$(arg output)"/>
     <arg name="debug" value="$(arg debug)"/>
-    <arg name="source" value="$(arg source)"/>
-    <arg name="namespace" value="$(arg namespace)"/>
-    <arg name="simulated" value="$(arg simulated)"/>
   </include>
 
   <group ns="$(arg namespace)">

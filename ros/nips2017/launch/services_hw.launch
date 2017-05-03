@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="output" default="screen"/> <!-- Set output="log" to mute the screen output -->
+  <arg name="debug" default="True"/> <!-- Enable debugging information and pictures -->
+  <arg name="namespace" default="apex"/> <!-- Name of the experiment -->
+
+  <group ns="$(arg namespace)">
+
+      <param name="perception/debug" value="$(arg debug)" />
+      <param name="experiment_name" value="$(arg namespace)" />
+
+      <rosparam command="load" param="experiment" file="$(find nips2017)/config/experiment.yaml" />
+
+      <node name="environment" pkg="nips2017" type="environment.py" output="$(arg output)"/>
+      <node name="perception" pkg="nips2017" type="perception.py" output="$(arg output)"/>
+      <node name="torso" pkg="nips2017" type="torso.py" output="$(arg output)" respawn="true"/>
+      <node name="learning" pkg="nips2017" type="learning.py" output="$(arg output)" required="true"/>
+      <node name="user" pkg="nips2017" type="user.py" output="$(arg output)" respawn="true"/>
+      <node name="sound" pkg="nips2017" type="sound.py" output="$(arg output)" respawn="true"/>
+
+      <include file="$(find nips2017)/launch/controllers.launch">
+          <arg name="torso_vrep_port" value="$(arg torso_vrep_port)"/>
+          <arg name="ergo_vrep_port" value="$(arg ergo_vrep_port)"/>
+          <arg name="simulated" value="false"/>
+      </include>
+  </group>
+</launch>
