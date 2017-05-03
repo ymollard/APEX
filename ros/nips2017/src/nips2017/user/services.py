@@ -6,14 +6,14 @@ from std_msgs.msg import String, Bool, UInt32
 
 class UserServices(object):
     def __init__(self):
-        self.services = {'set_iteration': {'name': '/nips2017/learning/set_iteration', 'type': SetIteration},
-                         'set_focus': {'name': '/nips2017/learning/set_interest', 'type': SetFocus},
-                         'assess': {'name': '/nips2017/learning/assess', 'type': Assess},
-                         'get_interests': {'name': '/nips2017/learning/get_interests', 'type': GetInterests}}
+        self.services = {'set_iteration': {'name': 'learning/set_iteration', 'type': SetIteration},
+                         'set_focus': {'name': 'learning/set_interest', 'type': SetFocus},
+                         'assess': {'name': 'learning/assess', 'type': Assess},
+                         'get_interests': {'name': 'learning/get_interests', 'type': GetInterests}}
 
-        rospy.Subscriber('/nips2017/learning/current_focus', String, self._cb_focus)
-        rospy.Subscriber('/nips2017/learning/user_focus', String, self._cb_user_focus)
-        rospy.Subscriber('/nips2017/learning/ready_for_interaction', Bool, self._cb_ready)
+        rospy.Subscriber('learning/current_focus', String, self._cb_focus)
+        rospy.Subscriber('learning/user_focus', String, self._cb_user_focus)
+        rospy.Subscriber('learning/ready_for_interaction', Bool, self._cb_ready)
 
         self.current_focus = ""
         self.user_focus = ""

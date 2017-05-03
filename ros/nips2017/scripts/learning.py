@@ -44,30 +44,30 @@ class LearningNode(object):
         self.experiment_file = "/dev/null"
 
         # Serving these services
-        self.service_name_perceive = "/nips2017/learning/perceive"
-        self.service_name_produce = "/nips2017/learning/produce"
-        self.service_name_set_interest = "/nips2017/learning/set_interest"
-        self.service_name_set_iteration = "/nips2017/learning/set_iteration"
-        self.service_name_demonstrate = "/nips2017/learning/assess"
-        self.service_name_interests = "/nips2017/learning/get_interests"
+        self.service_name_perceive = "learning/perceive"
+        self.service_name_produce = "learning/produce"
+        self.service_name_set_interest = "learning/set_interest"
+        self.service_name_set_iteration = "learning/set_iteration"
+        self.service_name_demonstrate = "learning/assess"
+        self.service_name_interests = "learning/get_interests"
 
         # Publishing these topics
-        self.pub_focus = rospy.Publisher('/nips2017/learning/current_focus', String, queue_size=1, latch=True)
-        self.pub_user_focus = rospy.Publisher('/nips2017/learning/user_focus', String, queue_size=1, latch=True)
-        self.pub_ready = rospy.Publisher('/nips2017/learning/ready_for_interaction', Bool, queue_size=1, latch=True)
-        self.pub_iteration = rospy.Publisher('/nips2017/iteration', UInt32, queue_size=1, latch=True)
+        self.pub_focus = rospy.Publisher('learning/current_focus', String, queue_size=1, latch=True)
+        self.pub_user_focus = rospy.Publisher('learning/user_focus', String, queue_size=1, latch=True)
+        self.pub_ready = rospy.Publisher('learning/ready_for_interaction', Bool, queue_size=1, latch=True)
+        self.pub_iteration = rospy.Publisher('iteration', UInt32, queue_size=1, latch=True)
 
         # Using these services
-        self.service_name_get_perception = "/nips2017/perception/get"
+        self.service_name_get_perception = "perception/get"
         for service in [self.service_name_get_perception]:
             rospy.loginfo("Learning  node is waiting service {}...".format(service))
             rospy.wait_for_service(service)
         self.get_state = rospy.ServiceProxy(self.service_name_get_perception, GetSensorialState)
 
     def update_learner(self):
-        condition = rospy.get_param('/nips2017/experiment/current/condition')
-        trial = rospy.get_param('/nips2017/experiment/current/trial')
-        experiment_name = rospy.get_param("/nips2017/experiment_name", "experiment")
+        condition = rospy.get_param('experiment/current/condition')
+        trial = rospy.get_param('experiment/current/trial')
+        experiment_name = rospy.get_param("experiment_name", "experiment")
 
         if condition != self.condition or trial != self.trial:
             with self.lock_iteration:

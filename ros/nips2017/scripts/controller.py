@@ -14,7 +14,8 @@ class Controller(object):
         self.rospack = RosPack()
         with open(join(self.rospack.get_path('nips2017'), 'config', 'general.json')) as f:
             self.params = json.load(f)
-        self.experiment = rospy.get_param('/nips2017/experiment')
+
+        self.experiment = rospy.get_param('experiment')
         self.torso = Torso()
         self.ergo = Ergo()
         self.learning = Learning()
@@ -41,13 +42,13 @@ class Controller(object):
                             rospy.sleep(5)
 
                         self.experiment['current'] = {'condition': condition, 'iteration': iteration, 'trial': trial}
-                        rospy.set_param('/nips2017/experiment', self.experiment)
+                        rospy.set_param('experiment', self.experiment)
                         self.execute_iteration(iteration, trial, params)
                     finally:
                         self.experiment['current']['condition'] = condition
                         self.experiment['current']['trial'] = trial
                         self.experiment['current']['iteration'] = iteration
-                        rospy.set_param('/nips2017/experiment', self.experiment)
+                        rospy.set_param('experiment', self.experiment)
                         dump_exp = deepcopy(self.experiment)
                         #del dump_exp['current']
                         with open(join(self.rospack.get_path('nips2017'), 'config', 'experiment.yaml'), 'w') as f:
@@ -70,5 +71,6 @@ class Controller(object):
             self.torso.reset(slow=False)
         self.learning.perceive(recording.demo)  # TODO non-blocking
 
-rospy.init_node("nips2017_controller")
-Controller().run()
+if __name__ == '__main__':
+    rospy.init_node("nips2017_controller")
+    Controller().run()

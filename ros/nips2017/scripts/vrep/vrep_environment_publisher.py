@@ -67,11 +67,11 @@ class ObjectTracker(object):
 
 class VRepEnvironmentPublisher(object):
     def __init__(self):
-        self.joy_pub = rospy.Publisher('/nips2017/sensors/joystick/1', Joy, queue_size=1)
-        self.joy_pub2 = rospy.Publisher('/nips2017/sensors/joystick/2', Joy, queue_size=1)
-        self.ball_pub = rospy.Publisher('/nips2017/environment/ball', CircularState, queue_size=1)
-        self.light_pub = rospy.Publisher('/nips2017/environment/light', UInt8, queue_size=1)
-        self.sound_pub = rospy.Publisher('/nips2017/environment/sound', Float32, queue_size=1)
+        self.joy_pub = rospy.Publisher('sensors/joystick/1', Joy, queue_size=1)
+        self.joy_pub2 = rospy.Publisher('sensors/joystick/2', Joy, queue_size=1)
+        self.ball_pub = rospy.Publisher('environment/ball', CircularState, queue_size=1)
+        self.light_pub = rospy.Publisher('environment/light', UInt8, queue_size=1)
+        self.sound_pub = rospy.Publisher('environment/sound', Float32, queue_size=1)
 
         self.rospack = RosPack()
         with open(join(self.rospack.get_path('nips2017'), 'config', 'ergo.json')) as f:
@@ -130,7 +130,7 @@ class VRepEnvironmentPublisher(object):
 
     def run(self):
         self.start_simulation()
-        rospy.Service('/nips2017/vrep/reset_ball', Empty, self.cb_reset_ball)
+        rospy.Service('vrep/reset_ball', Empty, self.cb_reset_ball)
 
         try:
             self.reset_ball()

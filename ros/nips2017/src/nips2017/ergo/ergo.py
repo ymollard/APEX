@@ -21,8 +21,8 @@ class Ergo(object):
         self.rate = rospy.Rate(self.params['publish_rate'])
 
         # Service callers
-        self.robot_reach_srv_name = '/{}/reach'.format(self.params['robot_name'])
-        self.robot_compliant_srv_name = '/{}/set_compliant'.format(self.params['robot_name'])
+        self.robot_reach_srv_name = '{}/reach'.format(self.params['robot_name'])
+        self.robot_compliant_srv_name = '{}/set_compliant'.format(self.params['robot_name'])
         rospy.loginfo("Ergo node is waiting for poppy controllers...")
         rospy.wait_for_service(self.robot_reach_srv_name)
         rospy.wait_for_service(self.robot_compliant_srv_name)
@@ -30,8 +30,8 @@ class Ergo(object):
         self.compliant_proxy = rospy.ServiceProxy(self.robot_compliant_srv_name, SetCompliant)
         rospy.loginfo("Controllers connected!")
 
-        self.state_pub = rospy.Publisher('/nips2017/ergo/state', CircularState, queue_size=1)
-        self.button_pub = rospy.Publisher('/nips2017/ergo/button', Bool, queue_size=1)
+        self.state_pub = rospy.Publisher('ergo/state', CircularState, queue_size=1)
+        self.button_pub = rospy.Publisher('ergo/button', Bool, queue_size=1)
 
         self.goals = []
         self.goal = 0.
@@ -41,9 +41,9 @@ class Ergo(object):
         self.joy2_y = 0.
         self.motion_started_joy = 0.
         self.js = JointState()
-        rospy.Subscriber('/nips2017/sensors/joystick/1', Joy, self.cb_joy_1)
-        rospy.Subscriber('/nips2017/sensors/joystick/2', Joy, self.cb_joy_2)
-        rospy.Subscriber('/{}/joint_state'.format(self.params['robot_name']), JointState, self.cb_js)
+        rospy.Subscriber('sensors/joystick/1', Joy, self.cb_joy_1)
+        rospy.Subscriber('sensors/joystick/2', Joy, self.cb_joy_2)
+        rospy.Subscriber('{}/joint_state'.format(self.params['robot_name']), JointState, self.cb_js)
 
         self.t = rospy.Time.now()
         self.srv_reset = None
@@ -112,7 +112,7 @@ class Ergo(object):
     def run(self):
         self.go_to_start()
         self.last_activity = rospy.Time.now()
-        self.srv_reset = rospy.Service('/nips2017/ergo/reset', Reset, self._cb_reset)
+        self.srv_reset = rospy.Service('ergo/reset', Reset, self._cb_reset)
         rospy.loginfo('Ergo is ready and starts joystick servoing...')
         self.t = rospy.Time.now()
 

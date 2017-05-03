@@ -22,9 +22,9 @@ class Environment(object):
 
         self.tracking = BallTracking(self.params)
         self.conversions = EnvironmentConversions()
-        self.ball_pub = rospy.Publisher('/nips2017/environment/ball', CircularState, queue_size=1)
-        self.light_pub = rospy.Publisher('/nips2017/environment/light', UInt8, queue_size=1)
-        self.sound_pub = rospy.Publisher('/nips2017/environment/sound', Float32, queue_size=1)
+        self.ball_pub = rospy.Publisher('environment/ball', CircularState, queue_size=1)
+        self.light_pub = rospy.Publisher('environment/light', UInt8, queue_size=1)
+        self.sound_pub = rospy.Publisher('environment/sound', Float32, queue_size=1)
         self.rate = rospy.Rate(self.params['rate'])
 
     def update_light(self, state):
@@ -39,7 +39,7 @@ class Environment(object):
             return
 
         while not rospy.is_shutdown():
-            debug = rospy.get_param('/nips2017/perception/debug', False)
+            debug = rospy.get_param('perception/debug', False)
             grabbed, frame = self.tracking.read()
 
             if not grabbed:

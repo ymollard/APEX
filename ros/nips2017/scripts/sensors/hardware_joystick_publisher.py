@@ -19,8 +19,8 @@ pygame.joystick.init()
 
 class HardwareJoystickPublisher(object):
     def __init__(self):
-        self.joy_pub = rospy.Publisher('/nips2017/sensors/joystick/1', Joy, queue_size=1)
-        self.joy_pub2 = rospy.Publisher('/nips2017/sensors/joystick/2', Joy, queue_size=1)
+        self.joy_pub = rospy.Publisher('sensors/joystick/1', Joy, queue_size=1)
+        self.joy_pub2 = rospy.Publisher('sensors/joystick/2', Joy, queue_size=1)
 
         self.rospack = RosPack()
         with open(join(self.rospack.get_path('nips2017'), 'config', 'ergo.json')) as f:

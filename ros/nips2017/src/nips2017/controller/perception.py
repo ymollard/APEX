@@ -8,12 +8,12 @@ import json
 
 class Perception(object):
     def __init__(self):
-        self.services = {'record': {'name': '/nips2017/perception/record', 'type': Record}}
+        self.services = {'record': {'name': 'perception/record', 'type': Record}}
         for service_name, service in self.services.items():
             rospy.loginfo("Controller is waiting service {}...".format(service['name']))
             rospy.wait_for_service(service['name'])
             service['call'] = rospy.ServiceProxy(service['name'], service['type'])
-        rospy.Subscriber('/nips2017/ergo/button', Bool, self._cb_help_pressed)
+        rospy.Subscriber('ergo/button', Bool, self._cb_help_pressed)
         self.button_pressed = False
         self.last_press = rospy.Time(0)
         self.rospack = RosPack()

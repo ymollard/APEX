@@ -4,8 +4,8 @@ from nips2017.srv import *
 
 class Learning(object):
     def __init__(self):
-        self.services = {'produce': {'name': '/nips2017/learning/produce', 'type': Produce},
-                         'perceive': {'name': '/nips2017/learning/perceive', 'type': Perceive}}
+        self.services = {'produce': {'name': 'learning/produce', 'type': Produce},
+                         'perceive': {'name': 'learning/perceive', 'type': Perceive}}
 
         for service_name, service in self.services.items():
             rospy.loginfo("Controller is waiting service {}...".format(service['name']))

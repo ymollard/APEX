@@ -4,7 +4,7 @@ from nips2017.srv import *
 
 class Ergo(object):
     def __init__(self):
-        self.services = {'reset_ergo': {'name': '/nips2017/ergo/reset', 'type': Reset}}
+        self.services = {'reset_ergo': {'name': 'ergo/reset', 'type': Reset}}
 
         for service_name, service in self.services.items():
             rospy.loginfo("Controller is waiting service {}...".format(service['name']))

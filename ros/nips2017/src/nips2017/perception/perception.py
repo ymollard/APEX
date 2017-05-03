@@ -20,10 +20,10 @@ class Perception(object):
         self.rate = rospy.Rate(self.params['recording_rate'])
 
         # Serving these services
-        self.service_name_get = "/nips2017/perception/get"
-        self.service_name_record = "/nips2017/perception/record"
+        self.service_name_get = "perception/get"
+        self.service_name_record = "perception/record"
         # Using these services
-        self.service_name_set_compliant = "/{}/left_arm/set_compliant".format(self.torso_params["robot_name"])
+        self.service_name_set_compliant = "{}/left_arm/set_compliant".format(self.torso_params["robot_name"])
         self.topics = TopicAggregator()  # All topics are read and stored in that object
 
     def run(self):

@@ -8,15 +8,15 @@ import rospy
 class TopicAggregator(object):
     def __init__(self):
         self.topics = {
-            "ball": {"topic": "/nips2017/environment/ball", "sub": None, "data": CircularState(), "type": CircularState},
-            "light": {"topic": "/nips2017/environment/light", "sub": None, "data": UInt8(), "type": UInt8},
-            "sound": {"topic": "/nips2017/environment/sound", "sub": None, "data": Float32(), "type": Float32},
-            "ergo_state": {"topic": "/nips2017/ergo/state", "sub": None, "data": CircularState(), "type": CircularState},
-            "joy1": {"topic": "/nips2017/sensors/joystick/1", "sub": None, "data": Joy(), "type": Joy},
-            "joy2": {"topic": "/nips2017/sensors/joystick/2", "sub": None, "data": Joy(), "type": Joy},
-            "torso_l_j": {"topic": "/{}/joint_state".format("poppy_torso"), "sub": None, "data": JointState(), "type": JointState},
-            "torso_l_eef": {"topic": "/{}/left_arm/end_effector_pose".format("poppy_torso"), "sub": None, "data": PoseStamped(), "type": PoseStamped},
-            "torso_r_eef": {"topic": "/{}/right_arm/end_effector_pose".format("poppy_torso"), "sub": None, "data": PoseStamped(), "type": PoseStamped}
+            "ball": {"topic": "environment/ball", "sub": None, "data": CircularState(), "type": CircularState},
+            "light": {"topic": "environment/light", "sub": None, "data": UInt8(), "type": UInt8},
+            "sound": {"topic": "environment/sound", "sub": None, "data": Float32(), "type": Float32},
+            "ergo_state": {"topic": "ergo/state", "sub": None, "data": CircularState(), "type": CircularState},
+            "joy1": {"topic": "sensors/joystick/1", "sub": None, "data": Joy(), "type": Joy},
+            "joy2": {"topic": "sensors/joystick/2", "sub": None, "data": Joy(), "type": Joy},
+            "torso_l_j": {"topic": "{}/joint_state".format("poppy_torso"), "sub": None, "data": JointState(), "type": JointState},
+            "torso_l_eef": {"topic": "{}/left_arm/end_effector_pose".format("poppy_torso"), "sub": None, "data": PoseStamped(), "type": PoseStamped},
+            "torso_r_eef": {"topic": "{}/right_arm/end_effector_pose".format("poppy_torso"), "sub": None, "data": PoseStamped(), "type": PoseStamped}
         }
 
         self.topics["ball"]["sub"] = rospy.Subscriber(self.topics["ball"]["topic"], self.topics["ball"]["type"], self.cb_ball)

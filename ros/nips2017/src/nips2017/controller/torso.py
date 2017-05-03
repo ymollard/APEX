@@ -11,8 +11,8 @@ class Torso(object):
         self.rospack = RosPack()
         with open(join(self.rospack.get_path('nips2017'), 'config', 'torso.json')) as f:
             self.params = json.load(f)
-        self.services = {'exec_torso': {'name': '/{}/execute'.format(self.params['robot_name']), 'type': ExecuteTrajectory},
-                         'reset_torso': {'name': '/nips2017/torso/reset', 'type': Reset}}
+        self.services = {'exec_torso': {'name': '{}/execute'.format(self.params['robot_name']), 'type': ExecuteTrajectory},
+                         'reset_torso': {'name': 'torso/reset', 'type': Reset}}
         for service_name, service in self.services.items():
             rospy.loginfo("Controller is waiting service {}...".format(service['name']))
             rospy.wait_for_service(service['name'])

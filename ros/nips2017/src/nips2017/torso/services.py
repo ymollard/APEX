@@ -9,16 +9,16 @@ class TorsoServices(object):
         self.set_compliant_srv = {}
         for group in ['left_arm', 'right_arm', 'full_robot']:
             self.set_compliant_srv[group] = {}
-            name = '/{}/{}/set_compliant'.format(robot_name, group)
+            name = '{}/{}/set_compliant'.format(robot_name, group)
             self.set_compliant_srv[group]['name'] = name
             rospy.loginfo("{} is waiting for service {}...".format(robot_name, name))
             rospy.wait_for_service(name)
             self.set_compliant_srv[group]['proxy'] = rospy.ServiceProxy(name, SetCompliant)
-        self.execute_srv_name = '/{}/execute'.format(robot_name)
+        self.execute_srv_name = '{}/execute'.format(robot_name)
         rospy.loginfo("{} is waiting for service {}...".format(robot_name, self.execute_srv_name))
         rospy.wait_for_service(self.execute_srv_name)
         self.execute_proxy = rospy.ServiceProxy(self.execute_srv_name, ExecuteTrajectory)
-        self.reach_srv_name = '/{}/reach'.format(robot_name)
+        self.reach_srv_name = '{}/reach'.format(robot_name)
         rospy.loginfo("{} is waiting for service {}...".format(robot_name, self.reach_srv_name))
         rospy.wait_for_service(self.reach_srv_name)
         self.reach_proxy = rospy.ServiceProxy(self.reach_srv_name, ReachTarget)

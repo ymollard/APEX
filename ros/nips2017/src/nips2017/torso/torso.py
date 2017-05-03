@@ -28,7 +28,7 @@ class Torso(object):
         self.torso = TorsoServices(self.params['robot_name'])
 
         # Proposed servuces
-        self.reset_srv_name = '/nips2017/torso/reset'
+        self.reset_srv_name = 'torso/reset'
         self.reset_srv = None
 
     def go_to_start(self, duration=5):
