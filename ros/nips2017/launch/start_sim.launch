@@ -10,8 +10,10 @@
   <arg name="environment_vrep_port" default="19997"/>
 
   <include file="$(find nips2017)/launch/services_sim.launch" >
-    <arg name="torso_vrep_port" default="$(arg torso_vrep_port)"/>
-    <arg name="ergo_vrep_port" default="$(arg ergo_vrep_port)"/>
+    <arg name="torso_vrep_port" value="$(arg torso_vrep_port)"/>
+    <arg name="ergo_vrep_port" value="$(arg ergo_vrep_port)"/>
+    <arg name="clock_vrep_port" value="$(arg clock_vrep_port)"/>
+    <arg name="environment_vrep_port" value="$(arg environment_vrep_port)"/>
 
     <arg name="output" value="$(arg output)"/>
     <arg name="debug" value="$(arg debug)"/>

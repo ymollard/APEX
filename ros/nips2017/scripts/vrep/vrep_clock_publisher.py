@@ -25,5 +25,5 @@ class VRepClockPublisher(object):
 
 if __name__ == '__main__':
     rospy.init_node('vrep_clock_publisher')
-    vrep_port = rospy.get_param('vrep/clock_port', 19997)
+    vrep_port = rospy.get_param('vrep/clock_port', 29997)
     VRepClockPublisher().run(vrep_port)
