@@ -80,7 +80,7 @@ class VRepEnvironmentPublisher(object):
             self.env_params = json.load(f)
 
         self.rate = rospy.Rate(self.ergo_params['publish_rate'])
-        vrep_port = rospy.get_param('/sensors/vrep_port', 19997)
+        vrep_port = rospy.get_param('vrep/environment_port', 29997)
         self.simulation_id = vrep.simxStart('127.0.0.1', vrep_port, True, False, 5000, 5)
 
         # Object names in V-Rep
