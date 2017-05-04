@@ -74,6 +74,8 @@ add_service_files(
   SetFocus.srv
   SetIteration.srv
   Assess.srv
+  GetWork.srv
+  UpdateWorkStatus.srv
 
 )
 

@@ -1,0 +1,9 @@
+uint32 worker
+---
+bool work_available
+string method
+uint32 task
+uint32 trial
+uint32 iteration
+uint32 num_iterations
+
