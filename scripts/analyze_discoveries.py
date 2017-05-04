@@ -21,13 +21,13 @@ colors = {
 
 # PARAMS
 path = "/home/sforesti/scm/Flowers/NIPS2017/data/logs/"
-experiment_name = "discovery"
-configs = dict(RMB=3)
+experiment_name = "seb_holidays"
+configs = dict(RMB=3, AMB=3)
 #configs = dict(RmB=1, AMB=5)
 
 
 n_logs = 1
-n = 2000 # Iterations taken into account
+n = 5000 # Iterations taken into account
 p = 20 # Number of checkpoints
 x = range(n)
 
@@ -58,7 +58,7 @@ def dist(x, grid):
 s_spaces = ["Hand", "Joystick_L", "Joystick_R", "Ergo", "Ball", "Light", "Sound"]
 
 
-if False:
+if True:
 
     explo = {}
     explo_gain = {}
@@ -132,20 +132,17 @@ if False:
                     explo_discovery[config][trial][s_space1][s_space2] = np.zeros(p)
                     
             for i in range(1,n-1):
-#                 if abs(log["sm_data"]["mod4"][1][i][0] - log["sm_data"]["mod4"][1][i][-2]) > 0.1 or i in [321, 322]:
-#                     print i, "\nJ1:", log["sm_data"]["mod2"][1][i]
-#                     print i, "\nJ2:", log["sm_data"]["mod3"][1][i]
-#                     print i, "\nErgo:", log["sm_data"]["mod4"][1][i]
-#                     print i, "\nBall:", log["sm_data"]["mod5"][1][i]
+                if i in range(1200, 2000):
+                    print i, "\nBall:", log["sm_data"]["mod5"][1][i]
                 for s_space1 in explo_discovery[config][trial].keys():
                     mid = dims[s_space1]
                     if mid == log["chosen_modules"][i]:
                         for s_space2 in explo.keys():
                             #print
                             g = explo_gain[s_space2][config][trial][i]
-                            if g > 0:# and s_space2 in ["Joystick_L", "Ergo"]:
+                            if g > 0 and s_space2 in ["Ball"]:
                                 m = log["sm_data"]["mod1"][0][i]
-                                print "Iteration:", i, ", Chosen space:", s_space1, ", Gain in", s_space2, ":", g, "bootstrapped_s:", bootstrapped_s[s_space1][config][trial]
+                                #print "Iteration:", i, ", Chosen space:", s_space1, ", Gain in", s_space2, ":", g, "bootstrapped_s:", bootstrapped_s[s_space1][config][trial]
 #                                 print i, "\nJR:", log["sm_data"]["mod2"][1][i]
 #                                 print i, "\nJL:", log["sm_data"]["mod3"][1][i]
 #                                 print i, "\nErgo:", log["sm_data"]["mod4"][1][i]
@@ -173,7 +170,7 @@ else:
     
     config = "RMB"
     trials = range(configs[config])
-    trials = [1]
+    trials = [0]
     print trials
     
     labels = {

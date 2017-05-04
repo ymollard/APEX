@@ -11,7 +11,8 @@ colors = bmap.mpl_colors
 
 # PARAMS
 path = "/home/sforesti/scm/Flowers/NIPS2017/data/logs/"
-configs = dict(RmB=1, RMB=1)
+experiment_name = "seb_holidays"
+configs = dict(AMB=3, RMB=3)
 #configs = dict(RmB=1, AMB=5)
 
 config_colors = dict(AMB=colors[0], RmB=colors[1], FGB=colors[2], RMB=colors[3])
@@ -79,7 +80,7 @@ if True:
             
             print "\nLoading", config, trial
             
-            filename = path + "discovery_" + config + "_" + str(trial) + ".pickle"
+            filename = path + experiment_name + "_" + config + "_" + str(trial) + ".pickle"
             with open(filename, 'r') as f:
                 log = cPickle.load(f)
             f.close()
@@ -92,6 +93,9 @@ if True:
                 b_touch = 0
                 
                 for i in range(n):
+                    #print i, "joystick right", list(log["sm_data"]["mod2"][1][i])
+                    #print "ergo", list(log["sm_data"]["mod4"][1][i])[1:]
+                    #print "ball", list(log["sm_data"]["mod5"][1][i])[2:]
                     #if i < 100:
                         #print i, "Hand:", log["sm_data"]["mod1"][1][i]
                         #print i, "Ergo:", log["sm_data"]["mod4"][1][i]
@@ -100,16 +104,19 @@ if True:
                     #print i
                     if np.linalg.norm(log["sm_data"]["mod2"][1][i] - np.array([-1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1., 0., -1.,  0., -1.,  0., -1.,  0.])) > 0.05:
                         jr_touch += 1
+                        #print
                         #print i, "joystick right", list(log["sm_data"]["mod2"][1][i])
+                    if np.linalg.norm(np.array(list(log["sm_data"]["mod4"][1][i])[1:])[::2] - np.mean(np.array(list(log["sm_data"]["mod4"][1][i])[1:])[::2])) > 0.00001 or np.linalg.norm(np.array(list(log["sm_data"]["mod4"][1][i])[1:])[1::2] - np.mean(np.array(list(log["sm_data"]["mod4"][1][i])[1:])[1::2])) > 0.00001:
+                        e_touch += 1
+                        print
+                        print i, "joystick right", list(log["sm_data"]["mod2"][1][i])
+                        print "ergo", list(log["sm_data"]["mod4"][1][i])
+                            
+                    if abs(list(log["sm_data"]["mod5"][1][i])[2:][0] -  list(log["sm_data"]["mod5"][1][i])[2:][-2]) > 0.05:
+                        b_touch += 1
                     if np.linalg.norm(log["sm_data"]["mod3"][1][i] - np.array([0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1., 0., -1.,  0., -1.,  0., -1.])) > 0.05:
                         jl_touch += 1
                         #print i, "joystick left", list(log["sm_data"]["mod3"][1][i])
-                        if abs(list(log["sm_data"]["mod4"][1][i])[0] -  list(log["sm_data"]["mod4"][1][i])[1:][-2]) > 0.05:
-                            print "ergo", list(log["sm_data"]["mod4"][1][i])
-                            e_touch += 1
-                        if abs(list(log["sm_data"]["mod5"][1][i])[2:][0] -  list(log["sm_data"]["mod5"][1][i])[2:][-2]) > 0.05:
-                            #print "ball", list(log["sm_data"]["mod5"][1][i])[2:]
-                            b_touch += 1
                 print
                 print "Motor Babbling Iterations:", n
                 print "Joystick Left touched:", jl_touch, "percentage:", 100. * jl_touch / n, "%"
@@ -153,10 +160,10 @@ if True:
                 
                 
                 for s_space in explo.keys():
-                    print "Analysis", s_space
+                    #print "Analysis", s_space
                     
                     explo[s_space][config][trial] = compute_explo([log["sm_data"][dims[s_space]][1][i][cdims[s_space]:] for i in range(n)], -1., 1., x)
-                    print explo[s_space][config][trial]
+                    #print explo[s_space][config][trial]
                  
                  
     with open(path + 'analysis_explo.pickle', 'wb') as f:
