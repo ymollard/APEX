@@ -3,14 +3,13 @@
 
   <arg name="output" default="screen"/> <!-- Set output="log" to mute the screen output -->
   <arg name="debug" default="True"/> <!-- Enable debugging information and pictures -->
-  <arg name="namespace" default="apex"/> <!-- Name of the experiment -->
+  <arg name="name" default="apex"/> <!-- Name of the experiment -->
+  <arg name="namespace" default="apex"/> <!-- Isolate the data into a namespace -->
 
   <group ns="$(arg namespace)">
 
       <param name="perception/debug" value="$(arg debug)" />
-      <param name="experiment_name" value="$(arg namespace)" />
-
-      <rosparam command="load" param="experiment" file="$(find nips2017)/config/experiment.yaml" />
+      <param name="experiment/name" value="$(arg name)" />
 
       <node name="environment" pkg="nips2017" type="environment.py" output="$(arg output)"/>
       <node name="perception" pkg="nips2017" type="perception.py" output="$(arg output)"/>

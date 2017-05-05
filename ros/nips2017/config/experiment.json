@@ -1,0 +1,155 @@
+[
+    {
+        "num_iterations": 100000, 
+        "num_trials": 1, 
+        "method": "AMB", 
+        "progress": [
+            {
+                "status": "taken", 
+                "worker": 0, 
+                "iteration": 27
+            }
+        ]
+    }, 
+    {
+        "num_iterations": 3000, 
+        "num_trials": 5, 
+        "method": "FGB", 
+        "progress": [
+            {
+                "status": "taken", 
+                "worker": 1, 
+                "iteration": 23
+            }, 
+            {
+                "status": "taken", 
+                "worker": 0, 
+                "iteration": 4
+            }, 
+            {
+                "status": "taken", 
+                "worker": 1, 
+                "iteration": 2
+            }, 
+            {
+                "status": "taken", 
+                "worker": 0, 
+                "iteration": 0
+            }, 
+            {
+                "status": "taken", 
+                "worker": 1, 
+                "iteration": 8
+            }
+        ]
+    }, 
+    {
+        "num_iterations": 3000, 
+        "num_trials": 5, 
+        "method": "OPT", 
+        "progress": [
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }, 
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }, 
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }, 
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }, 
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }
+        ]
+    }, 
+    {
+        "num_iterations": 500, 
+        "num_trials": 5, 
+        "method": "RMB", 
+        "progress": [
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }, 
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }, 
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }, 
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }, 
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }
+        ]
+    }, 
+    {
+        "num_iterations": 500, 
+        "num_trials": 1, 
+        "method": "RmB", 
+        "progress": [
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }
+        ]
+    }, 
+    {
+        "num_iterations": 3000, 
+        "num_trials": 5, 
+        "method": "SG", 
+        "progress": [
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }, 
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }, 
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }, 
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }, 
+            {
+                "status": "open", 
+                "worker": -1, 
+                "iteration": 0
+            }
+        ]
+    }
+]
+
