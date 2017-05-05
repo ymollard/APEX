@@ -11,6 +11,7 @@
   </include>
 
   <group ns="$(arg namespace)">
+    <node name="manager" pkg="nips2017" type="task_manager.py" output="$(arg output)" required="true"/>
     <node name="controller" pkg="nips2017" type="controller.py" output="$(arg output)" required="true"/>
   </group>
 </launch>

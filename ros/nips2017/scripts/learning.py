@@ -65,9 +65,9 @@ class LearningNode(object):
         self.get_state = rospy.ServiceProxy(self.service_name_get_perception, GetSensorialState)
 
     def update_learner(self):
-        condition = rospy.get_param('experiment/current/condition')
+        condition = rospy.get_param('experiment/current/method')
         trial = rospy.get_param('experiment/current/trial')
-        experiment_name = rospy.get_param("experiment_name", "experiment")
+        experiment_name = rospy.get_param("experiment/name", "experiment")
 
         if condition != self.condition or trial != self.trial:
             with self.lock_iteration:
