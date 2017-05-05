@@ -1,12 +1,12 @@
 [
     {
-        "num_iterations": 5000, 
+        "num_iterations": 5, 
         "num_trials": 3, 
         "method": "AMB", 
         "progress": [
             {
-                "status": "taken", 
-                "iteration": 15, 
+                "status": "open", 
+                "iteration": 0, 
                 "worker": 0
             }, 
             {
@@ -22,7 +22,7 @@
         ]
     }, 
     {
-        "num_iterations": 5000, 
+        "num_iterations": 5, 
         "num_trials": 3, 
         "method": "OS", 
         "progress": [
@@ -44,7 +44,7 @@
         ]
     }, 
     {
-        "num_iterations": 5000, 
+        "num_iterations": 5, 
         "num_trials": 3, 
         "method": "RMB", 
         "progress": [
@@ -66,7 +66,7 @@
         ]
     }, 
     {
-        "num_iterations": 5000, 
+        "num_iterations": 5, 
         "num_trials": 3, 
         "method": "RmB", 
         "progress": [
@@ -88,7 +88,7 @@
         ]
     }, 
     {
-        "num_iterations": 5000, 
+        "num_iterations": 5, 
         "num_trials": 3, 
         "method": "FC", 
         "progress": [
