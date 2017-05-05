@@ -1,155 +1,112 @@
 [
     {
-        "num_iterations": 100000, 
-        "num_trials": 1, 
+        "num_iterations": 5000, 
+        "num_trials": 3, 
         "method": "AMB", 
         "progress": [
             {
                 "status": "taken", 
-                "worker": 0, 
-                "iteration": 27
+                "iteration": 15, 
+                "worker": 0
+            }, 
+            {
+                "status": "open", 
+                "iteration": 0, 
+                "worker": -1
+            }, 
+            {
+                "status": "open", 
+                "iteration": 0, 
+                "worker": -1
             }
         ]
     }, 
     {
-        "num_iterations": 3000, 
-        "num_trials": 5, 
-        "method": "FGB", 
-        "progress": [
-            {
-                "status": "taken", 
-                "worker": 1, 
-                "iteration": 23
-            }, 
-            {
-                "status": "taken", 
-                "worker": 0, 
-                "iteration": 4
-            }, 
-            {
-                "status": "taken", 
-                "worker": 1, 
-                "iteration": 2
-            }, 
-            {
-                "status": "taken", 
-                "worker": 0, 
-                "iteration": 0
-            }, 
-            {
-                "status": "taken", 
-                "worker": 1, 
-                "iteration": 8
-            }
-        ]
-    }, 
-    {
-        "num_iterations": 3000, 
-        "num_trials": 5, 
-        "method": "OPT", 
+        "num_iterations": 5000, 
+        "num_trials": 3, 
+        "method": "OS", 
         "progress": [
             {
                 "status": "open", 
-                "worker": -1, 
-                "iteration": 0
+                "iteration": 0, 
+                "worker": -1
             }, 
             {
                 "status": "open", 
-                "worker": -1, 
-                "iteration": 0
+                "iteration": 0, 
+                "worker": -1
             }, 
             {
                 "status": "open", 
-                "worker": -1, 
-                "iteration": 0
-            }, 
-            {
-                "status": "open", 
-                "worker": -1, 
-                "iteration": 0
-            }, 
-            {
-                "status": "open", 
-                "worker": -1, 
-                "iteration": 0
+                "iteration": 0, 
+                "worker": -1
             }
         ]
     }, 
     {
-        "num_iterations": 500, 
-        "num_trials": 5, 
+        "num_iterations": 5000, 
+        "num_trials": 3, 
         "method": "RMB", 
         "progress": [
             {
                 "status": "open", 
-                "worker": -1, 
-                "iteration": 0
+                "iteration": 0, 
+                "worker": -1
             }, 
             {
                 "status": "open", 
-                "worker": -1, 
-                "iteration": 0
+                "iteration": 0, 
+                "worker": -1
             }, 
             {
                 "status": "open", 
-                "worker": -1, 
-                "iteration": 0
-            }, 
-            {
-                "status": "open", 
-                "worker": -1, 
-                "iteration": 0
-            }, 
-            {
-                "status": "open", 
-                "worker": -1, 
-                "iteration": 0
+                "iteration": 0, 
+                "worker": -1
             }
         ]
     }, 
     {
-        "num_iterations": 500, 
-        "num_trials": 1, 
+        "num_iterations": 5000, 
+        "num_trials": 3, 
         "method": "RmB", 
         "progress": [
             {
                 "status": "open", 
-                "worker": -1, 
-                "iteration": 0
+                "iteration": 0, 
+                "worker": -1
+            }, 
+            {
+                "status": "open", 
+                "iteration": 0, 
+                "worker": -1
+            }, 
+            {
+                "status": "open", 
+                "iteration": 0, 
+                "worker": -1
             }
         ]
     }, 
     {
-        "num_iterations": 3000, 
-        "num_trials": 5, 
-        "method": "SG", 
+        "num_iterations": 5000, 
+        "num_trials": 3, 
+        "method": "FC", 
         "progress": [
             {
                 "status": "open", 
-                "worker": -1, 
-                "iteration": 0
+                "iteration": 0, 
+                "worker": -1
             }, 
             {
                 "status": "open", 
-                "worker": -1, 
-                "iteration": 0
+                "iteration": 0, 
+                "worker": -1
             }, 
             {
                 "status": "open", 
-                "worker": -1, 
-                "iteration": 0
-            }, 
-            {
-                "status": "open", 
-                "worker": -1, 
-                "iteration": 0
-            }, 
-            {
-                "status": "open", 
-                "worker": -1, 
-                "iteration": 0
+                "iteration": 0, 
+                "worker": -1
             }
         ]
     }
 ]
-
