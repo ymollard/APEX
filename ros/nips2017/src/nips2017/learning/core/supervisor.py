@@ -6,11 +6,10 @@ from learning_module import LearningModule
 
 
 class Supervisor(object):
-    def __init__(self, config, babbling_mode="active", n_motor_babbling=0, explo_noise=0.1, choice_eps=0.2, normalize_interests=True):
-        
+    def __init__(self, config, babbling_mode="active", n_motor_babbling=0.1, explo_noise=0.05, choice_eps=0.2, normalize_interests=True):
         self.config = config
-        self.babbling_mode = "prop" if babbling_mode == "active" else "random"
-        self.n_motor_babbling = 0.1
+        self.babbling_mode = babbling_mode
+        self.n_motor_babbling = n_motor_babbling
         self.explo_noise = explo_noise
         self.choice_eps = choice_eps,
         self.normalize_interests = normalize_interests
@@ -140,7 +139,7 @@ class Supervisor(object):
                     self.modules[mid].interest_model.forward(data["im_data"][mid], self.chosen_modules.count(mid), 0, 0)
         
         
-    def choose_babbling_module(self, mode='prop'):
+    def choose_babbling_module(self, mode='active'):
         interests = {}
         for mid in self.modules.keys():
             interests[mid] = self.modules[mid].interest()
@@ -158,9 +157,20 @@ class Supervisor(object):
             w = interests.values()
             mid = self.modules.keys()[softmax_choice(w, temperature)]
         
-        elif mode == 'prop':
+        elif mode == 'active':
             w = interests.values()
             mid = self.modules.keys()[prop_choice(w, eps=self.choice_eps)]
+            
+        elif mode == 'FC':
+            # Fixed Curriculum
+            mids = ["mod1", "mod2", "mod3", "mod4", "mod5", "mod6", "mod7"]
+            n = 5000.
+            i = max(0, min(int(self.t / (n / 7.)), 6))
+            mid = mids[i]
+            
+        elif mode == 'OS':
+            # One Space: ball space
+            mid = "mod5"
         
         self.chosen_modules.append(mid)
         return mid
@@ -210,6 +220,7 @@ class Supervisor(object):
         if np.random.random() < self.n_motor_babbling:
             self.mid_control = None
             self.chosen_modules.append("motor_babbling")
+            rospy.loginfo("Random Motor Babbling")
             return self.motor_babbling()
         else:
             if space is None:
@@ -225,7 +236,7 @@ class Supervisor(object):
                 self.chosen_modules.append("forced_" + mid)
                 self.increase_interest(mid)
             self.mid_control = mid
-            
+            rospy.loginfo("Chosen module: {}".format(mid))
             j_sm = self.modules["mod2"].sensorimotor_model
             if self.modules[mid].context_mode is None:
                 self.m = self.modules[mid].produce(j_sm=j_sm)

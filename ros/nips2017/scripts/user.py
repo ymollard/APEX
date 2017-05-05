@@ -85,6 +85,10 @@ class UserNode(object):
                     'data': get_scores('s_joystick_1')
                 },
                 {
+                    'interestId': 's_joystick_1',
+                    'data': scores['s_joystick_1']
+                },
+                {
                     'interestId': 's_ergo',
                     'data': get_scores('s_ergo')
                 },

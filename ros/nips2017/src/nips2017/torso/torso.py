@@ -51,10 +51,10 @@ class Torso(object):
 
     def go_to_rest(self, slow):
         with self.robot_lock:
-            duration = 4 if slow else 0.5
+            duration = 2 if slow else 0.5
             #self.set_torque_limits(60)
-            #self.torso.goto_position({'l_shoulder_y': 13, 'l_shoulder_x': 20, 'l_elbow_y': -25}, duration)
-            #rospy.sleep(duration)
+            self.torso.reach({'l_elbow_y': -35, 'l_shoulder_x': 30}, duration)
+            rospy.sleep(duration)
             self.torso.reach({'l_shoulder_y': -25, 'l_shoulder_x': 40, 'l_arm_z': 30, 'l_elbow_y': 0}, duration)
             rospy.sleep(duration)
             rospy.sleep(0.5)
