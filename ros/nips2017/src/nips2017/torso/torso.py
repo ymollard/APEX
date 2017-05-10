@@ -32,7 +32,7 @@ class Torso(object):
         self.reset_srv = None
 
     def go_to_start(self, duration=5):
-        d = {"abs_z": 75,
+        d = {"abs_z": 0,
              "bust_y": 0,
              "bust_x": 0,
              "head_z": 0,
