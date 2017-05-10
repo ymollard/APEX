@@ -25,6 +25,7 @@ class Supervisor(object):
         self.have_to_replay_arm_demo = None
             
         self.mid_control = ''
+        self.measure_interest = False
         
             
         # Define motor and sensory spaces:
@@ -241,7 +242,14 @@ class Supervisor(object):
             if self.modules[mid].context_mode is None:
                 self.m = self.modules[mid].produce(j_sm=j_sm)
             else:
-                self.m = self.modules[mid].produce(context=np.array(context)[range(self.modules[mid].context_mode["context_n_dims"])], j_sm=j_sm)
+                explore = True  
+                self.measure_interest = False              
+                if self.babbling_mode == "active" and np.random.random() < 0.2:
+                    # In condition AMB, in 20% of iterations we do not explore but measure interest
+                    explore = False
+                    self.measure_interest = True
+                     
+                self.m = self.modules[mid].produce(context=np.array(context)[range(self.modules[mid].context_mode["context_n_dims"])], j_sm=j_sm, explore=explore)
             return self.m
     
     def inverse(self, mid, s, context):
@@ -284,7 +292,7 @@ class Supervisor(object):
                 return False
             ms = self.set_ms(self.m, s)
             self.update_sensorimotor_models(ms)
-            if self.mid_control is not None:
+            if self.mid_control is not None and self.measure_interest:
                 self.modules[self.mid_control].update_im(self.modules[self.mid_control].get_m(ms), self.modules[self.mid_control].get_s(ms))
         self.t = self.t + 1
         

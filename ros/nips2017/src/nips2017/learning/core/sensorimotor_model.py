@@ -35,11 +35,13 @@ class DemonstrableNN(NonParametric):
                 idx = self.model.imodel.fmodel.dataset.nn_y(x)[1][0]
                 #print "demonstrated idx", idx
             if self.mode == 'explore':
+                print "explore mode"
                 r = self.mean_explore
                 r[self.sigma_expl > 0] = np.random.normal(r[self.sigma_expl > 0], self.sigma_expl[self.sigma_expl > 0])
                 res = bounds_min_max(r, self.m_mins, self.m_maxs)
                 return res, idx
             else:  # exploit'
+                print "exploit mode"
                 return array(self.model.infer_order(tuple(x))), idx
 
         else:
