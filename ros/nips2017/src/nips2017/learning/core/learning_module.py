@@ -33,14 +33,14 @@ class LearningModule(Agent):
         
         if context_mode is not None:
             im_cls, kwargs = (ContextRandomInterest, {
-                               'win_size': 200,
+                               'win_size': 50,
                                'competence_mode': 'knn',
                                'k': 20,
                                'progress_mode': 'local',
                                'context_mode':context_mode})
         else:
             im_cls, kwargs = (MiscRandomInterest, {
-                               'win_size': 200,
+                               'win_size': 50,
                                'competence_mode': 'knn',
                                'k': 20,
                                'progress_mode': 'local'})
@@ -119,14 +119,14 @@ class LearningModule(Agent):
                 m = rand_bounds(self.conf.bounds[:, inf_dims], n), -1
         return m
             
-    def produce(self, context=None, j_sm=None):
+    def produce(self, context=None, j_sm=None, explore=True):
         if self.t < self.motor_babbling_n_iter:
             self.m = self.motor_babbling()
             self.s = np.zeros(len(self.s_space))
             self.x = np.zeros(len(self.expl_dims))
         else:
             self.x = self.choose(context)
-            m, idx = self.infer(self.expl_dims, self.inf_dims, self.x)
+            m, idx = self.infer(self.expl_dims, self.inf_dims, self.x, explore=explore)
             if idx<0:
                 self.y = m
             else:
