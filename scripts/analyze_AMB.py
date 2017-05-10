@@ -10,13 +10,32 @@ plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 
 
-iterations = 3000
+simu = True
+
+if simu:
+    
+    # From SIMU
+    path = "/home/sforesti/catkin_ws/src/nips2017/logs/"
+    experiment_name = "experiment"
+    configs = dict(AMB=9)
+    n = 10000
+    j_error = 0.1
+else:
+    
+    # PARAMS
+    path = "/home/sforesti/scm/Flowers/NIPS2017/data/logs/"
+    experiment_name = "nips_4_mai"
+    configs = dict(AMB=2)
+    n = 5000
+    j_error = 0.02
+
+
 
     
 data = {}
-for i in range(5):
+for i in range(configs["AMB"]):
         
-    filename = "/home/sforesti/ros/home/ros/Repos/NIPS2016/ros/nips2016/logs/experiment_AMB_" + str(i) + ".pickle"
+    filename = path + experiment_name + "_AMB_" + str(i) + ".pickle"
     
     with open(filename, 'r') as f:
         log = cPickle.load(f)
@@ -27,17 +46,17 @@ for i in range(5):
 
 
 labels = dict(mod1="Hand", 
-             mod2="Joystick_1", 
-             mod3="Joystick_2", 
+             mod2="Joystick Right", 
+             mod3="Joystick Left", 
              mod4="Ergo", 
              mod5="Ball", 
              mod6="Light", 
              mod7="Sound")
 
-for i in range(5):
+for i in range(configs["AMB"]):
     plt.figure()
     for mid in data[i]["interests_evolution"].keys():
-        plt.plot(data[i]["interests_evolution"][mid][:iterations], lw=2, label=labels[mid])
+        plt.plot(data[i]["interests_evolution"][mid][:n], lw=2, label=labels[mid])
     
     
     legend = plt.legend(frameon=True, fontsize=18, loc="left")
