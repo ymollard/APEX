@@ -150,15 +150,25 @@ class Supervisor(object):
         elif mode == 'greedy':
             eps = 0.2
             if np.random.random() < eps:
-                mid = np.random.choice(self.interests.keys())
+                mid = np.random.choice(interests.keys())
             else:
                 mid = max(interests, key=interests.get)
-        elif mode == 'softmax':
-            temperature = 0.1
-            w = interests.values()
-            mid = self.modules.keys()[softmax_choice(w, temperature)]
-        
         elif mode == 'active':
+            eps = 0.2
+            if np.random.random() < eps or sum(interests.values()) == 0.:
+                mid = np.random.choice(interests.keys())
+            else:
+                temperature = 1.
+                non_zero_interests = {key:interests[key] for key in interests.keys() if interests[key] > 0.}
+                w = np.array(non_zero_interests.values())   
+                w = w / np.sum(w)
+                probas = np.exp(w / temperature)
+                probas = probas / np.sum(probas)
+                print "interests", interests, "probas:", probas
+                idx = np.where(np.random.multinomial(1, probas) == 1)[0][0]
+                mid = non_zero_interests.keys()[idx]
+        
+        elif mode == 'prop':
             w = interests.values()
             mid = self.modules.keys()[prop_choice(w, eps=self.choice_eps)]
             
@@ -244,7 +254,7 @@ class Supervisor(object):
             else:
                 explore = True  
                 self.measure_interest = False              
-                if self.babbling_mode == "active" and np.random.random() < 0.2:
+                if self.babbling_mode == "active" and (self.modules[mid].interest() == 0. or np.random.random() < 0.2):
                     # In condition AMB, in 20% of iterations we do not explore but measure interest
                     explore = False
                     self.measure_interest = True
