@@ -18,8 +18,8 @@ if simu:
     # From SIMU
     path = "/home/sforesti/catkin_ws/src/nips2017/logs/"
     experiment_name = "experiment"
-    configs = dict(AMB=3, RMB=3, RmB=3, FC=1, OS=3)
-    n = 10000
+    configs = dict(AMB=9)#, RMB=3, RmB=3, FC=1, OS=3)
+    n = 4000
     j_error = 0.1
 else:
     
