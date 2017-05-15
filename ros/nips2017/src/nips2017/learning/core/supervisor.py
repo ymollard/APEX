@@ -155,7 +155,7 @@ class Supervisor(object):
                 mid = max(interests, key=interests.get)
         elif mode == 'active':
             eps = 0.2
-            if np.random.random() < eps or sum(interests.values()) == 0.:
+            if self.t < 200 or np.random.random() < eps or sum(interests.values()) == 0.:
                 mid = np.random.choice(interests.keys())
             else:
                 temperature = 1.
