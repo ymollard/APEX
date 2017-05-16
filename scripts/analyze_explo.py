@@ -6,12 +6,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 import brewer2mpl
-bmap = brewer2mpl.get_map('Dark2', 'qualitative', 5)
+bmap = brewer2mpl.get_map('Dark2', 'qualitative', 8)
 colors = bmap.mpl_colors
 
 
 
-simu = True
+simu = False
 
 if simu:
     
@@ -19,20 +19,20 @@ if simu:
     path = "/home/sforesti/catkin_ws/src/nips2017/logs/"
     experiment_name = "experiment"
     configs = dict(AMB=9)#, RMB=3, RmB=3, FC=1, OS=3)
-    n = 4000
+    n = 10000
     j_error = 0.1
 else:
     
     # PARAMS
     path = "/home/sforesti/scm/Flowers/NIPS2017/data/logs/"
-    experiment_name = "nips_4_mai"
-    configs = dict(AMB=2, RMB=3, RmB=1, FC=3, OS=3)
+    experiment_name = "nips_15_mai"
+    configs = dict(AMB=2)#, RMB=3, RmB=1, FC=3, OS=3)
     n = 5000
     j_error = 0.02
 
 
 
-config_colors = dict(AMB=colors[0], RmB=colors[1], FC=colors[2], RMB=colors[3], OS=colors[4])
+config_colors = dict(AMB=colors[0], RmB=colors[1], FC=colors[2], RMB=colors[3], OS=colors[5])
 
 
 sw = 20
@@ -126,12 +126,15 @@ if True:
                         #print i, "joystick right", list(log["sm_data"]["mod2"][1][i]), np.linalg.norm(log["sm_data"]["mod2"][1][i] - np.array([-1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1., 0., -1.,  0., -1.,  0., -1.,  0.]))
                     if np.linalg.norm(np.array(list(log["sm_data"]["mod4"][1][i])[1:])[::2] - np.mean(np.array(list(log["sm_data"]["mod4"][1][i])[1:])[::2])) > 0.02 or np.linalg.norm(np.array(list(log["sm_data"]["mod4"][1][i])[1:])[1::2] - np.mean(np.array(list(log["sm_data"]["mod4"][1][i])[1:])[1::2])) > 0.02:
                         e_touch += 1
-                        #print
-                        #print i, "joystick right", list(log["sm_data"]["mod2"][1][i])
-                        #print "ergo", list(log["sm_data"]["mod4"][1][i])
+                        print
+                        print i, "joystick right", list(log["sm_data"]["mod2"][1][i])
+                        print "ergo", list(log["sm_data"]["mod4"][1][i])
                             
                     if abs(list(log["sm_data"]["mod5"][1][i])[2:][0] -  list(log["sm_data"]["mod5"][1][i])[2:][-2]) > 0.02:
                         b_touch += 1
+                        #print i, "joystick right", list(log["sm_data"]["mod2"][1][i])
+                        #print "ergo", list(log["sm_data"]["mod4"][1][i])
+                        #print "ball", list(log["sm_data"]["mod5"][1][i])
                     if np.linalg.norm(log["sm_data"]["mod3"][1][i] - np.array([0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1., 0., -1.,  0., -1.,  0., -1.])) > j_error:
                         jl_touch += 1
                         #print i, "joystick left", list(log["sm_data"]["mod3"][1][i]), np.linalg.norm(log["sm_data"]["mod3"][1][i] - np.array([0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1.,  0., -1., 0., -1.,  0., -1.,  0., -1.]))
@@ -141,15 +144,20 @@ if True:
                                              
                     if np.linalg.norm(log["sm_data"]["mod7"][1][i][2:] - np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])) > 0.01:
                         s_touch += 1
-                      
+                        #print
+                        #print i, "ball", list(log["sm_data"]["mod5"][1][i])
+                        #print "sound", list(log["sm_data"]["mod7"][1][i])
+                        
+                     
+                it = len(log["sm_data"]["mod1"][1]) 
                 print
-                print "Iterations:", len(log["sm_data"]["mod1"][1])
-                print "Joystick Left touched:", jl_touch, "percentage:", 100. * jl_touch / n, "%"
-                print "Joystick Right touched:", jr_touch, "percentage:", 100. * jr_touch / n, "%"
-                print "Ergo touched:", e_touch, "percentage:", 100. * e_touch / n, "%"
-                print "Ball touched:", b_touch, "percentage:", int(100. * b_touch / n), "%"
-                print "Light touched:", l_touch, "percentage:", int(100. * l_touch / n), "%"
-                print "Sound touched:", s_touch, "percentage:", int(100. * s_touch / n), "%"
+                print "Iterations:", it
+                print "Joystick Left touched:", jl_touch, "percentage:", 100. * jl_touch / it, "%"
+                print "Joystick Right touched:", jr_touch, "percentage:", 100. * jr_touch / it, "%"
+                print "Ergo touched:", e_touch, "percentage:", 100. * e_touch / it, "%"
+                print "Ball touched:", b_touch, "percentage:", int(100. * b_touch / it), "%"
+                print "Light touched:", l_touch, "percentage:", int(100. * l_touch / it), "%"
+                print "Sound touched:", s_touch, "percentage:", int(100. * s_touch / it), "%"
                 print
                 
             
@@ -192,7 +200,7 @@ if True:
                     try:
                         explo[s_space][config][trial] = compute_explo([log["sm_data"][dims[s_space]][1][i][cdims[s_space]:] for i in range(len(log["sm_data"][dims[s_space]][1]))], -1., 1., x)
                     except:
-                        print i, len(log["sm_data"][dims[s_space]][1]), log["sm_data"][dims[s_space]][1][i][cdims[s_space]:]
+                        print i#, len(log["sm_data"][dims[s_space]][1]), log["sm_data"][dims[s_space]][1][i][cdims[s_space]:]
                         
                     #print explo[s_space][config][trial]
                  
@@ -214,29 +222,30 @@ else:
                  
         fig, ax = plt.subplots()
         fig.canvas.set_window_title(s_space)
-        plt.title('Exploration of $' + s_space + "$ space", fontsize=24)
+        #plt.title('Exploration of $' + s_space + "$ space", fontsize=24)
         
-        for config in configs.keys():
+        for config in ["RmB", "OS", "FC", "RMB", "AMB"]:
             ys = [100.*explo[s_space][config][trial] for trial in range(configs[config])] 
+            ymean = np.mean(ys, axis=0)
             ymed = np.percentile(ys, 50, axis=0)
             ymax = np.percentile(ys, 100, axis=0)
             ymin = np.percentile(ys, 0, axis=0)
             
-            plt.plot(x, ymed, lw=2, color=config_colors[config], label=config)
+            plt.plot(x, ymean, lw=3, color=config_colors[config], label=config)
             plt.fill_between(x, ymin, ymax, color=config_colors[config], alpha=0.2)
         
             
-        legend = plt.legend(frameon=True, fontsize=18)
-        plt.xticks(fontsize = 16)
-        plt.yticks(fontsize = 16)
-        plt.xlabel("Iterations", fontsize=18)
-        plt.ylabel("Exploration \%", fontsize=18)
+        legend = plt.legend(frameon=True, loc="upper left", fontsize=20)
+        plt.xticks([0, 1000, 2000, 3000, 4000, 5000], ["$0$", "", "", "", "", "$5000$"], fontsize = 20)
+        plt.yticks(fontsize = 20)
+        plt.xlabel("Iterations", fontsize=20)
+        plt.ylabel("Exploration \%", fontsize=20)
         frame = legend.get_frame()
         frame.set_facecolor('1.')
         frame.set_edgecolor('0.')
         
         #plt.savefig("/home/sforesti/scm/PhD/cogsci2016/include/obj-explo.pdf", format='pdf', dpi=100, bbox_inches='tight')
-        plt.savefig("/home/sforesti/scm/Flowers/NIPS2016/data/figs/explo_" + s_space + '.pdf', format='pdf', dpi=100, bbox_inches='tight')
+        plt.savefig("/home/sforesti/scm/Flowers/NIPS2017/figs/explo_" + s_space + '.pdf', format='pdf', dpi=100, bbox_inches='tight')
         
         
         plt.show(block=False)

@@ -19,11 +19,26 @@ colors = {
       "Sound":bmap.mpl_colors[7]
       }
 
-# PARAMS
-path = "/home/sforesti/scm/Flowers/NIPS2017/data/logs/"
-experiment_name = "seb_holidays"
-configs = dict(RMB=3, AMB=3)
-#configs = dict(RmB=1, AMB=5)
+
+
+simu = False
+
+if simu:
+    
+    # From SIMU
+    path = "/home/sforesti/catkin_ws/src/nips2017/logs/"
+    experiment_name = "experiment"
+    configs = dict(AMB=9)#, RMB=3, RmB=3, FC=1, OS=3)
+    n = 10000
+    j_error = 0.1
+else:
+    
+    # PARAMS
+    path = "/home/sforesti/scm/Flowers/NIPS2017/data/logs/"
+    experiment_name = "nips_4_mai"
+    configs = dict(RMB=3)#, RMB=3, RmB=1, FC=3, OS=3)
+    n = 5000
+    j_error = 0.02
 
 
 n_logs = 1
