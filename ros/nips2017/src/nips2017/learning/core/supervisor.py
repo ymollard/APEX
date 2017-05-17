@@ -175,7 +175,7 @@ class Supervisor(object):
             
         elif mode == 'FC':
             # Fixed Curriculum
-            mids = ["mod1", "mod2", "mod3", "mod4", "mod5", "mod6", "mod7"]
+            mids = ["mod1", "mod3", "mod2", "mod4", "mod5", "mod6", "mod7"]
             n = 5000.
             i = max(0, min(int(self.t / (n / 7.)), 6))
             mid = mids[i]
