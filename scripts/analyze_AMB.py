@@ -10,22 +10,22 @@ plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 
 
-simu = True
+simu = False
 
 if simu:
     
     # From SIMU
     path = "/home/sforesti/catkin_ws/src/nips2017/logs/"
     experiment_name = "experiment"
-    configs = dict(AMB=9)
+    configs = dict(AMB=10)
     n = 10000
     j_error = 0.1
 else:
     
     # PARAMS
     path = "/home/sforesti/scm/Flowers/NIPS2017/data/logs/"
-    experiment_name = "nips_4_mai"
-    configs = dict(AMB=2)
+    experiment_name = "nips_15_mai"
+    configs = dict(AMB=1)
     n = 5000
     j_error = 0.02
 
@@ -43,6 +43,8 @@ for i in range(configs["AMB"]):
     data[i] = log
     
     print i, len(log["sm_data"]["mod2"][1])
+    #print len(data[i]["interests_evolution"])
+    #print data[i]["interests_evolution"]
 
 
 labels = dict(mod1="Hand", 

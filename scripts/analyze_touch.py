@@ -3,7 +3,7 @@ import sys
 import cPickle
 import numpy as np
 import matplotlib.pyplot as plt
-#import seaborn as sns
+import seaborn as sns
 
 import brewer2mpl
 bmap = brewer2mpl.get_map('Dark2', 'qualitative', 8)
@@ -19,14 +19,30 @@ colors = {
       "Sound":bmap.mpl_colors[7]
       }
 
-# PARAMS
-path = "/home/sforesti/scm/Flowers/NIPS2017/data/logs/"
-experiment_name = "seb_holidays"
-configs = dict(RMB=3, AMB=3)
-#configs = dict(RmB=1, AMB=5)
 
 
-n_logs = 1
+
+simu = False
+
+if simu:
+    
+    # From SIMU
+    path = "/home/sforesti/catkin_ws/src/nips2017/logs/"
+    experiment_name = "experiment"
+    configs = dict(AMB=9)#, RMB=3, RmB=3, FC=1, OS=3)
+    n = 10000
+    j_error = 0.1
+else:
+    
+    # PARAMS
+    path = "/home/sforesti/scm/Flowers/NIPS2017/data/logs/"
+    experiment_name = "nips_4_mai"
+    configs = dict(RMB=3)#, RMB=3, RmB=1, FC=3, OS=3)
+    n = 5000
+    j_error = 0.02
+
+
+
 n = 5000 # Iterations taken into account
 p = 10 # Number of checkpoints
 x = range(n)
@@ -92,7 +108,7 @@ if True:
                 log = cPickle.load(f)
             f.close()
             
-            #print log["chosen_modules"][:50]
+            print log["chosen_modules"]
             
             dims = {"motor_babbling":"motor_babbling",
                     "Hand":"mod1",
@@ -154,6 +170,7 @@ if True:
             for s_space1 in explo_touch[config][trial].keys():
                 #print trial, s_space1, [log["chosen_modules"][i*(n/10):(i+1)*(n/10)].count(dims[s_space1]) for i in range(10)]
                 chosen = [log["chosen_modules"][j*(n/p):(j+1)*(n/p)].count(dims[s_space1]) for j in range(p)]
+                print "chosen", s_space1, chosen
                 for s_space2 in explo.keys():
                     explo_touch[config][trial][s_space1][s_space2] /= chosen
 #                     if s_space2 == "Hand":
@@ -171,9 +188,9 @@ else:
     
     print explo_touch
     
-    config = "AMB"
+    config = "RMB"
     #trials = range(configs[config])
-    trials = [0]
+    trials = [0, 1, 2]
     print trials
     
     labels = {
@@ -190,24 +207,24 @@ else:
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
     
-    for s_space2 in ["Hand", "Joystick_L", "Joystick_R", "Ergo", "Ball"]:#, "Light", "Sound"]:
+    for s_space2 in ["Joystick_L", "Joystick_R", "Ergo", "Ball", "Light", "Sound"]:
             
                 
         fig, ax = plt.subplots()
         fig.canvas.set_window_title(s_space2)
-        plt.title("\% Touching $"+s_space2+"$ while exploring...", fontsize=24)
+        #plt.title("\% Touching $"+s_space2+"$ while exploring...", fontsize=24)
             
-        for s_space1 in ["motor_babbling", "Hand", "Joystick_L", "Joystick_R", "Ergo", "Ball"]:#, "Light", "Sound"]:
+        for s_space1 in ["motor_babbling", "Hand", "Joystick_L", "Joystick_R", "Ergo", "Ball", "Light", "Sound"]:
 #             if s_space1 == "Hand" and s_space2 == "Ball":
 #                 print s_space1, s_space2, [explo_touch[config][trial][s_space1][s_space2] for trial in range(configs[config])]
             plt.plot(np.linspace(n/p, n, p), 100. * np.mean([explo_touch[config][trial][s_space1][s_space2] for trial in trials], axis=0), lw=3, color=colors[s_space1], label=labels[s_space1])
             
                 
-        legend = plt.legend(frameon=True, fontsize=18)
-        plt.xticks(fontsize = 16)
-        plt.yticks(fontsize = 16)
-        plt.xlabel("Iterations", fontsize=18)
-        plt.ylabel("\% Touch", fontsize=18)
+        legend = plt.legend(frameon=True, fontsize=20)
+        plt.xticks([0, 1000, 2000, 3000, 4000, 5000], ["$0$", "$1000$", "$2000$", "$3000$", "$4000$", "$5000$"], fontsize = 20)
+        plt.yticks(fontsize = 20)
+        plt.xlabel("Iterations", fontsize=20)
+        plt.ylabel("\% Reach", fontsize=20)
         frame = legend.get_frame()
         frame.set_facecolor('1.')
         frame.set_edgecolor('0.')

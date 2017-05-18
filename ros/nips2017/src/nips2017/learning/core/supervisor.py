@@ -150,21 +150,32 @@ class Supervisor(object):
         elif mode == 'greedy':
             eps = 0.2
             if np.random.random() < eps:
-                mid = np.random.choice(self.interests.keys())
+                mid = np.random.choice(interests.keys())
             else:
                 mid = max(interests, key=interests.get)
-        elif mode == 'softmax':
-            temperature = 0.1
-            w = interests.values()
-            mid = self.modules.keys()[softmax_choice(w, temperature)]
-        
         elif mode == 'active':
+            print "interests", interests
+            eps = 0.2
+            if self.t < 200 or np.random.random() < eps or sum(interests.values()) == 0.:
+                mid = np.random.choice(interests.keys())
+            else:
+                temperature = 1.
+                non_zero_interests = {key:interests[key] for key in interests.keys() if interests[key] > 0.}
+                w = np.array(non_zero_interests.values())   
+                w = w / np.sum(w)
+                probas = np.exp(w / temperature)
+                probas = probas / np.sum(probas)
+                print  "probas:", probas
+                idx = np.where(np.random.multinomial(1, probas) == 1)[0][0]
+                mid = non_zero_interests.keys()[idx]
+        
+        elif mode == 'prop':
             w = interests.values()
             mid = self.modules.keys()[prop_choice(w, eps=self.choice_eps)]
             
         elif mode == 'FC':
             # Fixed Curriculum
-            mids = ["mod1", "mod2", "mod3", "mod4", "mod5", "mod6", "mod7"]
+            mids = ["mod1", "mod3", "mod2", "mod4", "mod5", "mod6", "mod7"]
             n = 5000.
             i = max(0, min(int(self.t / (n / 7.)), 6))
             mid = mids[i]
@@ -238,17 +249,28 @@ class Supervisor(object):
                 self.increase_interest(mid)
             self.mid_control = mid
             rospy.loginfo("Chosen module: {}".format(mid))
-            j_sm = self.modules["mod2"].sensorimotor_model
-            if self.modules[mid].context_mode is None:
-                self.m = self.modules[mid].produce(j_sm=j_sm)
-            else:
-                explore = True  
-                self.measure_interest = False              
-                if self.babbling_mode == "active" and np.random.random() < 0.2:
+
+
+            explore = True  
+            self.measure_interest = False   
+            #print "babbling_mode", self.babbling_mode           
+            if self.babbling_mode == "active":
+                #print "interest", mid, self.modules[mid].interest()
+                if self.modules[mid].interest() == 0.:
+                    #print "interest 0: exploit"
                     # In condition AMB, in 20% of iterations we do not explore but measure interest
                     explore = False
                     self.measure_interest = True
-                     
+                if np.random.random() < 0.2:                        
+                    #print "random chosen to exploit"
+                    # In condition AMB, in 20% of iterations we do not explore but measure interest
+                    explore = False
+                    self.measure_interest = True
+
+            j_sm = self.modules["mod2"].sensorimotor_model
+            if self.modules[mid].context_mode is None:
+                self.m = self.modules[mid].produce(j_sm=j_sm, explore=explore)
+            else:                     
                 self.m = self.modules[mid].produce(context=np.array(context)[range(self.modules[mid].context_mode["context_n_dims"])], j_sm=j_sm, explore=explore)
             return self.m
     
