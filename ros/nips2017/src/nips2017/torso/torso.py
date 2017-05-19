@@ -5,7 +5,6 @@ from nips2017.srv import *
 from threading import RLock
 from rospkg import RosPack
 from os.path import join
-from .idle import UpperBodyIdleMotion, HeadIdleMotion
 from .services import TorsoServices
 
 
@@ -52,30 +51,25 @@ class Torso(object):
     def go_to_rest(self, slow):
         with self.robot_lock:
             duration = 2 if slow else 0.5
-            #self.set_torque_limits(60)
+            self.torso.set_torque_max(self.params['torques'])
             self.torso.reach({'l_elbow_y': -35, 'l_shoulder_x': 30}, duration)
             rospy.sleep(duration)
             self.torso.reach({'l_shoulder_y': -25, 'l_shoulder_x': 40, 'l_arm_z': 30, 'l_elbow_y': 0}, duration)
             rospy.sleep(duration)
             rospy.sleep(0.5)
             self.in_rest_pose = True
-            #self.set_torque_limits()
-
-    #def set_torque_limits(self, value=None):
-    #    for m in self.torso.l_arm:
-    #        m.torque_limit = self.params['torques'] if value is None else value
+            self.torso.set_torque_max()
 
     def run(self):
         self.reset_srv = rospy.Service(self.reset_srv_name, Reset, self._cb_reset)
         self.go_to_start()
-        #self.primitive_head = UpperBodyIdleMotion(self.torso, 15)
-        #self.primitive_right = HeadIdleMotion(self.torso, 15)
-        #self.primitive_head.start()
-        #self.primitive_right.start()
+        self.torso.start_idle_motion('head')
+        self.torso.start_idle_motion('right_arm')
 
         rospy.spin()
-        #self.primitive_right.stop()
-        #self.primitive_head.stop()
+
+        self.torso.stop_idle_motion('head')
+        self.torso.stop_idle_motion('right_arm')
 
     def _cb_reset(self, request):
         rospy.loginfo("Resetting Torso{}...".format(" in slow mode" if request.slow else ""))
