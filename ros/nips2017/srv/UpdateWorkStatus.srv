@@ -2,5 +2,4 @@ uint32 trial
 uint32 task
 uint32 iteration
 uint32 worker
-bool isDying
 ---

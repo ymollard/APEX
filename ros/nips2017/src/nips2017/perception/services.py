@@ -5,7 +5,7 @@ from sensor_msgs.msg import JointState, Joy
 import rospy
 
 
-class TopicAggregator(object):
+class PerceptionServices(object):
     def __init__(self):
         self.topics = {
             "ball": {"topic": "environment/ball", "sub": None, "data": CircularState(), "type": CircularState},

@@ -6,7 +6,7 @@ from os import system
 from rospkg.rospack import RosPack
 from nips2017.srv import *
 from nips2017.msg import SensorialState, Demonstration
-from .aggregator import TopicAggregator
+from .services import PerceptionServices
 from ..tools import joints
 
 
@@ -24,7 +24,7 @@ class Perception(object):
         self.service_name_record = "perception/record"
         # Using these services
         self.service_name_set_compliant = "{}/left_arm/set_compliant".format(self.torso_params["robot_name"])
-        self.topics = TopicAggregator()  # All topics are read and stored in that object
+        self.topics = PerceptionServices()  # All topics are read and stored in that object
 
     def run(self):
         for service in [self.service_name_set_compliant]:

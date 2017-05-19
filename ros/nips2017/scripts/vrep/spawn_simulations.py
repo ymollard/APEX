@@ -7,6 +7,7 @@ from subprocess import Popen
 from os.path import isfile, join, realpath
 from os import remove, environ
 from shutil import copy2
+from termcolor import colored
 
 
 def get_vrep_api_file(*ports):
@@ -37,12 +38,13 @@ class SimulationSpawner(object):
         self.initial_vrep_port = 46400
         self.headless = headless
         self.children = []
+        self.work_manager_started = False
 
     def run(self):
         copy2(self.vrep_con_path, self.vrep_con_path_bak)
         try:
             for n in range(self.num_instances):
-                print("### Launching simulated instance {}/{}".format(n+1, self.num_instances))
+                print(colored("### Launching simulated instance {}/{}".format(n+1, self.num_instances), 'blue'))
                 ros_master_port = self.initial_ros_master_port + n
                 ros_master_uri = 'http://localhost:{}'.format(ros_master_port)
                 environ['ROS_MASTER_URI'] = ros_master_uri
@@ -54,18 +56,18 @@ class SimulationSpawner(object):
 
                 ui_port = self.initial_ui_port + n
 
-                print("[ROS master URI] {}".format(ros_master_uri))
-                print("[VREP ports] clock : {} environment : {} torso : {} ergo : {}".format(vrep_clock_port,
+                print(colored("[ROS master URI] {}".format(ros_master_uri), 'green'))
+                print(colored("[VREP ports] clock : {} environment : {} torso : {} ergo : {}".format(vrep_clock_port,
                                                                                              vrep_env_port,
                                                                                              vrep_torso_port,
-                                                                                             vrep_ergo_port))
-                print("[Web UI] port : {}".format(ui_port))
+                                                                                             vrep_ergo_port), 'green'))
+                print(colored("[Web UI] port : {}".format(ui_port), 'green'))
                 with open(self.vrep_con_path, 'w') as f:
                     f.write(get_vrep_api_file(vrep_clock_port, vrep_env_port, vrep_torso_port, vrep_ergo_port))
 
                 scene = join(self.rospack.get_path('nips2017'), 'simulation', 'apex_playground.ttt')
                 process_str = '{} {}{}'.format(self.vrep_bin_path, '-h ' if self.headless else '', scene)
-                print(process_str)
+                print(colored(process_str, 'yellow'))
                 process = Popen(process_str.split(' '))
                 self.children.append(process)
 
@@ -73,14 +75,24 @@ class SimulationSpawner(object):
 
                 name = 'instance_{}'.format(n)
                 process_str = 'roslaunch nips2017 start_sim.launch namespace:={} ' \
+                              'start_manager:=false ' \
                               'clock_vrep_port:={} environment_vrep_port:={} torso_vrep_port:={} ' \
                               'ergo_vrep_port:={} ui_port:={}'.format(name, vrep_clock_port,
                                                                 vrep_env_port,
                                                                 vrep_torso_port,
                                                                 vrep_ergo_port, ui_port)
-                print(process_str)
+                print(colored(process_str, 'yellow'))
                 process = Popen(process_str.split(' '), env=environ)
                 self.children.append(process)
+
+                if not self.work_manager_started:
+                    # Start the Work Manager
+                    print(colored("### Launching the work manager on ROS master {}".format(environ['ROS_MASTER_URI']), 'blue'))
+                    process_str = 'rosrun nips2017 work_manager.py --comm-outside-ros'
+                    print(colored(process_str, 'yellow'))
+                    process = Popen(process_str.split(' '))
+                    self.children.append(process)
+                    self.work_manager_started = True
 
             while True:
                 #terminated_processes = [p for p in self.children if p.poll() is not None]
@@ -96,7 +108,7 @@ class SimulationSpawner(object):
             #remove(self.vrep_con_path_bak)
 
             for p in self.children:
-                print('Waiting process to close...')
+                print(colored('Waiting process to close...', 'red'))
                 p.wait()
 
 if __name__ == '__main__':

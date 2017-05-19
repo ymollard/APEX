@@ -14,9 +14,10 @@ class Controller(object):
         with open(join(self.rospack.get_path('nips2017'), 'config', 'general.json')) as f:
             self.params = json.load(f)
 
+        self.outside_ros = rospy.get_param('/use_sim_time', False)  # True if work manager <-> controller comm must use ZMQ
         id = search(r"(\d+)", rospy.get_namespace())
         self.worker_id = 0 if id is None else int(id.groups()[0])  # TODO string worker ID
-        self.work = WorkManager(self.worker_id)
+        self.work = WorkManager(self.worker_id, self.outside_ros)
         self.torso = Torso()
         self.ergo = Ergo()
         self.learning = Learning()
@@ -26,7 +27,6 @@ class Controller(object):
     def run(self):
         work = self.work.get()
         if not work.work_available:
-            self.work.update(-1, -1, -1, is_dying=True)
             return
 
         rospy.set_param('experiment/current/trial', work.trial)
