@@ -1,14 +1,14 @@
 {
   "robot_name": "poppy_ergo_jr",
   "publish_rate": 20,
-  "speed": 80,
-  "delay_joy": 0.5,
-  "sensitivity_joy": 0.25,
+  "speed": 100,
+  "delay_joy": 0.4,
+  "sensitivity_joy": 0.2,
   "button_pin": 21,
   "control_joystick_id" : 1,
   "useless_joystick_id" : 2,
   "auto_standby_duration": 600,
-  "min_joy_elongation": 0.75,
+  "min_joy_elongation": 0.6,
   "min_joy_activity": 0.05,
   "bounds": [[-150, 150], [-90, 125], [-90, 90], [-40, 40], [-90, 90], [-90, 90]]
 }
