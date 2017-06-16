@@ -12,7 +12,7 @@
   </include>
 
   <group ns="$(arg namespace)">
-    <node if="$(arg start_manager)" name="manager" pkg="nips2017" type="task_manager.py" output="$(arg output)" required="true"/>
+    <node if="$(arg start_manager)" name="manager" pkg="nips2017" type="work_manager.py" output="$(arg output)" required="true"/>
     <node name="controller" pkg="nips2017" type="controller.py" output="$(arg output)" required="true"/>
   </group>
 </launch>

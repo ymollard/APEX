@@ -18,9 +18,7 @@
       <node name="user" pkg="nips2017" type="user.py" output="$(arg output)" respawn="true"/>
       <node name="sound" pkg="nips2017" type="sound.py" output="$(arg output)" respawn="true"/>
 
-      <include file="$(find nips2017)/launch/controllers.launch">
-          <arg name="torso_vrep_port" value="$(arg torso_vrep_port)"/>
-          <arg name="ergo_vrep_port" value="$(arg ergo_vrep_port)"/>
+      <include file="$(find poppy_torso_controllers)/launch/controllers.launch">
           <arg name="simulated" value="false"/>
       </include>
   </group>
