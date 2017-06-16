@@ -1,9 +1,15 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="output" default="screen"/> <!-- Set output="log" to mute the screen output -->
+  <arg name="namespace" default="apex"/>
   <arg name="light" default="false"/>
 
-  <node name="joystick_publisher" pkg="nips2017" type="hardware_joystick_publisher.py" output="$(arg output)"/>
-  <node name="ergo" pkg="nips2017" type="ergo.py" output="$(arg output)" respawn="true"/>
-  <node if="$(arg light)" name="light_controller" pkg="nips2017" type="light.py" launch-prefix="sudo -E PYTHONPATH=$(env PYTHONPATH)" output="$(arg output)" respawn="true"/>
+  <group ns="$(arg namespace)">
+      <include file="$(find poppy_ergo_jr_controllers)/launch/controllers.launch" >
+        <arg name="output" value="$(arg output)"/>
+      </include>
+      <node name="joystick_publisher" pkg="nips2017" type="hardware_joystick_publisher.py" output="$(arg output)"/>
+      <node name="ergo" pkg="nips2017" type="ergo.py" output="$(arg output)" respawn="true"/>
+      <node if="$(arg light)" name="light_controller" pkg="nips2017" type="light.py" launch-prefix="sudo -E PYTHONPATH=$(env PYTHONPATH)" output="$(arg output)" respawn="true"/>
+  </group>
 </launch>
