@@ -14,6 +14,9 @@ class Controller(object):
         with open(join(self.rospack.get_path('nips2017'), 'config', 'general.json')) as f:
             self.params = json.load(f)
 
+        with open(join(self.rospack.get_path('nips2017'), 'config', 'torso.json')) as f:
+            self.torso_params = json.load(f)
+
         self.outside_ros = rospy.get_param('/use_sim_time', False)  # True if work manager <-> controller comm must use ZMQ
         id = search(r"(\d+)", rospy.get_namespace())
         self.worker_id = 0 if id is None else int(id.groups()[0])  # TODO string worker ID
@@ -45,12 +48,15 @@ class Controller(object):
         if self.perception.help_pressed():
             rospy.sleep(1.5)  # Wait for the robot to fully stop
             recording = self.perception.record(human_demo=True, nb_points=self.params['nb_points'])
+            self.torso.set_torque_max(self.torso_params['torques'])
             self.torso.reset(slow=True)
         else:
             trajectory = self.learning.produce().torso_trajectory
+            self.torso.set_torque_max(self.torso_params['torques'])
             self.torso.execute_trajectory(trajectory)  # TODO: blocking, non-blocking, action server?
             recording = self.perception.record(human_demo=False, nb_points=self.params['nb_points'])
             recording.demo.torso_demonstration = JointTrajectory()
+            self.torso.set_torque_max(80)
             self.torso.reset(slow=False)
         self.learning.perceive(recording.demo)  # TODO non-blocking
 
