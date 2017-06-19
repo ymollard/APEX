@@ -20,6 +20,7 @@
 
       <include file="$(find poppy_torso_controllers)/launch/controllers.launch">
           <arg name="simulated" value="false"/>
+          <arg name="respawn" value="true"/>
       </include>
   </group>
 </launch>
