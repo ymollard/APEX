@@ -48,8 +48,8 @@ class HardwareJoystickPublisher(object):
     def publish_joy(self, x, y, publisher):
         joy = Joy()
         joy.header.stamp = rospy.Time.now()
-        joy.axes.append(x)
         joy.axes.append(y)
+        joy.axes.append(x)
         publisher.publish(joy)
 
     def run(self):

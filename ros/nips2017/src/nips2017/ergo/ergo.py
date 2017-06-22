@@ -82,9 +82,10 @@ class Ergo(object):
         self.extended = True
 
     def go_to_rest(self):
-        rest = {'m2': -26, 'm3': 59, 'm5': -30, 'm6': 78}
-        self.reach(rest, 0.5)
-        self.extended = False
+        if self.extended:
+            rest = {'m2': -26, 'm3': 59, 'm5': -30, 'm6': 78}
+            self.reach(rest, 0.5)
+            self.extended = False
 
     def is_controller_running(self):
         return len([node for node in rosnode.get_node_names() if 'controller' in node]) > 0
@@ -133,23 +134,24 @@ class Ergo(object):
             self.rate.sleep()
 
     def servo_axis_rotation(self, x):
-        x = x if abs(x) > self.params['sensitivity_joy'] else 0
-        min_x = self.params['bounds'][0][0] + self.params['bounds'][3][0]
-        max_x = self.params['bounds'][0][1] + self.params['bounds'][3][1]
-        self.goal = min(max(min_x, self.goal + self.params['speed']*x*self.delta_t), max_x)
+        if abs(x) > self.params['sensitivity_joy']:
+            x = x if abs(x) > self.params['sensitivity_joy'] else 0
+            min_x = self.params['bounds'][0][0] + self.params['bounds'][3][0]
+            max_x = self.params['bounds'][0][1] + self.params['bounds'][3][1]
+            self.goal = min(max(min_x, self.goal + self.params['speed']*x*self.delta_t), max_x)
 
-        if self.goal > self.params['bounds'][0][1]:
-            new_x_m3 = self.params['bounds'][0][1] - self.goal
-            new_x = self.params['bounds'][0][1]
-        elif self.goal < self.params['bounds'][0][0]:
-            new_x_m3 = self.params['bounds'][0][0] - self.goal
-            new_x = self.params['bounds'][0][0]
-        else:
-            new_x = self.goal
-            new_x_m3 = 0
+            if self.goal > self.params['bounds'][0][1]:
+                new_x_m3 = self.goal - self.params['bounds'][0][1]
+                new_x = self.params['bounds'][0][1]
+            elif self.goal < self.params['bounds'][0][0]:
+                new_x_m3 = self.goal - self.params['bounds'][0][0]
+                new_x = self.params['bounds'][0][0]
+            else:
+                new_x = self.goal
+                new_x_m3 = 0
 
-        new_x_m3 = max(min(new_x_m3, self.params['bounds'][3][1]), self.params['bounds'][3][0])
-        self.reach({'m1': new_x, 'm4': new_x_m3}, 0)  # Duration = 0 means joint teleportation
+            new_x_m3 = max(min(new_x_m3, self.params['bounds'][3][1]), self.params['bounds'][3][0])
+            self.reach({'m1': new_x, 'm4': new_x_m3}, 0)  # Duration = 0 means joint teleportation
 
     def servo_axis_elongation(self, x):
         if x > self.params['min_joy_elongation']:
