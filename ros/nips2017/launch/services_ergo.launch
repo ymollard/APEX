@@ -10,13 +10,15 @@
 
       <param name="environment/debug" value="$(arg debug)" />
 
-      <node name="environment" pkg="nips2017" type="environment.py" output="$(arg output)"/>
-      <node name="ergo" pkg="nips2017" type="ergo.py" output="$(arg output)" respawn="true"/>
-      <node if="$(arg light)" name="light_controller" pkg="nips2017" type="light.py" launch-prefix="sudo -E PYTHONPATH=$(env PYTHONPATH)" output="$(arg output)" respawn="true"/>
-
       <include file="$(find poppy_ergo_jr_controllers)/launch/controllers.launch">
           <arg name="simulated" value="false"/>
           <arg name="respawn" value="true"/>
       </include>
+
+      <node name="joystick_publisher" pkg="nips2017" type="hardware_joystick_publisher.py" output="$(arg output)"/>
+      <node name="environment" pkg="nips2017" type="environment.py" output="$(arg output)"/>
+      <node name="ergo" pkg="nips2017" type="ergo.py" output="$(arg output)" respawn="true"/>
+      <node if="$(arg light)" name="light_controller" pkg="nips2017" type="light.py" launch-prefix="sudo -E PYTHONPATH=$(env PYTHONPATH)" output="$(arg output)" respawn="true"/>
+
   </group>
 </launch>
