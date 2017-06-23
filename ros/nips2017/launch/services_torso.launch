@@ -8,19 +8,19 @@
 
   <group ns="$(arg namespace)">
 
-      <param name="perception/debug" value="$(arg debug)" />
       <param name="experiment/name" value="$(arg name)" />
-
-      <node name="environment" pkg="nips2017" type="environment.py" output="$(arg output)"/>
-      <node name="perception" pkg="nips2017" type="perception.py" output="$(arg output)"/>
-      <node name="torso" pkg="nips2017" type="torso.py" output="$(arg output)" respawn="true"/>
-      <node name="learning" pkg="nips2017" type="learning.py" output="$(arg output)" required="true"/>
-      <node name="user" pkg="nips2017" type="user.py" output="$(arg output)" respawn="true"/>
-      <node name="sound" pkg="nips2017" type="sound.py" output="$(arg output)" respawn="true"/>
 
       <include file="$(find poppy_torso_controllers)/launch/controllers.launch">
           <arg name="simulated" value="false"/>
           <arg name="respawn" value="true"/>
       </include>
+
+      <node name="perception" pkg="nips2017" type="perception.py" output="$(arg output)"/>
+      <node name="torso" pkg="nips2017" type="torso.py" output="$(arg output)" respawn="true"/>
+      <node name="learning" pkg="nips2017" type="learning.py" output="$(arg output)" required="true"/>
+      <node name="user" pkg="nips2017" type="user.py" output="$(arg output)" respawn="true"/>
+      <node name="sound" pkg="nips2017" type="sound.py" output="$(arg output)" respawn="true"/>
+      <node name="controller" pkg="nips2017" type="controller.py" output="$(arg output)" required="true"/>
+
   </group>
 </launch>
