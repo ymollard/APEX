@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="output" default="screen"/> <!-- Set output="log" to mute the screen output -->
+  <arg name="debug" default="True"/> <!-- Enable debugging information and pictures -->
+  <arg name="namespace" default="apex"/> <!-- Unique name of the experiment -->
+  <arg name="start_manager" default="true"/>  <!-- True if we must also start a work manager listening on ROS or on port 33589 -->
+
+  <arg name="torso_vrep_port" default="19999"/>
+  <arg name="ergo_vrep_port" default="19998"/>
+  <arg name="clock_vrep_port" default="29997"/>
+  <arg name="environment_vrep_port" default="19997"/>
+  <arg name="ui_port" default="5000"/>
+
+  <include file="$(find apex_playground)/launch/services_sim.launch" >
+    <arg name="torso_vrep_port" value="$(arg torso_vrep_port)"/>
+    <arg name="ergo_vrep_port" value="$(arg ergo_vrep_port)"/>
+    <arg name="clock_vrep_port" value="$(arg clock_vrep_port)"/>
+    <arg name="environment_vrep_port" value="$(arg environment_vrep_port)"/>
+    <arg name="ui_port" value="$(arg ui_port)"/>
+
+    <arg name="output" value="$(arg output)"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="namespace" value="$(arg namespace)"/>
+  </include>
+
+  <group ns="$(arg namespace)">
+    <node if="$(arg start_manager)" name="manager" pkg="apex_playground" type="task_manager.py" output="$(arg output)" required="true"/>
+    <node name="controller" pkg="apex_playground" type="controller.py" output="$(arg output)" required="true"/>
+  </group>
+</launch>

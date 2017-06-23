@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="output" default="screen"/> <!-- Set output="log" to mute the screen output -->
+  <arg name="debug" default="True"/> <!-- Enable debugging information and pictures -->
+  <arg name="name" default="apex"/> <!-- Name of the experiment -->
+  <arg name="namespace" default="apex"/> <!-- Isolate the data into a namespace -->
+
+  <group ns="$(arg namespace)">
+
+      <param name="experiment/name" value="$(arg name)" />
+
+      <include file="$(find poppy_torso_controllers)/launch/controllers.launch">
+          <arg name="simulated" value="false"/>
+          <arg name="respawn" value="true"/>
+      </include>
+
+      <node name="perception" pkg="apex_playground" type="perception.py" output="$(arg output)"/>
+      <node name="torso" pkg="apex_playground" type="torso.py" output="$(arg output)" respawn="true"/>
+      <node name="learning" pkg="apex_playground" type="learning.py" output="$(arg output)" required="true"/>
+      <node name="user" pkg="apex_playground" type="user.py" output="$(arg output)" respawn="true"/>
+      <node name="sound" pkg="apex_playground" type="sound.py" output="$(arg output)" respawn="true"/>
+      <node name="controller" pkg="apex_playground" type="controller.py" output="$(arg output)" required="true"/>
+
+  </group>
+</launch>
