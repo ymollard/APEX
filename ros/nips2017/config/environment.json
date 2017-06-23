@@ -1,16 +1,17 @@
 {
   "tracking": {
+    "resolution" : [400, 300],
     "ball" : {
-      "lower": [27, 45, 185],
+      "lower": [27, 45, 130],
       "upper": [38, 200, 255]
     },
     "arena": {
-      "lower": [95, 110, 150],
+      "lower": [95, 80, 110],
       "upper": [110, 255, 255],
       "radius": 0.225
     },
     "buffer_size": 32,
-    "ring_divider": 1.35
+    "ring_divider": 1.4
   },
   "rate": 15,
   "sound": {

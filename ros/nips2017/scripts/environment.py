@@ -34,12 +34,12 @@ class Environment(object):
         self.sound_pub.publish(Float32(self.conversions.ball_to_sound(state)))  # TODO rescale
 
     def run(self):
-        if not self.tracking.open():
+        if not self.tracking.open(*self.params['tracking']['resolution']):
             rospy.logerr("Cannot open the webcam, exiting")
             return
 
         while not rospy.is_shutdown():
-            debug = rospy.get_param('perception/debug', False)
+            debug = rospy.get_param('environment/debug', False)
             grabbed, frame = self.tracking.read()
 
             if not grabbed:
@@ -47,8 +47,10 @@ class Environment(object):
                 break
 
             hsv, mask_ball, mask_arena = self.tracking.get_images(frame)
-            ball_center, _ = self.tracking.find_center('ball', frame, mask_ball, 20)
-            arena_center, arena_radius = self.tracking.find_center('arena', frame, mask_arena, 100)
+            min_radius_ball = self.params['tracking']['resolution'][0]*self.params['tracking']['resolution'][1]/20000.
+            ball_center, _ = self.tracking.find_center('ball', frame, mask_ball, min_radius_ball)
+            min_radius_arena = self.params['tracking']['resolution'][0]*self.params['tracking']['resolution'][1]/2000.
+            arena_center, arena_radius = self.tracking.find_center('arena', frame, mask_arena, min_radius_arena)
             ring_radius = int(arena_radius/self.params['tracking']['ring_divider']) if arena_radius is not None else None
 
             if ball_center is not None and arena_center is not None:

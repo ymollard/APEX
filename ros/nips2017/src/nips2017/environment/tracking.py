@@ -48,13 +48,12 @@ class BallTracking(object):
             # find the largest contour in the mask, then use it to compute the minimum enclosing circle and centroid
             c = max(cnts, key=cv2.contourArea)
             ((x, y), radius) = cv2.minEnclosingCircle(c)
-            M = cv2.moments(c)
-            center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+            center = (int(x), int(y))
 
             # only proceed if the radius meets a minimum size
             if radius > min_radius:
                 # draw the circle and centroid on the frame, then update the list of tracked points
-                cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
+                cv2.circle(frame, center, int(radius), (0, 255, 255), 2)
                 cv2.circle(frame, center, 5, (0, 0, 255), -1)
                 self.pts[name].appendleft(center)
                 smooth_points = 8
