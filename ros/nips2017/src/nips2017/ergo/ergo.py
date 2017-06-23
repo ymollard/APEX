@@ -154,7 +154,7 @@ class Ergo(object):
             self.reach({'m1': new_x, 'm4': new_x_m3}, 0)  # Duration = 0 means joint teleportation
 
     def servo_axis_elongation(self, x):
-        if x > self.params['min_joy_elongation']:
+        if -x > self.params['min_joy_elongation']:
             self.go_to_extended()
         else:
             self.go_to_rest()
