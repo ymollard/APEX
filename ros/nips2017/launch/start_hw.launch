@@ -2,7 +2,6 @@
 <launch>
   <arg name="output" default="screen"/> <!-- Set output="log" to mute the screen output -->
   <arg name="debug" default="True"/> <!-- Enable debugging information and pictures -->
-  <arg name="source" default="none"/> <!-- Source of pre-planned data for this experiment -->
   <arg name="namespace" default="apex"/> <!-- Unique name of the experiment -->
   <arg name="start_manager" default="true"/>  <!-- True if we must also start a work manager listening on ROS or on port 33589 -->
 
