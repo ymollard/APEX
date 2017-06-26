@@ -1,0 +1,15 @@
+[Unit]
+Description=APEX Autostart
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/nohup /home/pi/Repos/APEX/scripts/raspberrypi/autostart.bash
+StandardOutput=journal
+KillSignal=SIGINT
+SuccessExitStatus=SIGINT
+
+[Install]
+WantedBy=multi-user.target
+
+# Keep a new line at EOF
+
