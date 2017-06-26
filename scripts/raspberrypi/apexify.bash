@@ -80,7 +80,7 @@ sudo apt-get install python-pygame python-opencv -y
 mkdir -p /home/pi/Repos
 cd /home/pi/Repos
 git clone https://github.com/ymollard/APEX.git
-ln -s /home/pi/Repos/APEX/ros/ /home/pi/ros_ws/src/APEX
+ln -s /home/pi/Repos/APEX/ros/ /home/pi/ros_ws/src/apex_playground
 
 # Bug: catkin_make_isolated does not compile well the last package, create a fake one
 cd /home/pi/ros_ws/src
