@@ -79,8 +79,8 @@ sudo su -c "echo \"dtoverlay=pi3-miniuart-bt\" >> /boot/config.txt"
 sudo apt-get install python-pygame python-opencv -y
 mkdir -p /home/pi/Repos
 cd /home/pi/Repos
-git clone https://github.com/ymollard/apex_playground.git
-ln -s /home/pi/Repos/apex_playground/ros/ /home/pi/ros_ws/src/apex_playground
+git clone https://github.com/ymollard/APEX.git
+ln -s /home/pi/Repos/APEX/ros/ /home/pi/ros_ws/src/APEX
 
 # Bug: catkin_make_isolated does not compile well the last package, create a fake one
 cd /home/pi/ros_ws/src
@@ -90,9 +90,14 @@ catkin_create_pkg zz_fake_pkg_workaround
 cd /home/pi/ros_ws
 catkin_make_isolated
 
-# Done, leaving...
+# Install autostart if compiling successed
 if [ $? -eq 0 ]; then
     source /home/pi/ros_ws/devel_isolated/setup.bash
-    sudo swapoff /dev/sda1
+    sudo cp apex.service /lib/systemd/system/
+    sudo systemctl daemon-reload
+    sudo systemctl enable apex.service
 fi
+
+sudo swapoff /dev/sda1
+
 
