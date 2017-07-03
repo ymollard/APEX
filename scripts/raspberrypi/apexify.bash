@@ -76,8 +76,8 @@ sudo su -c "echo \"dtoverlay=pi3-miniuart-bt\" >> /boot/config.txt"
 # If serial issues: sudo raspi-config F6 Serial > Would you like a serial console = NO
 
 # APEX playground files and deps
-sudo apt-get install python-opencv -y
-sudo pip install inputs
+sudo apt-get install python-opencv python-pyaudio -y
+sudo pip install inputs flask flask_cors explauto
 mkdir -p /home/pi/Repos
 cd /home/pi/Repos
 git clone https://github.com/ymollard/APEX.git
