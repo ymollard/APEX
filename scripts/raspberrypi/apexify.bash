@@ -81,7 +81,14 @@ sudo pip install inputs
 mkdir -p /home/pi/Repos
 cd /home/pi/Repos
 git clone https://github.com/ymollard/APEX.git
+git clone https://github.com/ymollard/poppy_torso_controllers.git
+git clone https://github.com/ymollard/poppy_ergo_jr_controllers.git
+git clone https://github.com/ymollard/poppy_msgs.git
+
 ln -s /home/pi/Repos/APEX/ros/ /home/pi/ros_ws/src/apex_playground
+ln -s /home/pi/Repos/poppy_msgs /home/pi/ros_ws/src/poppy_msgs
+ln -s /home/pi/Repos/poppy_torso_controllers /home/pi/ros_ws/src/poppy_torso_controllers
+ln -s /home/pi/Repos/poppy_ergo_jr_controllers /home/pi/ros_ws/src/poppy_ergo_jr_controllers
 
 # Bug: catkin_make_isolated does not compile well the last package, create a fake one
 cd /home/pi/ros_ws/src
