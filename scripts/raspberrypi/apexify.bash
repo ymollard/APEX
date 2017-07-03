@@ -56,9 +56,27 @@ if [ $? -eq 0 ]; then
     mkdir -p ros_ws/src
     cd ros_ws/src
     catkin_init_workspace .
-    echo -e "\nexport LC_ALL=C # Fix: terminate called after throwing an instance of 'std::runtime_error' what():  locale::facet::_S_create_c_locale name not valid\n" >> /home/pi/.bashrc
-    echo -e "source /opt/ros/kinetic/setup.bash\n" >> /home/pi/.bashrc
-    echo -e "if [ -f /home/pi/ros_ws/devel_isolated/setup.bash ]; then\n source /home/pi/ros_ws/devel_isolated/setup.bash\nfi\n " >> /home/pi/.bashrc
+    
+    tee --append /home/pi/.bashrc > /dev/null <<EOF
+export LC_ALL=C # Fix: terminate called after throwing an instance of 'std::runtime_error' what():  locale::facet::_S_create_c_locale name not valid
+
+master_hostname="mingew.local"
+hostname=`hostname`
+
+if [ -f /home/pi/ros_ws/devel_isolated/setup.bash ]; then
+ source /home/pi/ros_ws/devel_isolated/setup.bash
+fi
+
+if [ -f /home/pi/ros_ws/devel/setup.bash ]; then
+ source /home/pi/ros_ws/devel/setup.bash
+fi
+
+export ROS_MASTER_URI="http://${master_hostname}:11311"
+export ROS_HOSTNAME="${hostname}.local"
+export PS1="\[\033[00;33m\][\${ROS_MASTER_URI}]\[\033[00m\] ${PS1}"
+
+EOF
+    
     source /opt/ros/kinetic/setup.bash
 else
     echo -e "\e[31mROS comm install failed, exiting\e[0m"
