@@ -35,14 +35,11 @@ class Ergo(object):
 
         self.goals = []
         self.goal = 0.
-        self.joy1_x = 0.
-        self.joy1_y = 0.
-        self.joy2_x = 0.
-        self.joy2_y = 0.
+        self.joy_x = 0.
+        self.joy_y = 0.
         self.motion_started_joy = 0.
         self.js = JointState()
-        rospy.Subscriber('sensors/joystick/1', Joy, self.cb_joy_1)
-        rospy.Subscriber('sensors/joystick/2', Joy, self.cb_joy_2)
+        rospy.Subscriber('sensors/joystick/{}'.format(self.params["control_joystick_id"]), Joy, self.cb_joy)
         rospy.Subscriber('{}/joint_state'.format(self.params['robot_name']), JointState, self.cb_js)
 
         self.t = rospy.Time.now()
@@ -65,13 +62,9 @@ class Ergo(object):
     def set_compliant(self, compliant):
         self.compliant_proxy(SetCompliantRequest(compliant=compliant))
 
-    def cb_joy_1(self, msg):
-        self.joy1_x = msg.axes[0]
-        self.joy1_y = msg.axes[1]
-
-    def cb_joy_2(self, msg):
-        self.joy2_x = msg.axes[0]
-        self.joy2_y = msg.axes[1]
+    def cb_joy(self, msg):
+        self.joy_x = msg.axes[0]
+        self.joy_y = msg.axes[1]
 
     def go_to_start(self, slow=True):
         self.go_to([0.0, -15.4, 35.34, 0.0, -15.69, 71.99], 4 if slow else 1)
@@ -123,12 +116,12 @@ class Ergo(object):
             self.t = now
 
             self.go_or_resume_standby()
-            self.servo_robot(self.joy1_y, self.joy1_x)
+            self.servo_robot(self.joy_y, self.joy_x)
             self.publish_state()
             self.publish_button()
 
             # Update the last activity
-            if abs(self.joy1_x) > self.params['min_joy_activity'] or abs(self.joy1_y) > self.params['min_joy_activity']:
+            if abs(self.joy_x) > self.params['min_joy_activity'] or abs(self.joy_y) > self.params['min_joy_activity']:
                 self.last_activity = rospy.Time.now()
 
             self.rate.sleep()
@@ -170,12 +163,8 @@ class Ergo(object):
             self.servo_axis_elongation(0)
 
         elif self.motion_started_joy > 0. and now - self.motion_started_joy > self.params['delay_joy']:
-            if self.params['control_joystick_id'] == 2:
-                self.servo_axis_rotation(-x)
-                self.servo_axis_elongation(y)
-            else:
-                self.servo_axis_rotation(y)
-                self.servo_axis_elongation(x)
+            self.servo_axis_rotation(y)
+            self.servo_axis_elongation(x)
 
     def publish_button(self):
         self.button_pub.publish(Bool(data=self.button.pressed))

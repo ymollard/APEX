@@ -1,20 +1,34 @@
 #!/usr/bin/env python
 
+import os
+from inputs import devices
+
+from threading import Thread
 from sensor_msgs.msg import Joy
 from rospkg import RosPack
 from os.path import join
-import os
 import sys
 import rospy
-import pygame
 import json
 
-os.environ["SDL_VIDEODRIVER"] = "dummy"
-try:
-    pygame.display.init()
-except pygame.error:
-    raise pygame.error("Can't connect to the console, from ssh enable -X forwarding")
-pygame.joystick.init()
+class JoystickThread(Thread):
+    def __init__(self, id):
+        super(JoystickThread, self).__init__()
+        self.setDaemon(True)
+        self.joy = id
+        self.values = [0., 0.]
+
+    def run(self):
+        while not rospy.is_shutdown():
+            events = devices.gamepads[self.joy].read()
+            for event in events:
+                #player = int(str(event.device)[-1])
+                try:
+                    axis = ['ABS_X', 'ABS_Y'].index(event.code)
+                except ValueError:
+                    pass
+                else:
+                    self.values[axis] = (event.state-128)/128.  # Centering in [-1, 1]
 
 
 class HardwareJoystickPublisher(object):
@@ -23,27 +37,19 @@ class HardwareJoystickPublisher(object):
         self.joy_pub2 = rospy.Publisher('sensors/joystick/2', Joy, queue_size=1)
 
         self.rospack = RosPack()
-        with open(join(self.rospack.get_path('apex_playground'), 'config', 'ergo.json')) as f:
-            self.params = json.load(f)
 
-        self.rate = rospy.Rate(self.params['publish_rate'])
+        self.rate = rospy.Rate(20)
 
-        if pygame.joystick.get_count() < 2:
-            rospy.logerr("Sensors: Expecting 2 joysticks but found only {}, exiting".format(pygame.joystick.get_count()))
-            sys.exit(0)
-        else:
-            self.joystick = pygame.joystick.Joystick(0)
-            self.joystick2 = pygame.joystick.Joystick(1)
-            self.joystick.init()
-            self.joystick2.init()
+        count = len(devices.gamepads)
 
-            if self.params['useless_joystick_id'] != int(self.joystick2.get_name()[-1]):
-                useless_joy = self.joystick
-                self.joystick = self.joystick2
-                self.joystick2 = useless_joy
+        if count < 2:
+            rospy.logerr("Sensors: Expecting 2 joysticks but found only {}, exiting".format(count))
+            sys.exit(-1)
+        
+        rospy.loginfo(str(devices.gamepads))
 
-            rospy.loginfo('Initialized Joystick 1: {}'.format(self.joystick.get_name()))
-            rospy.loginfo('Initialized Joystick 2: {}'.format(self.joystick2.get_name()))
+        self.joysticks = [JoystickThread(joy) for joy in range(2)]
+        [joystick.start() for joystick in self.joysticks]
 
     def publish_joy(self, x, y, publisher):
         joy = Joy()
@@ -54,15 +60,9 @@ class HardwareJoystickPublisher(object):
 
     def run(self):
         while not rospy.is_shutdown():
-            pygame.event.get()
-            x = self.joystick.get_axis(0)
-            y = self.joystick.get_axis(1)
-
             # Publishers
-            self.publish_joy(x, y, self.joy_pub)
-            x = self.joystick2.get_axis(0)
-            y = self.joystick2.get_axis(1)
-            self.publish_joy(x, y, self.joy_pub2)
+            self.publish_joy(self.joysticks[0].values[0], self.joysticks[0].values[1], self.joy_pub)
+            self.publish_joy(self.joysticks[1].values[0], self.joysticks[1].values[1], self.joy_pub2)
             self.rate.sleep()
 
 if __name__ == '__main__':
