@@ -38,6 +38,7 @@ class WorkManager(object):
                             self.experiment[task]['progress'][trial]['status'] = 'taken'
                             self.experiment[task]['progress'][trial]['worker'] = worker
                             self.num_workers += 1
+                            rospy.logwarn("Distributing {} iterations {} trial {} to worker {}".format(self.experiment[task]['num_iterations'], self.experiment[task]['method'], trial, worker))
                             return dict(method=self.experiment[task]['method'],
                                                    iteration=self.experiment[task]['progress'][trial]['iteration'],
                                                    num_iterations=self.experiment[task]['num_iterations'],
@@ -59,8 +60,10 @@ class WorkManager(object):
                         self.experiment[task]['progress'][trial]['iteration'] = iteration
                         if self.is_completed(task, trial, self.experiment):
                             self.experiment[task]['progress'][trial]['status'] = 'complete'
+                            rospy.logwarn("{} trial {} completed by worker {}".format(self.experiment[task]['method'], trial, worker))
                         else:
                             pass  # This is a regular update
+                            rospy.loginfo("Regular update: iteration {}/{} from worker {}".format(iteration+1, self.experiment[task]['num_iterations'], worker))
                 else:
                     rospy.logerr("There is no known worker, we didn't expect that work update")
         self.save_experiment()
