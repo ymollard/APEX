@@ -7,6 +7,8 @@ ExecStart=/usr/bin/nohup /home/pi/Repos/APEX/scripts/raspberrypi/autostart.bash
 StandardOutput=journal
 KillSignal=SIGINT
 SuccessExitStatus=SIGINT
+RestartSec=10
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
