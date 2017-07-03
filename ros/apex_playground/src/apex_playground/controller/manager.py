@@ -15,8 +15,8 @@ class WorkManager(object):
         else:
             rospy.logwarn('Controller is using ROS to get work')
 
-            self.services = {'get': {'name': 'work/get', 'type': GetWork},
-                             'update': {'name': 'work/update', 'type': UpdateWorkStatus}}
+            self.services = {'get': {'name': '/work/get', 'type': GetWork},
+                             'update': {'name': '/work/update', 'type': UpdateWorkStatus}}
             for service_name, service in self.services.items():
                 rospy.loginfo("Controller is waiting service {}...".format(service['name']))
                 rospy.wait_for_service(service['name'])
