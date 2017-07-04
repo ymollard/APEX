@@ -12,17 +12,16 @@ import rospy
 import json
 
 class JoystickThread(Thread):
-    def __init__(self, id):
+    def __init__(self, pad):
         super(JoystickThread, self).__init__()
         self.setDaemon(True)
-        self.joy = id
+        self.pad = pad
         self.values = [0., 0.]
 
     def run(self):
         while not rospy.is_shutdown():
-            events = devices.gamepads[self.joy].read()
+            events = self.pad.read()
             for event in events:
-                #player = int(str(event.device)[-1])
                 try:
                     axis = ['ABS_X', 'ABS_Y'].index(event.code)
                 except ValueError:
@@ -46,9 +45,9 @@ class HardwareJoystickPublisher(object):
             rospy.logerr("Sensors: Expecting 2 joysticks but found only {}, exiting".format(count))
             sys.exit(-1)
         
-        rospy.loginfo(str(devices.gamepads))
-
-        self.joysticks = [JoystickThread(joy) for joy in range(2)]
+        gamepads = sorted(devices.gamepads, key=lambda pad: int(str(pad.name)[-1]))
+        rospy.loginfo(gamepads)
+        self.joysticks = [JoystickThread(pad) for pad in gamepads]
         [joystick.start() for joystick in self.joysticks]
 
     def publish_joy(self, x, y, publisher):
