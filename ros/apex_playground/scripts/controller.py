@@ -48,11 +48,11 @@ class Controller(object):
         if self.perception.help_pressed():
             rospy.sleep(1.5)  # Wait for the robot to fully stop
             recording = self.perception.record(human_demo=True, nb_points=self.params['nb_points'])
-            self.torso.set_torque_max(self.torso_params['torques'])
+            self.torso.set_torque_max(self.torso_params['torques']['reset'])
             self.torso.reset(slow=True)
         else:
             trajectory = self.learning.produce().torso_trajectory
-            self.torso.set_torque_max(self.torso_params['torques'])
+            self.torso.set_torque_max(self.torso_params['torques']['motion'])
             self.torso.execute_trajectory(trajectory)  # TODO: blocking, non-blocking, action server?
             recording = self.perception.record(human_demo=False, nb_points=self.params['nb_points'])
             recording.demo.torso_demonstration = JointTrajectory()
