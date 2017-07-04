@@ -5,6 +5,7 @@ from std_msgs.msg import Float32, UInt8
 from apex_playground.msg import CircularState
 from rospkg import RosPack
 from os.path import join
+from std_msgs.msg import Float32MultiArray, MultiArrayDimension
 import json
 import rospy
 
@@ -24,6 +25,7 @@ class Environment(object):
         self.conversions = EnvironmentConversions()
         self.ball_pub = rospy.Publisher('environment/ball', CircularState, queue_size=1)
         self.light_pub = rospy.Publisher('environment/light', UInt8, queue_size=1)
+        self.image_pub = rospy.Publisher('environment/image', Float32MultiArray, queue_size=1)
         self.sound_pub = rospy.Publisher('environment/sound', Float32, queue_size=1)
         self.rate = rospy.Rate(self.params['rate'])
 
@@ -60,7 +62,13 @@ class Environment(object):
                 self.ball_pub.publish(circular_state)
 
             if debug:
-                self.tracking.draw_images(frame, hsv, mask_ball, mask_arena, arena_center, ring_radius)
+                frame = self.tracking.draw_images(frame, hsv, mask_ball, mask_arena, arena_center, ring_radius)
+                image = Float32MultiArray()
+                image.layout.dim.append(MultiArrayDimension(size=frame.shape[0], label=str(frame.dtype)))
+                image.layout.dim.append(MultiArrayDimension(size=frame.shape[1]))
+                image.layout.dim.append(MultiArrayDimension(size=frame.shape[2]))
+                image.data = list(frame.reshape(frame.shape[0]*frame.shape[1]*frame.shape[2]))
+                self.image_pub.publish(image)
             self.rate.sleep()
 
 
