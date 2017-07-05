@@ -1,4 +1,5 @@
 import numpy as np
+import time
 import rospy
 from explauto.utils import rand_bounds, bounds_min_max, softmax_choice, prop_choice
 from explauto.utils.config import make_configuration
@@ -41,13 +42,30 @@ class Supervisor(object):
         self.s_light = range(m_ndims+112, m_ndims+122)
         self.s_sound = range(m_ndims+122, m_ndims+132)
         
+        self.s_hand_right = range(m_ndims+132, m_ndims+162)
+        self.s_base = range(m_ndims+162, m_ndims+192)
+        self.s_arena = range(m_ndims+192, m_ndims+212)
+        self.s_obj1 = range(m_ndims+212, m_ndims+232)
+        self.s_obj2 = range(m_ndims+232, m_ndims+252)
+        self.s_obj3 = range(m_ndims+252, m_ndims+272)
+        self.s_rdm1 = range(m_ndims+272, m_ndims+292)
+        self.s_rdm2 = range(m_ndims+292, m_ndims+312)
+        
         self.s_spaces = dict(s_hand=self.s_hand, 
                              s_joystick_1=self.s_joystick_1, 
                              s_joystick_2=self.s_joystick_2, 
                              s_ergo=self.s_ergo, 
                              s_ball=self.s_ball, 
                              s_light=self.s_light, 
-                             s_sound=self.s_sound)
+                             s_sound=self.s_sound,
+                             s_hand_right=self.s_hand_right,
+                             s_base=self.s_base,
+                             s_arena=self.s_arena,
+                             s_obj1=self.s_obj1,
+                             s_obj2=self.s_obj2,
+                             s_obj3=self.s_obj3,
+                             s_rdm1=self.s_rdm1,
+                             s_rdm2=self.s_rdm2)
         
         #print
         #print "Initialize agent with spaces:"
@@ -71,13 +89,30 @@ class Supervisor(object):
         self.modules['mod6'] = LearningModule("mod6", self.m_space, self.c_dims + self.s_light, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
         self.modules['mod7'] = LearningModule("mod7", self.m_space, self.c_dims + self.s_sound, self.conf, context_mode=dict(mode='mcs', context_n_dims=2, context_sensory_bounds=[[-1., -1.],[1., 1.]]), explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
     
+        self.modules['mod8'] = LearningModule("mod8", self.m_space, self.s_hand_right, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod9'] = LearningModule("mod9", self.m_space, self.s_base, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod10'] = LearningModule("mod10", self.m_space, self.s_arena, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod11'] = LearningModule("mod11", self.m_space, self.s_obj1, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod12'] = LearningModule("mod12", self.m_space, self.s_obj2, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod13'] = LearningModule("mod13", self.m_space, self.s_obj3, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod14'] = LearningModule("mod14", self.m_space, self.s_rdm1, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        self.modules['mod15'] = LearningModule("mod15", self.m_space, self.s_rdm2, self.conf, explo_noise=self.explo_noise, normalize_interests=self.normalize_interests)
+        
         self.space2mid = dict(s_hand="mod1", 
                              s_joystick_1="mod2", 
                              s_joystick_2="mod3", 
                              s_ergo="mod4", 
                              s_ball="mod5", 
                              s_light="mod6", 
-                             s_sound="mod7")   
+                             s_sound="mod7",
+                             s_hand_right='mod8',
+                             s_base='mod9',
+                             s_arena='mod10',
+                             s_obj1='mod11',
+                             s_obj2='mod12',
+                             s_obj3='mod13',
+                             s_rdm1='mod14',
+                             s_rdm2='mod15')   
          
         self.mid2space = dict(mod1="s_hand", 
                              mod2="s_joystick_1", 
@@ -85,15 +120,24 @@ class Supervisor(object):
                              mod4="s_ergo", 
                              mod5="s_ball", 
                              mod6="s_light", 
-                             mod7="s_sound")
+                             mod7="s_sound",
+                             mod8="s_hand_right",
+                             mod9="s_base",
+                             mod10="s_arena",
+                             mod11="s_obj1",
+                             mod12="s_obj2",
+                             mod13="s_obj3",
+                             mod14="s_rdm1",
+                             mod15="s_rdm2",)
         
         for mid in self.modules.keys():
+            print mid
             self.progresses_evolution[mid] = []
             self.interests_evolution[mid] = []
     
     def mid_to_space(self, mid): return self.mid2space[mid]
     def space_to_mid(self, space): return self.space2mid[space]
-    def get_space_names(self): return ["s_hand", "s_joystick_1", "s_joystick_2", "s_ergo", "s_ball", "s_light", "s_sound"]
+    def get_space_names(self): return ["s_hand", "s_joystick_1", "s_joystick_2", "s_ergo", "s_ball", "s_light", "s_sound", "s_hand_right", "s_base", "s_arena", "s_obj1", "s_obj2", "s_obj3", "s_rdm1", "s_rdm2"]
     def get_last_focus(self): return self.mid_to_space(self.mid_control) if self.mid_control else ""
     
     def save(self):
@@ -103,18 +147,29 @@ class Supervisor(object):
             sm_data[mid] = self.modules[mid].sensorimotor_model.save()
             im_data[mid] = self.modules[mid].interest_model.save()            
         return {"sm_data":sm_data,
-                "im_data":im_data,
+                #"im_data":im_data,
                 "chosen_modules":self.chosen_modules,
-                "progresses_evolution":self.progresses_evolution,
+                #"progresses_evolution":self.progresses_evolution,
                 "interests_evolution":self.interests_evolution,
-                "normalized_interests_evolution":self.get_normalized_interests_evolution(),
-                "normalize_interests":self.normalize_interests}
+                #"normalized_interests_evolution":self.get_normalized_interests_evolution(),
+                #"normalize_interests":self.normalize_interests
+                }
+    
+    def save_iteration(self, i):
+        m = self.modules["mod1"].sensorimotor_model.model.imodel.fmodel.dataset.get_x(i)
+        s = {}
+        for mid in self.modules.keys():
+            s[mid] = self.modules[mid].sensorimotor_model.model.imodel.fmodel.dataset.get_y(i)
+        return {"m":m,
+                "s":s,
+                "chosen_module":self.chosen_modules[i],
+                "interests":self.interests_evolution[i]}
 
+        
     def forward(self, data, iteration):
+        raise NotImplementedError
         if iteration > len(data["chosen_modules"]):
-            max_it = len(data["chosen_modules"])
-            rospy.logwarn("Asked to restart from iteration {} but only {} are available. "
-                          "Restarting from iteration {}...".format(iteration, max_it, max_it))
+            print "\nWARNING: asked to restart from iteration", iteration, "but only", len(data["chosen_modules"]), "are available. Restarting from iteration", len(data["chosen_modules"]), "..."
             iteration = len(data["chosen_modules"])
         if iteration < 0:
             iteration = len(data["chosen_modules"])
@@ -160,7 +215,8 @@ class Supervisor(object):
                 mid = np.random.choice(interests.keys())
             else:
                 temperature = 1.
-                non_zero_interests = {key:interests[key] for key in interests.keys() if interests[key] > 0.}
+                total_interest = sum([interests[key] for key in interests.keys()])
+                non_zero_interests = {key:interests[key] for key in interests.keys() if interests[key] > total_interest / 100.}
                 w = np.array(non_zero_interests.values())   
                 w = w / np.sum(w)
                 probas = np.exp(w / temperature)
@@ -169,13 +225,13 @@ class Supervisor(object):
                 idx = np.where(np.random.multinomial(1, probas) == 1)[0][0]
                 mid = non_zero_interests.keys()[idx]
         
-        elif mode == 'prop':
+        elif mode == 'active':
             w = interests.values()
             mid = self.modules.keys()[prop_choice(w, eps=self.choice_eps)]
             
         elif mode == 'FC':
             # Fixed Curriculum
-            mids = ["mod1", "mod3", "mod2", "mod4", "mod5", "mod6", "mod7"]
+            mids = ["mod1", "mod2", "mod3", "mod4", "mod5", "mod6", "mod7"]
             n = 5000.
             i = max(0, min(int(self.t / (n / 7.)), 6))
             mid = mids[i]
@@ -296,7 +352,7 @@ class Supervisor(object):
         s = self.sensory_primitive(s)
         #print "perceive len(s)", len(s), s[92:112]
         if j_demo or self.ball_moves(s[92:112]):
-            rospy.sleep(5)
+            time.sleep(5)
         if m_demo is not None:
             ms = self.set_ms(m_demo, s)
             self.update_sensorimotor_models(ms)
@@ -486,6 +542,7 @@ class Supervisor(object):
     
     def motor_move_ergo(self, context, direction="right"):
         angle = context[0]
+        print "angle courant ergo", angle
         if direction=="right":
             return self.inverse("mod4", [angle, -1.,
                                                angle, -1.,
@@ -567,7 +624,7 @@ class Supervisor(object):
         
 
     def get_normalized_interests_evolution(self):
-        data = np.transpose(np.array([self.interests_evolution[mid] for mid in ["mod1", "mod2", "mod3", "mod4", "mod5", "mod6", "mod7"]]))
+        data = np.transpose(np.array([self.interests_evolution[mid] for mid in ["mod1", "mod2", "mod3", "mod4", "mod5", "mod6", "mod7", "mod8", "mod9", "mod10", "mod11", "mod12", "mod13", "mod14", "mod15"]]))
         data_sum = data.sum(axis=1)
         data_sum[data_sum==0.] = 1.
         return data / data_sum.reshape(data.shape[0],1)

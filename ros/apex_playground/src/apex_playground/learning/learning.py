@@ -1,11 +1,11 @@
 
 import os
+import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import time
 import datetime
 
-import cPickle as pickle
 from core.supervisor import Supervisor
 from core.flat_goal_babbling import FGB
 
@@ -47,15 +47,15 @@ class Learning(object):
     def perceive(self, s, m_demo=None, j_demo=False):
         if m_demo is not None:
             assert len(m_demo) == 32, len(m_demo)
-            assert len(s) == 132, len(s)
+            assert len(s) == 312, len(s)
             # Demonstration of a torso arm trajectory converted to weights with "m_demo = environment.torsodemo2m(m_traj)"
             return self.agent.perceive(s, m_demo=m_demo)
         elif j_demo:
-            assert len(s) == 132, len(s)
+            assert len(s) == 312, len(s)
             return self.agent.perceive(list(s[:2]) + list(s[32:]), j_demo=True)
         else:
             # Perception of environment when m was produced
-            assert len(s) == 132, len(s)
+            assert len(s) == 312, len(s)
             return self.agent.perceive(s)
             
     def get_iterations(self): return self.agent.t
@@ -70,12 +70,12 @@ class Learning(object):
             data = pickle.load(f)
         return data
                 
-    def save(self, file_path):    
+    def save(self, trial, iteration, folder="/media/APEX/"):
         if self.agent is not None:
-            data = self.agent.save()
-            with open(file_path, 'w') as f:
-                pickle.dump(data, f, -1)
-
+            filename = "condition_" + str(self.condition) + "_trial_" + str(trial) + "_iteration_" + str(iteration) + ".pickle"
+            with open(folder + filename, 'w') as f:
+                pickle.dump(self.agent.save_iteration(iteration), f)
+    
     def start(self):
         if self.condition == "AMB":
             self.agent = Supervisor(self.config, 

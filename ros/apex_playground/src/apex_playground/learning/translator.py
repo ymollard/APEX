@@ -23,9 +23,9 @@ class EnvironmentTranslator(object):
             self.params = json.load(f)
         self.bounds_motors_min = np.array([float(bound[0]) for bound in self.bounds['motors']['positions']])
         self.bounds_motors_max = np.array([float(bound[1]) for bound in self.bounds['motors']['positions']])
-        self.bounds_sensory_min = [d for space in ['hand', 'joystick_1', 'joystick_2', 'ergo', 'ball', 'light', 'sound'] for d in [float(bound[0])for bound in self.bounds['sensory'][space]]*10]
+        self.bounds_sensory_min = [d for space in ['hand', 'joystick_1', 'joystick_2', 'ergo', 'ball', 'light', 'sound', "hand_right", "base", "arena", "obj1", "obj2", "obj3", "rdm1", "rdm2"] for d in [float(bound[0])for bound in self.bounds['sensory'][space]]*10]
         self.bounds_sensory_min = np.array([float(self.bounds['sensory']['ergo'][0][0]), float(self.bounds['sensory']['ball'][0][0])] + self.bounds_sensory_min)
-        self.bounds_sensory_max = [d for space in ['hand', 'joystick_1', 'joystick_2', 'ergo', 'ball', 'light', 'sound'] for d in [float(bound[1])for bound in self.bounds['sensory'][space]]*10]
+        self.bounds_sensory_max = [d for space in ['hand', 'joystick_1', 'joystick_2', 'ergo', 'ball', 'light', 'sound', "hand_right", "base", "arena", "obj1", "obj2", "obj3", "rdm1", "rdm2"] for d in [float(bound[1])for bound in self.bounds['sensory'][space]]*10]
         self.bounds_sensory_max = np.array([float(self.bounds['sensory']['ergo'][0][1]), float(self.bounds['sensory']['ball'][0][1])] + self.bounds_sensory_max)
         self.bounds_sensory_diff = self.bounds_sensory_max - self.bounds_sensory_min
 
@@ -38,8 +38,8 @@ class EnvironmentTranslator(object):
         self.context = {}
         self.config = dict(m_mins=[-1.]*32,
                            m_maxs=[1.]*32,
-                           s_mins=[-1.]*132,
-                           s_maxs=[1.]*132)
+                           s_mins=[-1.]*312,
+                           s_maxs=[1.]*312)
 
     def trajectory_to_w(self, m_traj):
         assert m_traj.shape == (self.timesteps, self.n_dmps)
@@ -57,18 +57,35 @@ class EnvironmentTranslator(object):
         def flatten(list2d):
             return [element2 for element1 in list2d for element2 in element1]
 
+        self.context = {'ball': state.points[0].ball.angle,
+                        'ergo': state.points[0].ergo.angle}
+        rospy.loginfo("Context {}".format(self.context))
+        
         state_dict = {}
         state_dict['hand'] = flatten([(point.hand.pose.position.x, point.hand.pose.position.y, point.hand.pose.position.z) for point in state.points])
         state_dict['joystick_1'] = flatten([point.joystick_1.axes for point in state.points])
         state_dict['joystick_2'] = flatten([point.joystick_2.axes for point in state.points])
-        state_dict['ergo'] = flatten([(point.ergo.angle, float(point.ergo.extended)) for point in state.points])
-        state_dict['ball'] = flatten([(point.ball.angle, float(point.ball.extended)) for point in state.points])
+        state_dict['ergo'] = flatten([((point.ergo.angle - self.context['ergo']) / 2., float(point.ergo.extended)) for point in state.points])
+        state_dict['ball'] = flatten([((point.ball.angle - self.context['ball']) / 2., float(point.ball.extended)) for point in state.points])
         state_dict['light'] = [point.color.data for point in state.points]
         state_dict['sound'] = [point.sound.data for point in state.points]
 
-        self.context = {'ball': state_dict['ball'][0],
-                        'ergo': state_dict['ergo'][0]}
-        rospy.loginfo("Context {}".format(self.context))
+        state_dict['hand_right'] = flatten([(0., 0., 0.) for _ in range(10)])
+        state_dict['base'] = flatten([(0., 0., 0.) for _ in range(10)])
+        state_dict['arena'] = flatten([(0., 0.) for _ in range(10)])
+        state_dict['obj1'] = flatten([(0., 0.) for _ in range(10)])
+        state_dict['obj2'] = flatten([(0., 0.) for _ in range(10)])
+        state_dict['obj3'] = flatten([(0., 0.) for _ in range(10)])
+        
+
+        rdm_power = 0.1
+        rdm2_x = list(np.cumsum(rdm_power*(np.random.random(10)-0.5)))
+        rdm2_y = list(np.cumsum(rdm_power*(np.random.random(10)-0.5)))
+        state_dict['rdm1'] = flatten([(rdm2_x[i], rdm2_y[i]) for i in range(10)])
+        
+        rdm3_x = list(np.cumsum(rdm_power*(np.random.random(10)-0.5)))
+        rdm3_y = list(np.cumsum(rdm_power*(np.random.random(10)-0.5)))
+        state_dict['rdm2'] = flatten([(rdm3_x[i], rdm3_y[i]) for i in range(10)])
 
         assert len(state_dict['hand']) == 30, len(state_dict['hand'])
         assert len(state_dict['joystick_1']) == 20, len(state_dict['joystick_1'])
@@ -79,9 +96,9 @@ class EnvironmentTranslator(object):
         assert len(state_dict['sound']) == 10, len(state_dict['sound'])
 
         # Concatenate all these values in a huge 132-float list
-        s_bounded = np.array([self.context['ergo'], self.context['ball']] + [value for space in ['hand', 'joystick_1', 'joystick_2', 'ergo', 'ball', 'light', 'sound'] for value in state_dict[space]])
-        s_normalized = ((s_bounded - self.bounds_sensory_min) / self.bounds_sensory_diff) * 2 + np.array([-1.]*132)
-        s_normalized = bounds_min_max(s_normalized, 132 * [-1.], 132 * [1.])
+        s_bounded = np.array([self.context['ergo'], self.context['ball']] + [value for space in ['hand', 'joystick_1', 'joystick_2', 'ergo', 'ball', 'light', 'sound', 'hand_right', 'base', 'arena', 'obj1', 'obj2', 'obj3', 'rdm1', 'rdm2'] for value in state_dict[space]])
+        s_normalized = ((s_bounded - self.bounds_sensory_min) / self.bounds_sensory_diff) * 2 + np.array([-1.]*312)
+        s_normalized = bounds_min_max(s_normalized, 312 * [-1.], 312 * [1.])
         # print "context", s_bounded[:2], s_normalized[:2]
         # print "hand", s_bounded[2:32], s_normalized[2:32]
         # print "joystick_1", s_bounded[32:52], s_normalized[32:52]
@@ -98,9 +115,7 @@ class EnvironmentTranslator(object):
         traj = JointTrajectory()
         traj.header.stamp = rospy.Time.now()
         traj.joint_names = ['l_shoulder_y', 'l_shoulder_x', 'l_arm_z', 'l_elbow_y']
-        for point in range(len(matrix_traj)):
-            traj.points.append(JointTrajectoryPoint(positions=list(matrix_traj[point]),
-                                                    time_from_start=rospy.Duration(float(point)/self.params['recording_rate'])))
+        traj.points = [JointTrajectoryPoint(positions=list(matrix_traj[point])) for point in range(len(matrix_traj))]
         return traj
 
     def trajectory_msg_to_matrix(self, trajectory):
