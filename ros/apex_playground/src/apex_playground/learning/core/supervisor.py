@@ -1,5 +1,4 @@
 import numpy as np
-import time
 import rospy
 from explauto.utils import rand_bounds, bounds_min_max, softmax_choice, prop_choice
 from explauto.utils.config import make_configuration
@@ -131,7 +130,6 @@ class Supervisor(object):
                              mod15="s_rdm2",)
         
         for mid in self.modules.keys():
-            print mid
             self.progresses_evolution[mid] = []
             self.interests_evolution[mid] = []
     
@@ -169,8 +167,10 @@ class Supervisor(object):
     def forward(self, data, iteration):
         raise NotImplementedError
         if iteration > len(data["chosen_modules"]):
-            print "\nWARNING: asked to restart from iteration", iteration, "but only", len(data["chosen_modules"]), "are available. Restarting from iteration", len(data["chosen_modules"]), "..."
-            iteration = len(data["chosen_modules"])
+            max_it = len(data["chosen_modules"])
+            rospy.logwarn("Asked to restart from iteration {} but only {} are available. "
+                          "Restarting from iteration {}...".format(iteration, max_it, max_it))
+            iteration = max_it
         if iteration < 0:
             iteration = len(data["chosen_modules"])
         self.chosen_modules = data["chosen_modules"][:iteration]
@@ -209,7 +209,6 @@ class Supervisor(object):
             else:
                 mid = max(interests, key=interests.get)
         elif mode == 'active':
-            print "interests", interests
             eps = 0.2
             if self.t < 200 or np.random.random() < eps or sum(interests.values()) == 0.:
                 mid = np.random.choice(interests.keys())
@@ -221,7 +220,6 @@ class Supervisor(object):
                 w = w / np.sum(w)
                 probas = np.exp(w / temperature)
                 probas = probas / np.sum(probas)
-                print  "probas:", probas
                 idx = np.where(np.random.multinomial(1, probas) == 1)[0][0]
                 mid = non_zero_interests.keys()[idx]
         
@@ -352,7 +350,7 @@ class Supervisor(object):
         s = self.sensory_primitive(s)
         #print "perceive len(s)", len(s), s[92:112]
         if j_demo or self.ball_moves(s[92:112]):
-            time.sleep(5)
+            rospy.sleep(5)
         if m_demo is not None:
             ms = self.set_ms(m_demo, s)
             self.update_sensorimotor_models(ms)
@@ -542,7 +540,6 @@ class Supervisor(object):
     
     def motor_move_ergo(self, context, direction="right"):
         angle = context[0]
-        print "angle courant ergo", angle
         if direction=="right":
             return self.inverse("mod4", [angle, -1.,
                                                angle, -1.,
