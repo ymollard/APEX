@@ -87,7 +87,7 @@ class LearningNode(object):
                                          enable_hand=self.params["enable_hand"],
                                          normalize_interests=self.params["normalize_interests"])
 
-                if isfile(self.experiment_file):
+                if False: #isfile(self.experiment_file):    # TODO: Restore only when supervisor.forward is back!
                     rospy.loginfo("Learning node appends data to {}".format(self.experiment_file))
                     self.learning.restart_from_end_of_file(self.experiment_file)
                 else:
