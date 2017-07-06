@@ -15,10 +15,8 @@ class Torso(object):
             self.params = json.load(f)
 
         self.publish_rate = rospy.Rate(self.params['publish_rate'])
-
-        self.primitive_head = None
-        self.primitive_right = None
-
+        self.demo = rospy.get_param('demo_mode')
+        
         # Protected resources
         self.in_rest_pose = False
         self.robot_lock = RLock()
@@ -26,7 +24,7 @@ class Torso(object):
         # Used services
         self.torso = TorsoServices(self.params['robot_name'])
 
-        # Proposed servuces
+        # Proposed services
         self.reset_srv_name = 'torso/reset'
         self.reset_srv = None
 
@@ -63,13 +61,15 @@ class Torso(object):
     def run(self):
         self.reset_srv = rospy.Service(self.reset_srv_name, Reset, self._cb_reset)
         self.go_to_start()
-        self.torso.start_idle_motion('head')
-        self.torso.start_idle_motion('right_arm')
+        if self.demo:
+            self.torso.start_idle_motion('head')
+            self.torso.start_idle_motion('right_arm')
 
         rospy.spin()
-
-        self.torso.stop_idle_motion('head')
-        self.torso.stop_idle_motion('right_arm')
+        
+        if self.demo:
+            self.torso.stop_idle_motion('head')
+            self.torso.stop_idle_motion('right_arm')
 
     def _cb_reset(self, request):
         rospy.loginfo("Resetting Torso{}...".format(" in slow mode" if request.slow else ""))
