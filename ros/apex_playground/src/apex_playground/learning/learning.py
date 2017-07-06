@@ -70,7 +70,7 @@ class Learning(object):
             data = pickle.load(f)
         return data
                 
-    def save(self, trial, iteration, folder="/media/APEX/"):
+    def save(self, trial, iteration, folder="/media/usb/"):
         if self.agent is not None:
             filename = "condition_" + str(self.condition) + "_trial_" + str(trial) + "_iteration_" + str(iteration) + ".pickle"
             with open(folder + filename, 'w') as f:
