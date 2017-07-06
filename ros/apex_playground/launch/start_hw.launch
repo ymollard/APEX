@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="name" default="apex"/> <!-- Name of the experiment -->
+  <arg name="disabled_workers" default="[]"/> <!-- List of disabled workers -->
+  <param name="/experiment/disabled_workers" value="$(arg disabled_workers)" />
+
+  <node name="manager" pkg="apex_playground" type="work_manager.py" required="true"/>
+</launch>

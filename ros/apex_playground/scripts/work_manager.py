@@ -2,6 +2,7 @@
 import rospy
 import argparse
 import json
+import yaml
 from threading import RLock
 from os.path import join
 from rospkg import RosPack
@@ -15,6 +16,7 @@ class WorkManager(object):
         self.num_workers = 0
         self.outside_ros = rospy.get_param('/use_sim_time', outside_ros)  # True if work manager <-> controller comm must use ZMQ
         self.experiment_file = join(self.rospack.get_path('apex_playground'), 'config', 'experiment.json')
+        self.disabled_workers = yaml.load(rospy.get_param('/experiment/disabled_workers', "[]"))
 
         with open(self.experiment_file) as f:
             self.experiment = self.check(json.load(f))
@@ -28,21 +30,22 @@ class WorkManager(object):
 
     def _cb_get_work(self, worker):
         with self.experiment_lock:
-            for task in range(len(self.experiment)):
-                for trial in range(self.experiment[task]['num_trials']):
-                    if self.experiment[task]['progress'][trial]['status'] == 'open':
-                        if self.is_completed(task, trial, self.experiment):
-                            self.experiment[task]['progress'][trial]['status'] = 'complete'
-                        else:
-                            # This task needs work, distribute it to the worker
-                            self.experiment[task]['progress'][trial]['status'] = 'taken'
-                            self.experiment[task]['progress'][trial]['worker'] = worker
-                            self.num_workers += 1
-                            rospy.logwarn("Distributing {} iterations {} trial {} to worker {}".format(self.experiment[task]['num_iterations'], self.experiment[task]['method'], trial, worker))
-                            return dict(method=self.experiment[task]['method'],
-                                                   iteration=self.experiment[task]['progress'][trial]['iteration'],
-                                                   num_iterations=self.experiment[task]['num_iterations'],
-                                                   task=task, trial=trial, work_available=True)
+            if worker not in self.disabled_workers:
+                for task in range(len(self.experiment)):
+                    for trial in range(self.experiment[task]['num_trials']):
+                        if self.experiment[task]['progress'][trial]['status'] == 'open':
+                            if self.is_completed(task, trial, self.experiment):
+                                self.experiment[task]['progress'][trial]['status'] = 'complete'
+                            else:
+                                # This task needs work, distribute it to the worker
+                                self.experiment[task]['progress'][trial]['status'] = 'taken'
+                                self.experiment[task]['progress'][trial]['worker'] = worker
+                                self.num_workers += 1
+                                rospy.logwarn("Distributing {} iterations {} trial {} to worker {}".format(self.experiment[task]['num_iterations'], self.experiment[task]['method'], trial, worker))
+                                return dict(method=self.experiment[task]['method'],
+                                                       iteration=self.experiment[task]['progress'][trial]['iteration'],
+                                                       num_iterations=self.experiment[task]['num_iterations'],
+                                                       task=task, trial=trial, work_available=True)
         return dict(work_available=False)
 
     def _cb_update_work(self, task, trial, worker, iteration):
@@ -150,5 +153,5 @@ if __name__ == '__main__':
                         action="store_true")
     args, _ = parser.parse_known_args()
 
-    rospy.init_node("task_manager")
+    rospy.init_node("work_manager")
     WorkManager(args.comm_outside_ros).run()
