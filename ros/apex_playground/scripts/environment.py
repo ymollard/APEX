@@ -64,10 +64,10 @@ class Environment(object):
             if debug:
                 frame = self.tracking.draw_images(frame, hsv, mask_ball, mask_arena, arena_center, ring_radius)
                 image = Float32MultiArray()
-                image.layout.dim.append(MultiArrayDimension(size=frame.shape[0], label=str(frame.dtype)))
-                image.layout.dim.append(MultiArrayDimension(size=frame.shape[1]))
-                image.layout.dim.append(MultiArrayDimension(size=frame.shape[2]))
-                image.data = list(frame.reshape(frame.shape[0]*frame.shape[1]*frame.shape[2]))
+                for dim in range(len(frame.shape)):
+                    image.layout.dim.append(MultiArrayDimension(size=frame.shape[dim], label=str(frame.dtype)))
+                length = reduce(int.__mul__, frame.shape)
+                image.data = list(frame.reshape(length))
                 self.image_pub.publish(image)
             self.rate.sleep()
 
