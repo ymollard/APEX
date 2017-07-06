@@ -18,7 +18,7 @@ export ROS_MASTER_URI="http://${ros_master}:11311"
 export ROS_HOSTNAME="${hostname}.local"
 
 if [ $platform_type == "torso" ]; then
-    roslaunch apex_playground services_torso.launch demo:=false namespace:=${ns}
+    roslaunch apex_playground services_torso.launch demo_mode:=false namespace:=${ns}
 elif [ $platform_type == "ergo" ]; then
     roslaunch apex_playground services_ergo.launch debug:=false namespace:=${ns}
 elif [ $platform_type == "distractor" ]; then

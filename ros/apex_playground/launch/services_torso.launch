@@ -3,12 +3,12 @@
 
   <arg name="output" default="screen"/> <!-- Set output="log" to mute the screen output -->
   <arg name="debug" default="True"/> <!-- Enable debugging information and pictures -->
-  <arg name="demo" default="True"/> <!-- Aestetic demo mode (versus scientific experiment mode) -->
+  <arg name="demo_mode" default="True"/> <!-- Aestetic demo mode (versus scientific experiment mode) -->
   <arg name="namespace" default="apex"/> <!-- Isolate the data into a namespace -->
 
   <group ns="$(arg namespace)">
 
-      <param name="demo_mode" value="$(arg demo)" />
+      <param name="demo_mode" value="$(arg demo_mode)" />
 
       <include file="$(find poppy_torso_controllers)/launch/controllers.launch">
           <arg name="simulated" value="false"/>
