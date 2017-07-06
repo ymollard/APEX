@@ -10,7 +10,7 @@ sudo swapon /dev/sda1
 sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install -y python ipython python-dev cmake
-sudo apt-get install -y htop uptimed git
+sudo apt-get install -y htop uptimed git usbmount
 
 sed -i.bak -e "s/#alias /alias /g" /home/pi/.bashrc
 
