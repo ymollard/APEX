@@ -115,7 +115,9 @@ class EnvironmentTranslator(object):
         traj = JointTrajectory()
         traj.header.stamp = rospy.Time.now()
         traj.joint_names = ['l_shoulder_y', 'l_shoulder_x', 'l_arm_z', 'l_elbow_y']
-        traj.points = [JointTrajectoryPoint(positions=list(matrix_traj[point])) for point in range(len(matrix_traj))]
+        for point in range(len(matrix_traj)):
+            traj.points.append(JointTrajectoryPoint(positions=list(matrix_traj[point]),
+                                                    time_from_start=rospy.Duration(float(point)/self.params['recording_rate'])))
         return traj
 
     def trajectory_msg_to_matrix(self, trajectory):
