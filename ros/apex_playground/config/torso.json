@@ -4,6 +4,6 @@
   "speed": 6,
   "torques": {
     "motion": 20,
-    "reset": 60
+    "reset": 45
   }
 }
