@@ -70,11 +70,14 @@ class Learning(object):
             data = pickle.load(f)
         return data
                 
-    def save(self, trial, folder="/media/usb/"):
+    def save(self, experiment_name, trial, folder="/media/usb/"):
         if self.agent is not None:
+            folder_trial = os.path.join(folder, experiment_name, "condition_" + str(self.condition), "trial_" + str(trial))
+            if not os.path.isdir(folder_trial):
+                os.makedirs(folder_trial)
             iteration = self.get_iterations() - 1
-            filename = "condition_" + str(self.condition) + "_trial_" + str(trial) + "_iteration_" + str(iteration) + ".pickle"
-            with open(folder + filename, 'w') as f:
+            filename = "iteration_" + str(iteration) + ".pickle"
+            with open(os.path.join(folder_trial, filename), 'w') as f:
                 pickle.dump(self.agent.save_iteration(iteration), f)
     
     def start(self):

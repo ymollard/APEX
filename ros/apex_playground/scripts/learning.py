@@ -38,7 +38,7 @@ class LearningNode(object):
         # self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         # self.source_file = join(self.dir, self.source_name + '.pickle')
         self.main_experiment = True
-        self.experiment_name = ""
+        self.experiment_name = rospy.get_param('/experiment/name', 'apex')
         self.condition = ""
         self.trial = ""
         self.experiment_file = "/dev/null"
@@ -67,16 +67,15 @@ class LearningNode(object):
     def update_learner(self):
         condition = rospy.get_param('experiment/current/method')
         trial = rospy.get_param('experiment/current/trial')
-        experiment_name = rospy.get_param("experiment/name", "experiment")
 
         if condition != self.condition or trial != self.trial:
             with self.lock_iteration:
                 if self.trial != '' and self.condition != '':                
                     rospy.logwarn("Learner closes and saves condition {} trial {}...".format(self.condition, self.trial+1))
-                    self.learning.save(self.trial)
+                    self.learning.save(self.experiment_name, self.trial)
 
                 rospy.logwarn("Learner opens condition {} trial {}...".format(condition, trial+1))
-                self.experiment_name = "{}_{}_{}".format(experiment_name, condition, trial)
+                self.experiment_name = rospy.get_param('/experiment/name', 'apex')
                 self.experiment_file = join(self.dir, self.experiment_name + '.pickle') # if self.source_name == "none" else self.source_file
 
                 self.learning = Learning(self.translator.config,
@@ -144,7 +143,7 @@ class LearningNode(object):
         if ready:
             if into_past:
                 if self.main_experiment:
-                    self.learning.save(self.trial)
+                    self.learning.save(self.experiment_name, self.trial)
                 self.main_experiment = False
                 rospy.loginfo("Saving file before time travel into {}".format(self.experiment_file))
                 #self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -194,7 +193,7 @@ class LearningNode(object):
             self.learning.restart_from_file(self.experiment_file, set_iteration)
 
         # And savethe current iteration
-        self.learning.save(self.trial)
+        self.learning.save(self.experiment_name, self.trial)
 
         return PerceiveResponse()
 
