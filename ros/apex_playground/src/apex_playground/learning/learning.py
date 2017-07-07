@@ -70,8 +70,9 @@ class Learning(object):
             data = pickle.load(f)
         return data
                 
-    def save(self, trial, iteration, folder="/media/usb/"):
+    def save(self, trial, folder="/media/usb/"):
         if self.agent is not None:
+            iteration = self.get_iterations() - 1
             filename = "condition_" + str(self.condition) + "_trial_" + str(trial) + "_iteration_" + str(iteration) + ".pickle"
             with open(folder + filename, 'w') as f:
                 pickle.dump(self.agent.save_iteration(iteration), f)

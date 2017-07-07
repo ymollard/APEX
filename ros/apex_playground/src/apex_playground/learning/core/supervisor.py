@@ -156,12 +156,14 @@ class Supervisor(object):
     def save_iteration(self, i):
         m = self.modules["mod1"].sensorimotor_model.model.imodel.fmodel.dataset.get_x(i)
         s = {}
+        interests = {}
         for mid in self.modules.keys():
             s[mid] = self.modules[mid].sensorimotor_model.model.imodel.fmodel.dataset.get_y(i)
+            interests[mid] = self.interests_evolution[mid][i]
         return {"m":m,
                 "s":s,
                 "chosen_module":self.chosen_modules[i],
-                "interests":self.interests_evolution[i]}
+                "interests": interests}
 
         
     def forward(self, data, iteration):

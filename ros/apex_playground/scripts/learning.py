@@ -73,7 +73,7 @@ class LearningNode(object):
             with self.lock_iteration:
                 if self.trial != '' and self.condition != '':                
                     rospy.logwarn("Learner closes and saves condition {} trial {}...".format(self.condition, self.trial+1))
-                    self.learning.save(self.experiment_file)
+                    self.learning.save(self.trial)
 
                 rospy.logwarn("Learner opens condition {} trial {}...".format(condition, trial+1))
                 self.experiment_name = "{}_{}_{}".format(experiment_name, condition, trial)
@@ -117,14 +117,9 @@ class LearningNode(object):
         rospy.loginfo("Learning is up!")
 
         rate = rospy.Rate(self.params['publish_rate'])
-        try:
-            while not rospy.is_shutdown():
-                self.publish()
-                rate.sleep()
-        finally:
-            if self.learning is not None:
-                rospy.loginfo("Saving file before exit into {}".format(self.experiment_file))
-                self.learning.save(self.experiment_file)
+        while not rospy.is_shutdown():
+            self.publish()
+            rate.sleep()
 
     def publish(self):
         if self.learning is not None:
@@ -149,7 +144,7 @@ class LearningNode(object):
         if ready:
             if into_past:
                 if self.main_experiment:
-                    self.learning.save(self.experiment_file)
+                    self.learning.save(self.trial)
                 self.main_experiment = False
                 rospy.loginfo("Saving file before time travel into {}".format(self.experiment_file))
                 #self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -189,11 +184,6 @@ class LearningNode(object):
         if not success:
             rospy.logerr("Learner could not perceive this trajectory")
 
-        # Regularly overwrite the results
-        if self.main_experiment and self.learning.get_iterations() % self.params['save_every'] == 0:
-            rospy.loginfo("Saving file (periodic save) into {}".format(self.experiment_file))
-            self.learning.save(self.experiment_file)
-
         # This turn is over, check if we have a time travel pending...
         with self.lock_iteration:
             set_iteration = copy(self.set_iteration)
@@ -202,6 +192,9 @@ class LearningNode(object):
         if set_iteration > -1:
             rospy.logwarn("Applying time travel to iteration {}".format(set_iteration))
             self.learning.restart_from_file(self.experiment_file, set_iteration)
+
+        # And savethe current iteration
+        self.learning.save(self.trial)
 
         return PerceiveResponse()
 
