@@ -1,112 +1,27 @@
 [
     {
-        "num_iterations": 5, 
-        "num_trials": 3, 
-        "method": "AMB", 
-        "progress": [
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": 0
-            }, 
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }, 
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }
-        ]
+        "num_iterations": 5000, 
+        "num_trials": 1, 
+        "method": "OS" 
     }, 
     {
-        "num_iterations": 5, 
-        "num_trials": 3, 
-        "method": "OS", 
-        "progress": [
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }, 
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }, 
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }
-        ]
+        "num_iterations": 5000, 
+        "num_trials": 1, 
+        "method": "RMB" 
     }, 
     {
-        "num_iterations": 5, 
-        "num_trials": 3, 
-        "method": "RMB", 
-        "progress": [
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }, 
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }, 
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }
-        ]
+        "num_iterations": 5000, 
+        "num_trials": 1, 
+        "method": "RmB" 
     }, 
     {
-        "num_iterations": 5, 
-        "num_trials": 3, 
-        "method": "RmB", 
-        "progress": [
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }, 
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }, 
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }
-        ]
-    }, 
+        "num_iterations": 5000, 
+        "num_trials": 1, 
+        "method": "FC"
+    },
     {
-        "num_iterations": 5, 
+        "num_iterations": 5000, 
         "num_trials": 3, 
-        "method": "FC", 
-        "progress": [
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }, 
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }, 
-            {
-                "status": "open", 
-                "iteration": 0, 
-                "worker": -1
-            }
-        ]
-    }
+        "method": "AMB" 
+    } 
 ]
