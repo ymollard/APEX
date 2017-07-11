@@ -1,9 +1,9 @@
 {
   "tracking": {
-    "resolution" : [400, 300],
+    "resolution" : [352, 288],
     "ball" : {
       "lower": [27, 45, 70],
-      "upper": [38, 200, 255]
+      "upper": [38, 255, 255]
     },
     "arena": {
       "lower": [95, 40, 25],

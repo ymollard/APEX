@@ -18,7 +18,8 @@ class BallTracking(object):
     def read(self):
         if not self.camera:
             return False, None
-        return self.camera.read()
+        success, image = self.camera.read()
+        return success, image[16:-16,48:-48]
 
     def get_images(self, frame):
         # resize the frame, blur it, and convert it to the HSV color space
