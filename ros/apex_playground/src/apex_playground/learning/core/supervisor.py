@@ -205,19 +205,22 @@ class Supervisor(object):
         if mode == 'random':
             mid = np.random.choice(interests.keys())
         elif mode == 'greedy':
-            eps = 0.2
-            if np.random.random() < eps:
+            eps_rgb = 0.2
+            if np.random.random() < eps_rgb:
                 mid = np.random.choice(interests.keys())
             else:
                 mid = max(interests, key=interests.get)
         elif mode == 'active':
-            eps = 0.2
-            if self.t < 200 or np.random.random() < eps or sum(interests.values()) == 0.:
+            eps_rgb = 0.3
+            n_rgb = 200
+            interest_threshold = 0.05
+            temperature = 1.
+            
+            if self.t < n_rgb or np.random.random() < eps_rgb or sum(interests.values()) == 0.:
                 mid = np.random.choice(interests.keys())
             else:
-                temperature = 1.
                 total_interest = sum([interests[key] for key in interests.keys()])
-                non_zero_interests = {key:interests[key] for key in interests.keys() if interests[key] > total_interest / 100.}
+                non_zero_interests = {key:interests[key] for key in interests.keys() if interests[key] > total_interest * interest_threshold}
                 w = np.array(non_zero_interests.values())   
                 w = w / np.sum(w)
                 probas = np.exp(w / temperature)
@@ -231,7 +234,7 @@ class Supervisor(object):
             
         elif mode == 'FC':
             # Fixed Curriculum
-            mids = ["mod1", "mod2", "mod3", "mod4", "mod5", "mod6", "mod7"]
+            mids = ["mod1", "mod3", "mod2", "mod4", "mod5", "mod6", "mod7"]
             n = 5000.
             i = max(0, min(int(self.t / (n / 7.)), 6))
             mid = mids[i]
