@@ -60,7 +60,7 @@ if [ $? -eq 0 ]; then
     tee --append /home/pi/.bashrc > /dev/null <<EOF
 export LC_ALL=C # Fix: terminate called after throwing an instance of 'std::runtime_error' what():  locale::facet::_S_create_c_locale name not valid
 
-master_hostname="mingew.local"
+master_hostname="ros.local"
 hostname=`hostname`
 
 if [ -f /home/pi/ros_ws/devel_isolated/setup.bash ]; then

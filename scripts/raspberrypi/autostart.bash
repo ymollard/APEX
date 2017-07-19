@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-ros_master="mingew.local"
+ros_master="ros.local"
 
 #hostname="apex-1-ergo"
 hostname=`hostname`
