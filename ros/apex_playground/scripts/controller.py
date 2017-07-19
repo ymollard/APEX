@@ -36,6 +36,8 @@ class Controller(object):
         rospy.set_param('experiment/current/method', work.method)
 
         for iteration in range(work.iteration, work.num_iterations):
+            if iteration % self.params["ergo_reset"] == 0:
+                self.ergo.reset()
             try:
                 rospy.set_param('experiment/current/iteration', iteration)
                 if not rospy.is_shutdown():
