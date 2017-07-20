@@ -15,7 +15,7 @@ from core.flat_goal_babbling import FGB
 class Learning(object):
     def __init__(self, config, condition="AMB", n_motor_babbling=0.1, explo_noise=0.05, choice_eps=0.2, enable_hand=True, normalize_interests=True):
         self.config = config
-        if not condition in ["AMB", "RMB", "RmB", "FC", "OS"]:
+        if not condition in ["AMB", "AMBALL", "AMBMIX", "RMB", "RmB", "FC", "OS"]:
             raise NotImplementedError
         self.condition = condition
         self.n_motor_babbling = n_motor_babbling
