@@ -88,6 +88,20 @@ class Learning(object):
                                     explo_noise=self.explo_noise, 
                                     choice_eps=self.choice_eps,
                                     normalize_interests=self.normalize_interests)
+        elif self.condition == "AMBALL":
+            self.agent = Supervisor(self.config, 
+                                    babbling_mode="activeall",
+                                    n_motor_babbling=self.n_motor_babbling, 
+                                    explo_noise=self.explo_noise, 
+                                    choice_eps=self.choice_eps,
+                                    normalize_interests=self.normalize_interests)
+        elif self.condition == "AMBMIX":
+            self.agent = Supervisor(self.config, 
+                                    babbling_mode="activemix",
+                                    n_motor_babbling=self.n_motor_babbling, 
+                                    explo_noise=self.explo_noise, 
+                                    choice_eps=self.choice_eps,
+                                    normalize_interests=self.normalize_interests)
         elif self.condition == "RMB":
             self.agent = Supervisor(self.config, 
                                     babbling_mode="random",

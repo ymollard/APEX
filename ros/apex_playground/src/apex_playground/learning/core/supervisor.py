@@ -210,8 +210,8 @@ class Supervisor(object):
                 mid = np.random.choice(interests.keys())
             else:
                 mid = max(interests, key=interests.get)
-        elif mode == 'active':
-            eps_rgb = 0.3
+        elif mode == 'active' or mode == 'activeall' or mode == 'activemix':
+            eps_rgb = 0.2
             n_rgb = 200
             interest_threshold = 0.05
             temperature = 1.
@@ -227,11 +227,8 @@ class Supervisor(object):
                 probas = probas / np.sum(probas)
                 idx = np.where(np.random.multinomial(1, probas) == 1)[0][0]
                 mid = non_zero_interests.keys()[idx]
+                
         
-        elif mode == 'active':
-            w = interests.values()
-            mid = self.modules.keys()[prop_choice(w, eps=self.choice_eps)]
-            
         elif mode == 'FC':
             # Fixed Curriculum
             mids = ["mod1", "mod3", "mod2", "mod4", "mod5", "mod6", "mod7"]
@@ -324,7 +321,18 @@ class Supervisor(object):
                     #print "random chosen to exploit"
                     # In condition AMB, in 20% of iterations we do not explore but measure interest
                     explore = False
-                    self.measure_interest = True
+                    self.measure_interest = True  
+                          
+            elif self.babbling_mode == "activeall":
+                explore = True  
+                self.measure_interest = True 
+                          
+            elif self.babbling_mode == "activemix":
+                if np.random.random() < 0.2:                        
+                    #print "random chosen to exploit"
+                    # In condition AMB, in 20% of iterations we do not explore but measure interest
+                    explore = False
+                self.measure_interest = True 
 
             j_sm = self.modules["mod2"].sensorimotor_model
             if self.modules[mid].context_mode is None:
