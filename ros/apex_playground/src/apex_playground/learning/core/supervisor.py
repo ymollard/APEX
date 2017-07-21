@@ -210,10 +210,10 @@ class Supervisor(object):
                 mid = np.random.choice(interests.keys())
             else:
                 mid = max(interests, key=interests.get)
-        elif mode == 'active' or mode == 'activeall' or mode == 'activemix':
+        elif mode == 'active' or mode == 'activemix':
             eps_rgb = 0.2
             n_rgb = 200
-            interest_threshold = 0.05
+            interest_threshold = 0.0
             temperature = 1.
             
             if self.t < n_rgb or np.random.random() < eps_rgb or sum(interests.values()) == 0.:
@@ -227,6 +227,19 @@ class Supervisor(object):
                 probas = probas / np.sum(probas)
                 idx = np.where(np.random.multinomial(1, probas) == 1)[0][0]
                 mid = non_zero_interests.keys()[idx]
+                
+        elif mode == 'prop':
+            eps_rgb = 0.2
+            n_rgb = 200
+            
+            if self.t < n_rgb or np.random.random() < eps_rgb or sum(interests.values()) == 0.:
+                mid = np.random.choice(interests.keys())
+            else:
+                total_interest = sum([interests[key] for key in interests.keys()])
+                w = np.array(interests.values())   
+                probas = w / np.sum(w)
+                idx = np.where(np.random.multinomial(1, probas) == 1)[0][0]
+                mid = interests.keys()[idx]
                 
         
         elif mode == 'FC':
@@ -310,7 +323,7 @@ class Supervisor(object):
             explore = True  
             self.measure_interest = False   
             #print "babbling_mode", self.babbling_mode           
-            if self.babbling_mode == "active":
+            if self.babbling_mode == "active" or self.babbling_mode == "prop":
                 #print "interest", mid, self.modules[mid].interest()
                 if self.modules[mid].interest() == 0.:
                     #print "interest 0: exploit"
@@ -322,10 +335,6 @@ class Supervisor(object):
                     # In condition AMB, in 20% of iterations we do not explore but measure interest
                     explore = False
                     self.measure_interest = True  
-                          
-            elif self.babbling_mode == "activeall":
-                explore = True  
-                self.measure_interest = True 
                           
             elif self.babbling_mode == "activemix":
                 if np.random.random() < 0.2:                        
