@@ -214,7 +214,7 @@ class Supervisor(object):
             eps_rgb = 0.2
             n_rgb = 200
             interest_threshold = 0.0
-            temperature = 1.
+            temperature = 0.5
             
             if self.t < n_rgb or np.random.random() < eps_rgb or sum(interests.values()) == 0.:
                 mid = np.random.choice(interests.keys())
