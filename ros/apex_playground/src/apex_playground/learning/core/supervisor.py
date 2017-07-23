@@ -22,6 +22,8 @@ class Supervisor(object):
         self.progresses_evolution = {}
         self.interests_evolution = {}
         
+        self.ms = None
+        
         self.have_to_replay_arm_demo = None
             
         self.mid_control = ''
@@ -154,11 +156,11 @@ class Supervisor(object):
                 }
     
     def save_iteration(self, i):
-        m = self.modules["mod1"].sensorimotor_model.model.imodel.fmodel.dataset.get_x(i)
+        m = self.m
         s = {}
         interests = {}
         for mid in self.modules.keys():
-            s[mid] = self.modules[mid].sensorimotor_model.model.imodel.fmodel.dataset.get_y(i)
+            s[mid] = self.modules[mid].get_s(self.ms)
             interests[mid] = self.interests_evolution[mid][i]
         return {"m":m,
                 "s":s,
@@ -290,7 +292,17 @@ class Supervisor(object):
             
     def update_sensorimotor_models(self, ms):
         for mid in self.modules.keys():
-            self.modules[mid].update_sm(self.modules[mid].get_m(ms), self.modules[mid].get_s(ms))
+            m = self.modules[mid].get_m(ms)
+            s = self.modules[mid].get_s(ms)
+            
+            if mid == "mod4":
+                if min(abs(s[0] - s[-2]), 2 - abs(s[0] - s[-2])) > 0.02:
+                    self.modules[mid].update_sm(m, s)
+            elif mid == "mod5":
+                if min(abs(s[1] - s[-2]), 2 - abs(s[1] - s[-2])) > 0.02:
+                    self.modules[mid].update_sm(m, s)                
+            else:
+                self.modules[mid].update_sm(m, s)
         
     def increase_interest(self, mid):
         self.modules[mid].interest_model.current_progress = self.modules[mid].interest_model.current_progress * 1.1
@@ -389,6 +401,7 @@ class Supervisor(object):
             if not hasattr(self, "m"):
                 return False
             ms = self.set_ms(self.m, s)
+            self.ms = ms
             self.update_sensorimotor_models(ms)
             if self.mid_control is not None and self.measure_interest:
                 self.modules[self.mid_control].update_im(self.modules[self.mid_control].get_m(ms), self.modules[self.mid_control].get_s(ms))

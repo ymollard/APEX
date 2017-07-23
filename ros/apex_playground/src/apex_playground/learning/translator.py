@@ -65,8 +65,10 @@ class EnvironmentTranslator(object):
         state_dict['hand'] = flatten([(point.hand.pose.position.x, point.hand.pose.position.y, point.hand.pose.position.z) for point in state.points])
         state_dict['joystick_1'] = flatten([point.joystick_1.axes for point in state.points])
         state_dict['joystick_2'] = flatten([point.joystick_2.axes for point in state.points])
-        state_dict['ergo'] = flatten([((point.ergo.angle - self.context['ergo']) / 2., float(point.ergo.extended)) for point in state.points])
-        state_dict['ball'] = flatten([((point.ball.angle - self.context['ball']) / 2., float(point.ball.extended)) for point in state.points])
+        state_dict['ergo'] = flatten([(point.ergo.angle, float(point.ergo.extended)) for point in state.points])
+        state_dict['ball'] = flatten([(point.ball.angle, float(point.ball.extended)) for point in state.points])
+        #state_dict['ergo'] = flatten([((point.ergo.angle - self.context['ergo']) / 2., float(point.ergo.extended)) for point in state.points])
+        #state_dict['ball'] = flatten([((point.ball.angle - self.context['ball']) / 2., float(point.ball.extended)) for point in state.points])
         state_dict['light'] = [point.color.data for point in state.points]
         state_dict['sound'] = [point.sound.data for point in state.points]
 
