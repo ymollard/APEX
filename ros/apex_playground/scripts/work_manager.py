@@ -16,6 +16,7 @@ class WorkManager(object):
         self.num_workers = 0
         self.outside_ros = rospy.get_param('/use_sim_time', outside_ros)  # True if work manager <-> controller comm must use ZMQ
         self.experiment_file = join(self.rospack.get_path('apex_playground'), 'config', 'experiment.json')
+        self.workers = {}
         self.disabled_workers = yaml.load(rospy.get_param('/experiment/disabled_workers', "[]"))
 
         with open(self.experiment_file) as f:
@@ -36,16 +37,32 @@ class WorkManager(object):
                         if self.experiment[task]['progress'][trial]['status'] == 'open':
                             if self.is_completed(task, trial, self.experiment):
                                 self.experiment[task]['progress'][trial]['status'] = 'complete'
+                                del self.workers[worker]
+                                self.num_workers -= 1
                             else:
-                                # This task needs work, distribute it to the worker
-                                self.experiment[task]['progress'][trial]['status'] = 'taken'
-                                self.experiment[task]['progress'][trial]['worker'] = worker
-                                self.num_workers += 1
-                                rospy.logwarn("Distributing {} iterations {} trial {} to worker {}".format(self.experiment[task]['num_iterations'], self.experiment[task]['method'], trial, worker))
-                                return dict(method=self.experiment[task]['method'],
-                                                       iteration=self.experiment[task]['progress'][trial]['iteration'],
-                                                       num_iterations=self.experiment[task]['num_iterations'],
-                                                       task=task, trial=trial, work_available=True)
+                                if worker in self.workers:
+                                    rospy.logerr("Worker {} requested work while it hadn't completed its first task, blacklisting worker {}".format(worker, worker))
+                                    self.disabled_workers.append(worker)
+                                    failed_work = self.workers[worker]
+                                    self.experiment[failed_work['task']]['progress'][failed_work['trial']]['worker'] = -1
+                                    self.experiment[failed_work['task']]['progress'][failed_work['trial']]['iteration'] = 0
+                                    self.experiment[failed_work['task']]['progress'][failed_work['trial']]['status'] = 'open'
+                                    del self.workers[worker]
+                                    self.num_workers -= 1
+                                    return dict(work_available=False)
+                                else:
+                                    # This task needs work, distribute it to the worker
+                                    self.experiment[task]['progress'][trial]['status'] = 'taken'
+                                    self.experiment[task]['progress'][trial]['worker'] = worker
+                                    self.workers[worker] = {"task": task, "trial": trial, "method": self.experiment[task]['method']}
+                                    self.num_workers += 1
+                                    rospy.logwarn("Distributing {} iterations {} trial {} to worker {}".format(self.experiment[task]['num_iterations'], self.experiment[task]['method'], trial, worker))
+                                    return dict(method=self.experiment[task]['method'],
+                                                           iteration=self.experiment[task]['progress'][trial]['iteration'],
+                                                           num_iterations=self.experiment[task]['num_iterations'],
+                                                           task=task, trial=trial, work_available=True)
+            else:
+                rospy.logwarn("Worker {} requested work but it is blacklisted".format(worker))
         return dict(work_available=False)
 
     def _cb_update_work(self, task, trial, worker, iteration):
@@ -64,6 +81,7 @@ class WorkManager(object):
                         if self.is_completed(task, trial, self.experiment):
                             self.experiment[task]['progress'][trial]['status'] = 'complete'
                             rospy.logwarn("{} trial {} completed by worker {}".format(self.experiment[task]['method'], trial, worker))
+                            del self.workers[worker]
                         else:
                             pass  # This is a regular update
                             rospy.loginfo("Regular update: iteration {}/{} from worker {}".format(iteration+1, self.experiment[task]['num_iterations'], worker))
