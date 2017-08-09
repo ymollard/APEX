@@ -16,7 +16,6 @@ class WorkManager(object):
         self.num_workers = 0
         self.outside_ros = rospy.get_param('/use_sim_time', outside_ros)  # True if work manager <-> controller comm must use ZMQ
         self.experiment_file = join(self.rospack.get_path('apex_playground'), 'config', 'experiment.json')
-        self.workers = {}
         self.disabled_workers = yaml.load(rospy.get_param('/experiment/disabled_workers', "[]"))
 
         with open(self.experiment_file) as f:
@@ -34,33 +33,28 @@ class WorkManager(object):
             if worker not in self.disabled_workers:
                 for task in range(len(self.experiment)):
                     for trial in range(self.experiment[task]['num_trials']):
-                        if self.experiment[task]['progress'][trial]['status'] == 'open':
+                        status = self.experiment[task]['progress'][trial]['status']
+                        resuming = status =='taken' and self.experiment[task]['progress'][trial]['worker'] == worker
+                        # If this work is open or taken and the same worker is requesting some work, distribute it!
+                        if status == 'open' or resuming:
                             if self.is_completed(task, trial, self.experiment):
                                 self.experiment[task]['progress'][trial]['status'] = 'complete'
-                                del self.workers[worker]
                                 self.num_workers -= 1
                             else:
-                                if worker in self.workers:
-                                    rospy.logerr("Worker {} requested work while it hadn't completed its first task, blacklisting worker {}".format(worker, worker))
-                                    self.disabled_workers.append(worker)
-                                    failed_work = self.workers[worker]
-                                    self.experiment[failed_work['task']]['progress'][failed_work['trial']]['worker'] = -1
-                                    self.experiment[failed_work['task']]['progress'][failed_work['trial']]['iteration'] = 0
-                                    self.experiment[failed_work['task']]['progress'][failed_work['trial']]['status'] = 'open'
-                                    del self.workers[worker]
-                                    self.num_workers -= 1
-                                    return dict(work_available=False)
+                                # This task needs work, distribute it to the worker
+                                self.experiment[task]['progress'][trial]['status'] = 'taken'
+                                self.experiment[task]['progress'][trial]['worker'] = worker
+                                self.num_workers += 1
+                                if resuming:
+                                    rospy.logwarn("Resuming worker {} {} from iteration {}/{}".format(worker, self.experiment[task]['method'],
+                                                                                                   self.experiment[task]['progress'][trial]['iteration'],
+                                                                                                   self.experiment[task]['num_iterations']))
                                 else:
-                                    # This task needs work, distribute it to the worker
-                                    self.experiment[task]['progress'][trial]['status'] = 'taken'
-                                    self.experiment[task]['progress'][trial]['worker'] = worker
-                                    self.workers[worker] = {"task": task, "trial": trial, "method": self.experiment[task]['method']}
-                                    self.num_workers += 1
                                     rospy.logwarn("Distributing {} iterations {} trial {} to worker {}".format(self.experiment[task]['num_iterations'], self.experiment[task]['method'], trial, worker))
-                                    return dict(method=self.experiment[task]['method'],
-                                                           iteration=self.experiment[task]['progress'][trial]['iteration'],
-                                                           num_iterations=self.experiment[task]['num_iterations'],
-                                                           task=task, trial=trial, work_available=True)
+                                return dict(method=self.experiment[task]['method'],
+                                            iteration=self.experiment[task]['progress'][trial]['iteration'],
+                                            num_iterations=self.experiment[task]['num_iterations'],
+                                            task=task, trial=trial, work_available=True)
             else:
                 rospy.logwarn("Worker {} requested work but it is blacklisted".format(worker))
         return dict(work_available=False)
@@ -81,7 +75,6 @@ class WorkManager(object):
                         if self.is_completed(task, trial, self.experiment):
                             self.experiment[task]['progress'][trial]['status'] = 'complete'
                             rospy.logwarn("{} trial {} completed by worker {}".format(self.experiment[task]['method'], trial, worker))
-                            del self.workers[worker]
                         else:
                             pass  # This is a regular update
                             rospy.loginfo("Regular update: iteration {}/{} from worker {}".format(iteration+1, self.experiment[task]['num_iterations'], worker))
@@ -93,9 +86,9 @@ class WorkManager(object):
     def run(self):
         try:
             if self.outside_ros:
-                return self.run_outside_ros()
+                self.run_outside_ros()
             else:
-                return self.run_within_ros()
+                self.run_within_ros()
         finally:
             self.save_experiment()
 
@@ -156,11 +149,11 @@ class WorkManager(object):
     @staticmethod
     def cleanup(experiment):
         # Mark all taken jobs as open
-        for task in range(len(experiment)):
-            if 'progress' in experiment[task]:
-                for trial in range(experiment[task]['num_trials']):
-                    if experiment[task]['progress'][trial]['status'] == 'taken':
-                        experiment[task]['progress'][trial]['status'] = 'open'
+        #for task in range(len(experiment)):
+        #    if 'progress' in experiment[task]:
+        #        for trial in range(experiment[task]['num_trials']):
+        #            if experiment[task]['progress'][trial]['status'] == 'taken':
+        #                experiment[task]['progress'][trial]['status'] = 'open'
         return experiment
 
 if __name__ == '__main__':
