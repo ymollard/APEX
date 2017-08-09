@@ -15,12 +15,13 @@ class WorkManager(object):
         self.rospack = RosPack()
         self.num_workers = 0
         self.outside_ros = rospy.get_param('/use_sim_time', outside_ros)  # True if work manager <-> controller comm must use ZMQ
-        self.experiment_file = join(self.rospack.get_path('apex_playground'), 'config', 'experiment.json')
+        self.file_experiment = join(self.rospack.get_path('apex_playground'), 'config', 'experiment.json')
         self.disabled_workers = yaml.load(rospy.get_param('/experiment/disabled_workers', "[]"))
 
-        with open(self.experiment_file) as f:
-            self.experiment = self.check(json.load(f))
-        self.experiment_lock = RLock()
+        with open(self.file_experiment) as f:
+            experiment = self.check(json.load(f))
+        rospy.set_param('/work', experiment)
+        self.lock_experiment = RLock()
 
     @staticmethod
     def is_completed(task, trial, experiment):
@@ -29,70 +30,76 @@ class WorkManager(object):
         return experiment[task]['progress'][trial]['iteration'] >= experiment[task]['num_iterations'] - 1
 
     def _cb_get_work(self, worker):
-        with self.experiment_lock:
+        with self.lock_experiment:
+            experiment = rospy.get_param('/work')
             if worker not in self.disabled_workers:
-                for task in range(len(self.experiment)):
-                    for trial in range(self.experiment[task]['num_trials']):
-                        status = self.experiment[task]['progress'][trial]['status']
-                        resuming = status =='taken' and self.experiment[task]['progress'][trial]['worker'] == worker
+                for task in range(len(experiment)):
+                    for trial in range(experiment[task]['num_trials']):
+                        status = experiment[task]['progress'][trial]['status']
+                        resuming = status =='taken' and experiment[task]['progress'][trial]['worker'] == worker
                         # If this work is open or taken and the same worker is requesting some work, distribute it!
                         if status == 'open' or resuming:
-                            if self.is_completed(task, trial, self.experiment):
-                                self.experiment[task]['progress'][trial]['status'] = 'complete'
+                            if self.is_completed(task, trial, experiment):
+                                experiment[task]['progress'][trial]['status'] = 'complete'
                                 self.num_workers -= 1
+                                rospy.set_param('/work', experiment)
                             else:
                                 # This task needs work, distribute it to the worker
-                                self.experiment[task]['progress'][trial]['status'] = 'taken'
-                                self.experiment[task]['progress'][trial]['worker'] = worker
+                                experiment[task]['progress'][trial]['status'] = 'taken'
+                                experiment[task]['progress'][trial]['worker'] = worker
+                                rospy.set_param('/work', experiment)
                                 self.num_workers += 1
                                 if resuming:
-                                    rospy.logwarn("Resuming worker {} {} from iteration {}/{}".format(worker, self.experiment[task]['method'],
-                                                                                                   self.experiment[task]['progress'][trial]['iteration'],
-                                                                                                   self.experiment[task]['num_iterations']))
+                                    rospy.logwarn("Resuming worker {} {} from iteration {}/{}".format(worker, experiment[task]['method'],
+                                                                                                   experiment[task]['progress'][trial]['iteration'],
+                                                                                                   experiment[task]['num_iterations']))
                                 else:
-                                    rospy.logwarn("Distributing {} iterations {} trial {} to worker {}".format(self.experiment[task]['num_iterations'], self.experiment[task]['method'], trial, worker))
-                                return dict(method=self.experiment[task]['method'],
-                                            iteration=self.experiment[task]['progress'][trial]['iteration'],
-                                            num_iterations=self.experiment[task]['num_iterations'],
+                                    rospy.logwarn("Distributing {} iterations {} trial {} to worker {}".format(experiment[task]['num_iterations'], experiment[task]['method'], trial, worker))
+                                return dict(method=experiment[task]['method'],
+                                            iteration=experiment[task]['progress'][trial]['iteration'],
+                                            num_iterations=experiment[task]['num_iterations'],
                                             task=task, trial=trial, work_available=True)
             else:
                 rospy.logwarn("Worker {} requested work but it is blacklisted".format(worker))
         return dict(work_available=False)
 
     def _cb_update_work(self, task, trial, worker, iteration):
-        with self.experiment_lock:
-            if task > len(self.experiment) - 1:
+        with self.lock_experiment:
+            experiment = rospy.get_param('/work')
+            if task > len(experiment) - 1:
                 rospy.logerr("No such task: {}".format(task))
             else:
-                known_status = self.experiment[task]['progress'][trial]['status']
-                known_worker = self.experiment[task]['progress'][trial]['worker']
+                known_status = experiment[task]['progress'][trial]['status']
+                known_worker = experiment[task]['progress'][trial]['worker']
                 if self.num_workers > 0:
                     if known_status != 'taken' or known_worker != worker and known_worker >= 0:
                         rospy.logerr("Inconsistent data: Worker ID {} has returned task {} trial {} "
                                      "which is known {} by worker {}".format(worker, task, trial, known_status, known_worker))
                     else:
-                        self.experiment[task]['progress'][trial]['iteration'] = iteration
-                        if self.is_completed(task, trial, self.experiment):
-                            self.experiment[task]['progress'][trial]['status'] = 'complete'
-                            rospy.logwarn("{} trial {} completed by worker {}".format(self.experiment[task]['method'], trial, worker))
+                        experiment[task]['progress'][trial]['iteration'] = iteration
+                        if self.is_completed(task, trial, experiment):
+                            experiment[task]['progress'][trial]['status'] = 'complete'
+                            rospy.logwarn("{} trial {} completed by worker {}".format(experiment[task]['method'], trial, worker))
                         else:
                             pass  # This is a regular update
-                            rospy.loginfo("Regular update: iteration {}/{} from worker {}".format(iteration+1, self.experiment[task]['num_iterations'], worker))
+                            rospy.loginfo("Regular update: iteration {}/{} from worker {}".format(iteration+1, experiment[task]['num_iterations'], worker))
                 else:
                     rospy.logerr("There is no known worker, we didn't expect that work update")
+        rospy.set_param('/work', experiment)
         self.save_experiment()
         return dict()
 
     def _cb_add_work(self, request):
-        with self.experiment_lock:
+        with self.lock_experiment:
+            experiment = rospy.get_param('/work')
             task = {
                     "num_iterations": request.num_iterations,
                     "num_trials": request.num_trials,
                     "method": request.method
                 }
-            self.experiment.append(task)
-            self.experiment = self.check(self.experiment)
-            return AddWorkResponse(task=len(self.experiment)-1)
+            experiment.append(task)
+            rospy.set_param('/work', self.check(experiment))
+            return AddWorkResponse(task=len(experiment)-1)
 
     def run(self):
         try:
@@ -104,9 +111,10 @@ class WorkManager(object):
             self.save_experiment()
 
     def save_experiment(self):
-        with self.experiment_lock:
-            with open(self.experiment_file, 'w') as f:
-                json.dump(self.cleanup(deepcopy(self.experiment)), f, indent=4)
+        with self.lock_experiment:
+            experiment = rospy.get_param('/work')
+            with open(self.file_experiment, 'w') as f:
+                json.dump(self.cleanup(deepcopy(experiment)), f, indent=4)
 
     def run_outside_ros(self):
         # Use ZMQ for work manager <-> controller comm
