@@ -12,4 +12,27 @@ Intrinsically motivated spontaneous exploration is a key enabler of autonomous l
 ## Open-source and open-hardware
 This repository gives the open-source code of the experiments described in the paper, together with 3D shapes of the parts that need to be 3D-printed. The code is based on [ROS](http://www.ros.org/) for the communication between robots / webcam etc.
 
-The robots are from the [Poppy Project](https://www.poppy-project.org): an open-source 3D printed low-cost humanoid robotic platform that allows non-roboticists to quickly set up and program robotic experiments.
+## References
+This research project is developed by the Flowers team at Inria and Ensta ParisTech: https://flowers.inria.fr
+
+Here are some links:
+
+A Python/Explauto Tutorial: http://nbviewer.jupyter.org/github/sebastien-forestier/ExplorationAlgorithms/blob/master/main.ipynb
+
+A Paper on the Active Model Babbling architecture: Forestier S, Oudeyer P-Y. 2016. Modular Active Curiosity-Driven Discovery of Tool Use. 2016 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS). http://sforestier.com/sites/default/files/Forestier2016Modular.pdf
+
+Poppy Project: an open-source 3D printed low-cost humanoid robotic platform that allows non-roboticists to quickly set up and program robotic experiments. https://www.poppy-project.org
+
+Explauto: an open-source Python library to benchmark active learning and exploration algorithms that includes already implemented real and simulated robotics setups and exploration algorithms. https://github.com/flowersteam/explauto
+
+The poster of the demo: https://hal.inria.fr/hal-01404399/
+
+This project was conducted within a larger long-term research program at the Flowers lab on mechanisms of lifelong learning and development in machines and humans. This research program has in particular lead to a series of novel intrinsically motivated learning algorithms working on high-dimensional real robots and opening new perspectives in cognitive sciences. Papers providing this broader context are:
+
+Oudeyer, P-Y. and Smith. L. (2016) How Evolution may work through Curiosity-driven Developmental Process, Topics in Cognitive Science, 1-11. https://hal.inria.fr/hal-01404334
+
+P-Y. Oudeyer, J. Gottlieb and M. Lopes (2016) Intrinsic motivation, curiosity and learning: theory and applications in educational technologies, Progress in Brain Research, 229, pp. 257-284. https://hal.inria.fr/hal-01404278
+
+Baranes, A., Oudeyer, P-Y. (2013) Active Learning of Inverse Models with Intrinsically Motivated Goal Exploration in Robots, Robotics and Autonomous Systems, 61(1), pp. 49-73. https://hal.inria.fr/hal-00788440
+
+Oudeyer P-Y. and Kaplan F. (2007) What is intrinsic motivation? A typology of computational approaches. Frontiers in Neurorobotics, 1:6. http://journal.frontiersin.org/article/10.3389/neuro.12.006.2007/full
