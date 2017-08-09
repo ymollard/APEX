@@ -7,7 +7,7 @@ from threading import RLock
 from os.path import join
 from rospkg import RosPack
 from copy import deepcopy
-from apex_playground.srv import UpdateWorkStatus, GetWork, GetWorkResponse, UpdateWorkStatusResponse
+from apex_playground.srv import UpdateWorkStatus, GetWork, AddWork, GetWorkResponse, UpdateWorkStatusResponse, AddWorkResponse
 
 
 class WorkManager(object):
@@ -83,6 +83,17 @@ class WorkManager(object):
         self.save_experiment()
         return dict()
 
+    def _cb_add_work(self, request):
+        with self.experiment_lock:
+            task = {
+                    "num_iterations": request.num_iterations,
+                    "num_trials": request.num_trials,
+                    "method": request.method
+                }
+            self.experiment.append(task)
+            self.experiment = self.check(self.experiment)
+            return AddWorkResponse(task=len(self.experiment)-1)
+
     def run(self):
         try:
             if self.outside_ros:
@@ -134,6 +145,8 @@ class WorkManager(object):
         # Use ROS for work manager <-> controller comm
         rospy.Service('work/get', GetWork, lambda req: GetWorkResponse(**self._cb_get_work(req.worker)))
         rospy.Service('work/update', UpdateWorkStatus, lambda req: UpdateWorkStatusResponse(**self._cb_update_work(req.task, req.trial, req.worker, req.iteration)))
+        rospy.Service('work/add', AddWork, self._cb_add_work)
+
         rospy.spin()
 
     @staticmethod

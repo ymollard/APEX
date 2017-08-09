@@ -1,0 +1,8 @@
+# Add a new work in queue
+string method
+uint32 num_trials
+uint32 iteration
+uint32 num_iterations
+---
+uint32 task
+

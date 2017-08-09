@@ -76,7 +76,7 @@ add_service_files(
   Assess.srv
   GetWork.srv
   UpdateWorkStatus.srv
-
+  AddWork.srv
 )
 
 ## Generate actions in the 'action' folder
