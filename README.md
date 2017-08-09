@@ -1,7 +1,9 @@
 # Intrinsically Motivated Goal Exploration Processes with Automatic Curriculum Learning
 by Sébastien Forestier, Yoan Mollard and Pierre-Yves Oudeyer
 
-Paper available on arXiv: https://arxiv.org/abs/1708.02190
+The paper is available on arXiv: https://arxiv.org/abs/1708.02190
+
+A video explains the algorithms and shows the exploration and learning on the robotic setup: https://youtu.be/NOLAwD4ZTW0
 
 Abstract:
 
