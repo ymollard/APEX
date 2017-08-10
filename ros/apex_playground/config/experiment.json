@@ -1,27 +1,37 @@
 [
     {
-        "num_iterations": 5000, 
-        "num_trials": 1, 
-        "method": "OS" 
-    }, 
-    {
-        "num_iterations": 5000, 
-        "num_trials": 1, 
-        "method": "RMB" 
-    }, 
-    {
-        "num_iterations": 5000, 
+        "num_iterations": 20000, 
         "num_trials": 1, 
         "method": "RmB" 
     }, 
     {
-        "num_iterations": 5000, 
-        "num_trials": 1, 
+        "num_iterations": 20000, 
+        "num_trials": 5, 
+        "method": "RMB" 
+    }, 
+    {
+        "num_iterations": 20000, 
+        "num_trials": 5, 
+        "method": "AMB" 
+    }, 
+    {
+        "num_iterations": 20000, 
+        "num_trials": 5, 
+        "method": "RMB" 
+    }, 
+    {
+        "num_iterations": 20000, 
+        "num_trials": 5, 
+        "method": "AMB" 
+    }, 
+    {
+        "num_iterations": 20000, 
+        "num_trials": 10, 
         "method": "FC"
     },
     {
-        "num_iterations": 5000, 
-        "num_trials": 3, 
-        "method": "AMB" 
-    } 
+        "num_iterations": 20000, 
+        "num_trials": 10, 
+        "method": "OS" 
+    }
 ]
