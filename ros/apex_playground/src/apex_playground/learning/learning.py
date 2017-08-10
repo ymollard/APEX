@@ -138,7 +138,7 @@ class Learning(object):
         folder_trial = os.path.join(folder, experiment_name, "condition_" + str(self.condition), "trial_" + str(trial))
         for it in range(iteration):
             filename = "iteration_" + str(it) + ".pickle"
-            data = self.get_data_from_file(filename)
+            data = self.get_data_from_file(os.path.join(folder_trial, filename))
             self.agent.forward_iteration(data)
 
     def plot(self):
