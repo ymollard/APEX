@@ -161,11 +161,23 @@ class Supervisor(object):
         sg = data_iteration["goal"]
         interests = data_iteration["interests"]
                 
-        ms = self.set_ms(m, s)
-        self.update_sensorimotor_models(ms)
+
+
+        for mid in self.modules.keys():
+            smid = s[mid]
+            
+            if mid == "mod4":
+                if min(abs(smid[0] - smid[-2]), 2 - abs(smid[0] - smid[-2])) > 0.02:
+                    self.modules[mid].update_sm(m, smid)
+            elif mid == "mod5":
+                if min(abs(smid[1] - smid[-2]), 2 - abs(smid[1] - smid[-2])) > 0.02:
+                    self.modules[mid].update_sm(m, smid)                
+            else:
+                self.modules[mid].update_sm(m, smid)
+
         if sg is not None:
             self.modules[mid].s = sg
-            self.modules[mid].update_im(self.modules[mid].get_m(ms), self.modules[mid].get_s(ms))
+            self.modules[mid].update_im(m, s[mid])
         for mid in self.modules.keys():
             self.interests_evolution[mid].append(interests[mid])
         self.t += 1
