@@ -41,7 +41,6 @@ class LearningNode(object):
         self.experiment_name = rospy.get_param('/experiment/name', 'apex')
         self.condition = ""
         self.trial = ""
-        self.experiment_file = "/dev/null"
 
         # Serving these services
         self.service_name_perceive = "learning/perceive"
@@ -67,6 +66,7 @@ class LearningNode(object):
     def update_learner(self):
         condition = rospy.get_param('experiment/current/method')
         trial = rospy.get_param('experiment/current/trial')
+        iteration = rospy.get_param('experiment/current/iteration')
 
         if condition != self.condition or trial != self.trial:
             with self.lock_iteration:
@@ -76,7 +76,6 @@ class LearningNode(object):
 
                 rospy.logwarn("Learner opens condition {} trial {}...".format(condition, trial+1))
                 self.experiment_name = rospy.get_param('/experiment/name', 'apex')
-                self.experiment_file = join(self.dir, self.experiment_name + '.pickle') # if self.source_name == "none" else self.source_file
 
                 self.learning = Learning(self.translator.config,
                                          condition=condition,
@@ -86,11 +85,11 @@ class LearningNode(object):
                                          enable_hand=self.params["enable_hand"],
                                          normalize_interests=self.params["normalize_interests"])
 
-                if False: #isfile(self.experiment_file):    # TODO: Restore only when supervisor.forward is back!
-                    rospy.loginfo("Learning node appends data to {}".format(self.experiment_file))
-                    self.learning.restart_from_end_of_file(self.experiment_file)
+                if iteration > 0:
+                    rospy.loginfo("Learning node restarts {} from iteration {} trial {}".format(self.experiment_name, iteration, trial))
+                    self.learning.restart_from_files(self.experiment_name, trial, iteration)
                 else:
-                    rospy.loginfo("Learning node created {}".format(self.experiment_file))
+                    rospy.loginfo("Learning node starts {} from scratch trial {}".format(self.experiment_name, trial))
                     self.learning.start()
 
             rospy.loginfo("Learner loaded with condition {}!".format(condition))
@@ -145,9 +144,7 @@ class LearningNode(object):
                 if self.main_experiment:
                     self.learning.save(self.experiment_name, self.trial)
                 self.main_experiment = False
-                rospy.loginfo("Saving file before time travel into {}".format(self.experiment_file))
-                #self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                #self.experiment_file = join(self.dir, self.stamp + '_set_iteration_' + self.experiment_name + '.pickle')
+                rospy.loginfo("Saving file before time travel")
             else:
                 self.main_experiment = True
         return SetIterationResponse()
@@ -190,7 +187,7 @@ class LearningNode(object):
 
         if set_iteration > -1:
             rospy.logwarn("Applying time travel to iteration {}".format(set_iteration))
-            self.learning.restart_from_file(self.experiment_file, set_iteration)
+            #self.learning.restart_from_files(self.experiment_name, set_iteration)
 
         # And savethe current iteration
         self.learning.save(self.experiment_name, self.trial)
