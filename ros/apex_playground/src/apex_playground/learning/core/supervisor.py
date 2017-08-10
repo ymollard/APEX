@@ -182,7 +182,7 @@ class Supervisor(object):
             self.interests_evolution[mid].append(interests[mid])
         
         self.goals.append(sg)
-        self.chosen_module.append(mid)
+        self.chosen_modules.append(mid)
 
         self.t += 1
     
