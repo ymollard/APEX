@@ -19,6 +19,7 @@ class Supervisor(object):
         self.t = 0
         self.modules = {}
         self.chosen_modules = []
+        self.goals = []
         self.progresses_evolution = {}
         self.interests_evolution = {}
         
@@ -140,21 +141,6 @@ class Supervisor(object):
     def get_space_names(self): return ["s_hand", "s_joystick_1", "s_joystick_2", "s_ergo", "s_ball", "s_light", "s_sound", "s_hand_right", "s_base", "s_arena", "s_obj1", "s_obj2", "s_obj3", "s_rdm1", "s_rdm2"]
     def get_last_focus(self): return self.mid_to_space(self.mid_control) if self.mid_control else ""
     
-    def save(self):
-        sm_data = {}
-        im_data = {}
-        for mid in self.modules.keys():
-            sm_data[mid] = self.modules[mid].sensorimotor_model.save()
-            im_data[mid] = self.modules[mid].interest_model.save()            
-        return {"sm_data":sm_data,
-                #"im_data":im_data,
-                "chosen_modules":self.chosen_modules,
-                #"progresses_evolution":self.progresses_evolution,
-                "interests_evolution":self.interests_evolution,
-                #"normalized_interests_evolution":self.get_normalized_interests_evolution(),
-                #"normalize_interests":self.normalize_interests
-                }
-    
     def save_iteration(self, i):
         m = self.m
         s = {}
@@ -165,39 +151,25 @@ class Supervisor(object):
         return {"m":m,
                 "s":s,
                 "chosen_module":self.chosen_modules[i],
+                "goal":self.goals[i],
                 "interests": interests}
 
-        
-    def forward(self, data, iteration):
-        raise NotImplementedError
-        if iteration > len(data["chosen_modules"]):
-            max_it = len(data["chosen_modules"])
-            rospy.logwarn("Asked to restart from iteration {} but only {} are available. "
-                          "Restarting from iteration {}...".format(iteration, max_it, max_it))
-            iteration = max_it
-        if iteration < 0:
-            iteration = len(data["chosen_modules"])
-        self.chosen_modules = data["chosen_modules"][:iteration]
-        self.progresses_evolution = data["progresses_evolution"]
-        self.interests_evolution = data["interests_evolution"]
+    def forward_iteration(self, data_iteration):
+        m = data_iteration["m"]
+        s = data_iteration["s"]
+        mid = data_iteration["chosen_module"]
+        sg = data_iteration["goal"]
+        interests = data_iteration["interests"]
+                
+        ms = self.set_ms(m, s)
+        self.update_sensorimotor_models(ms)
+        if sg is not None:
+            self.modules[mid].s = sg
+            self.modules[mid].update_im(self.modules[mid].get_m(ms), self.modules[mid].get_s(ms))
         for mid in self.modules.keys():
-            self.progresses_evolution[mid] = self.progresses_evolution[mid][:iteration]
-            self.interests_evolution[mid] = self.interests_evolution[mid][:iteration]
-        self.t = iteration
-        if data.has_key("normalize_interests"):
-            self.normalize_interests = data["normalize_interests"]
-        if iteration > 0:
-            for mid in self.modules.keys():
-                if mid == "mod1":
-                    self.modules[mid].sensorimotor_model.forward(data["sm_data"][mid], iteration-self.chosen_modules.count("j_demo"))
-                else:
-                    self.modules[mid].sensorimotor_model.forward(data["sm_data"][mid], iteration)
-                    
-                if len(self.progresses_evolution[mid]) > 0:
-                    self.modules[mid].interest_model.forward(data["im_data"][mid], self.chosen_modules.count(mid), self.progresses_evolution[mid][-1], self.interests_evolution[mid][-1])
-                else:
-                    self.modules[mid].interest_model.forward(data["im_data"][mid], self.chosen_modules.count(mid), 0, 0)
-        
+            self.interests_evolution[mid].append(interests[mid])
+        self.t += 1
+    
         
     def choose_babbling_module(self, mode='active'):
         interests = {}
@@ -247,7 +219,7 @@ class Supervisor(object):
         elif mode == 'FC':
             # Fixed Curriculum
             mids = ["mod1", "mod3", "mod2", "mod4", "mod5", "mod6", "mod7"]
-            n = 5000.
+            n = 20000.
             i = max(0, min(int(self.t / (n / 7.)), 6))
             mid = mids[i]
             
@@ -405,6 +377,10 @@ class Supervisor(object):
             self.update_sensorimotor_models(ms)
             if self.mid_control is not None and self.measure_interest:
                 self.modules[self.mid_control].update_im(self.modules[self.mid_control].get_m(ms), self.modules[self.mid_control].get_s(ms))
+            if self.mid_control is not None and self.measure_interest and self.modules[self.mid_control].t >= self.modules[self.mid_control].motor_babbling_n_iter:
+                self.goals.append(self.modules[self.mid_control].s)
+            else:
+                self.goals.append(None)
         self.t = self.t + 1
         
         for mid in self.modules.keys():
