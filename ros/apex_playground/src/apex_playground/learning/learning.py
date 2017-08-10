@@ -132,16 +132,14 @@ class Learning(object):
                                     normalize_interests=self.normalize_interests)
         else:
             raise NotImplementedError
-        
-    def restart_from_end_of_file(self, file_path):
-        data = self.get_data_from_file(file_path)
-        self.start()
-        self.agent.forward(data, len(data["chosen_modules"]))
     
-    def restart_from_file(self, file_path, iteration):
-        data = self.get_data_from_file(file_path)
+    def restart_from_files(self, experiment_name, trial, iteration, folder="/media/usb/"):
         self.start()
-        self.agent.forward(data, iteration)
+        folder_trial = os.path.join(folder, experiment_name, "condition_" + str(self.condition), "trial_" + str(trial))
+        for it in range(iteration):
+            filename = "iteration_" + str(it) + ".pickle"
+            data = self.get_data_from_file(file_path)
+            self.agent.forward_iteration(data)
 
     def plot(self):
         fig, ax = plt.subplots()
