@@ -180,6 +180,10 @@ class Supervisor(object):
             self.modules[mid].update_im(m, s[mid])
         for mid in self.modules.keys():
             self.interests_evolution[mid].append(interests[mid])
+        
+        self.goals.append(sg)
+        self.chosen_module.append(mid)
+
         self.t += 1
     
         
