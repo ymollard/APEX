@@ -43,7 +43,11 @@ class Controller(object):
                 if not rospy.is_shutdown():
                     self.execute_iteration(iteration, work.trial, work.num_iterations)
             finally:
-                self.work.update(work.task, work.trial, iteration)
+                abort = self.work.update(work.task, work.trial, iteration)
+                if abort:
+                    rospy.logwarn("Work manager requested abortion, closing...")
+                    return
+        rospy.loginfo("Work successfully terminated, closing...")
 
     def execute_iteration(self, iteration, trial, num_iterations):
         rospy.logwarn("Controller starts iteration {}/{} trial {}".format(iteration+1, num_iterations, trial))
