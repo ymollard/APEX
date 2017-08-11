@@ -16,7 +16,6 @@ class WorkManager(object):
         self.num_workers = 0
         self.outside_ros = rospy.get_param('/use_sim_time', outside_ros)  # True if work manager <-> controller comm must use ZMQ
         self.file_experiment = join(self.rospack.get_path('apex_playground'), 'config', 'experiment.json')
-        self.disabled_workers = yaml.load(rospy.get_param('/experiment/disabled_workers', "[]"))
 
         with open(self.file_experiment) as f:
             experiment = self.check(json.load(f))
@@ -32,7 +31,8 @@ class WorkManager(object):
     def _cb_get_work(self, worker):
         with self.lock_experiment:
             experiment = rospy.get_param('/work')
-            if worker not in self.disabled_workers:
+            disabled_workers = rospy.get_param("/experiment/disabled_workers", [])
+            if worker not in disabled_workers:
                 for task in range(len(experiment)):
                     for trial in range(experiment[task]['num_trials']):
                         status = experiment[task]['progress'][trial]['status']
@@ -60,7 +60,8 @@ class WorkManager(object):
                                             num_iterations=experiment[task]['num_iterations'],
                                             task=task, trial=trial, work_available=True)
             else:
-                rospy.logwarn("Worker {} requested work but it is blacklisted".format(worker))
+                pass
+                #rospy.logwarn("Worker {} requested work but it is blacklisted".format(worker))
         return dict(work_available=False)
 
     def _cb_update_work(self, task, trial, worker, iteration):
