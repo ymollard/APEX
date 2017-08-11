@@ -86,7 +86,7 @@ class WorkManager(object):
                             else:
                                 pass  # This is a regular update
                                 rospy.loginfo("Regular update: iteration {}/{} from worker {}".format(iteration+1, experiment[task]['num_iterations'], worker))
-                   if inconsistent:
+                    if inconsistent:
                         rospy.logerr("Inconsistent data: Worker ID {} has returned task {} trial {} "
                                      "which is known {} by worker {}".format(worker, task, trial, known_status, known_worker))
                 else:

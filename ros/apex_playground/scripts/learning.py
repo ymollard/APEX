@@ -136,6 +136,7 @@ class LearningNode(object):
         into_past = request.iteration.data < self.learning.get_iterations()
         if ready:
             if into_past:
+                pass
                 #if self.main_experiment:
                 #    self.learning.save(experiment_name, self.trial)
                 #self.main_experiment = False
