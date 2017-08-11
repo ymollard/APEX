@@ -64,6 +64,7 @@ class WorkManager(object):
         return dict(work_available=False)
 
     def _cb_update_work(self, task, trial, worker, iteration):
+        inconsistent = True
         with self.lock_experiment:
             experiment = rospy.get_param('/work')
             if task > len(experiment) - 1:
@@ -72,22 +73,27 @@ class WorkManager(object):
                 known_status = experiment[task]['progress'][trial]['status']
                 known_worker = experiment[task]['progress'][trial]['worker']
                 if self.num_workers > 0:
-                    if known_status != 'taken' or known_worker != worker and known_worker >= 0:
+                    if known_worker == worker or known_worker < 0:
+                        if known_status == 'aborted':
+                            rospy.logerr("Received aborting requested, stopping task of worker {}".format(worker))
+                            return dict(abort=True)
+                        elif known_status == 'taken':
+                            inconsistent = False
+                            experiment[task]['progress'][trial]['iteration'] = iteration
+                            if self.is_completed(task, trial, experiment):
+                                experiment[task]['progress'][trial]['status'] = 'complete'
+                                rospy.loginfo("{} trial {} completed by worker {}".format(experiment[task]['method'], trial, worker))
+                            else:
+                                pass  # This is a regular update
+                                rospy.loginfo("Regular update: iteration {}/{} from worker {}".format(iteration+1, experiment[task]['num_iterations'], worker))
+                   if inconsistent:
                         rospy.logerr("Inconsistent data: Worker ID {} has returned task {} trial {} "
                                      "which is known {} by worker {}".format(worker, task, trial, known_status, known_worker))
-                    else:
-                        experiment[task]['progress'][trial]['iteration'] = iteration
-                        if self.is_completed(task, trial, experiment):
-                            experiment[task]['progress'][trial]['status'] = 'complete'
-                            rospy.logwarn("{} trial {} completed by worker {}".format(experiment[task]['method'], trial, worker))
-                        else:
-                            pass  # This is a regular update
-                            rospy.loginfo("Regular update: iteration {}/{} from worker {}".format(iteration+1, experiment[task]['num_iterations'], worker))
                 else:
                     rospy.logerr("There is no known worker, we didn't expect that work update")
         rospy.set_param('/work', experiment)
         self.save_experiment()
-        return dict()
+        return dict(abort=False)
 
     def _cb_add_work(self, request):
         with self.lock_experiment:
