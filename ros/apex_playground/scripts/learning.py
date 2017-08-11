@@ -38,7 +38,6 @@ class LearningNode(object):
         # self.stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         # self.source_file = join(self.dir, self.source_name + '.pickle')
         self.main_experiment = True
-        self.experiment_name = rospy.get_param('/experiment/name', 'apex')
         self.condition = ""
         self.trial = ""
 
@@ -63,19 +62,15 @@ class LearningNode(object):
             rospy.wait_for_service(service)
         self.get_state = rospy.ServiceProxy(self.service_name_get_perception, GetSensorialState)
 
-    def update_learner(self):
+    def produce_init_learner(self):
         condition = rospy.get_param('experiment/current/method')
         trial = rospy.get_param('experiment/current/trial')
         iteration = rospy.get_param('experiment/current/iteration')
+        experiment_name = rospy.get_param('/experiment/name')
 
         if condition != self.condition or trial != self.trial:
             with self.lock_iteration:
-                if self.trial != '' and self.condition != '':                
-                    rospy.logwarn("Learner closes and saves condition {} trial {}...".format(self.condition, self.trial+1))
-                    self.learning.save(self.experiment_name, self.trial)
-
                 rospy.logwarn("Learner opens condition {} trial {}...".format(condition, trial+1))
-                self.experiment_name = rospy.get_param('/experiment/name', 'apex')
 
                 self.learning = Learning(self.translator.config,
                                          condition=condition,
@@ -86,10 +81,10 @@ class LearningNode(object):
                                          normalize_interests=self.params["normalize_interests"])
 
                 if iteration > 0:
-                    rospy.loginfo("Learning node restarts {} from iteration {} trial {}".format(self.experiment_name, iteration, trial))
-                    self.learning.restart_from_files(self.experiment_name, trial, iteration)
+                    rospy.loginfo("Learning node restarts {} from iteration {} trial {}".format(experiment_name, iteration, trial))
+                    self.learning.restart_from_files(experiment_name, trial, iteration)
                 else:
-                    rospy.loginfo("Learning node starts {} from scratch trial {}".format(self.experiment_name, trial))
+                    rospy.loginfo("Learning node starts {} from scratch trial {}".format(experiment_name, trial))
                     self.learning.start()
 
             rospy.loginfo("Learner loaded with condition {}!".format(condition))
@@ -141,10 +136,10 @@ class LearningNode(object):
         into_past = request.iteration.data < self.learning.get_iterations()
         if ready:
             if into_past:
-                if self.main_experiment:
-                    self.learning.save(self.experiment_name, self.trial)
-                self.main_experiment = False
-                rospy.loginfo("Saving file before time travel")
+                #if self.main_experiment:
+                #    self.learning.save(experiment_name, self.trial)
+                #self.main_experiment = False
+                #rospy.loginfo("Saving file before time travel")
             else:
                 self.main_experiment = True
         return SetIterationResponse()
@@ -187,17 +182,18 @@ class LearningNode(object):
 
         if set_iteration > -1:
             rospy.logwarn("Applying time travel to iteration {}".format(set_iteration))
-            #self.learning.restart_from_files(self.experiment_name, set_iteration)
+            #self.learning.restart_from_files(experiment_name, set_iteration)
 
         # And savethe current iteration
-        self.learning.save(self.experiment_name, self.trial)
+        experiment_name = rospy.get_param('/experiment/name')
+        self.learning.save(experiment_name, self.trial)
 
         return PerceiveResponse()
 
     def cb_produce(self, request):
         with self.lock_iteration:
             # Check if we need a new learner
-            self.update_learner()
+            self.produce_init_learner()
 
             focus = copy(self.focus)
             demonstrate = copy(self.demonstrate)
