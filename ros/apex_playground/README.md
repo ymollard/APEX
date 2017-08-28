@@ -56,8 +56,38 @@ roslaunch apex_playground start_hw.launch name:=unique_experiment_name
 ```
 Learning data are stored on the USB sticks or hard drives connected to each torso.
 
+## Manual ON/OFF
+When powered, all torso robots try to contact the rosmaster, if any they start the robots in starting position. Then they try to get job from the work manager. If job exits they start working, otherwise they loop.
+
+To stop and later on restart this infinite process, ssh to the robot you want to control and run:
+```
+sudo systemctl stop apex
+sudo systemctl start apex
+```
+
 ## Troubleshooting
+### Read the systemd logs from remote
 Connect in SSH to the faulty raspberry pi. The command hereunder will guide you to catch the reason of failure: 
-`sudo journalctl -u apex --n 50`
+`sudo journalctl -u apex -n 50`
 
 A working Torso robot must loop on `Controller fully started!` till it gets work. A working Ergo Jr robot must say it started robot servoing (and moving joysticks should work).
+
+### Debug vision issues
+Visual tracking of the ball and arena have hardcoded threshold. Depending on the color of your 3D printed material or the ambiant light these values must be updated.
+Enable debugging the vision of pateform N by setting ROS parameter `/apex_N/environment/debug` to `true`, then use `draw_image.py` to display it. For instance, for platform 1:
+```
+rosparam set /apex_1/environment/debug false
+python APEX/scripts/other/draw_image.py /apex_1/environment/image
+```
+The visualization should clearly show the detected border of the arena (default: approx. sky blue) as well as the detected border of the ball (default: approx. yellow). If borders are invisible or too broad, please adjust lower and upper boundaries of the `hue, saturation, value`-formatted color [for the ball](https://github.com/ymollard/APEX/blob/master/ros/apex_playground/config/environment.json#L5-L6), and [for the arena](https://github.com/ymollard/APEX/blob/master/ros/apex_playground/config/environment.json#L9-L10). Actual color of the object to detect must be withing the boundaries.
+
+Note : to avoid OpenCV > ROS > OpenCV conversion and save CPU, images are not sent through the standard ROS format `sensor_msgs/Image` but OpenCV instead (numpy).
+
+### Debug Poppy robot hardware issues
+If root has a malfunction, systemd logs will report such errors:
+```
+Aug 28 17:05:12 apex-1-torso nohup[396]: Init fail:
+No suitable port found for ids [33, 34, 35, 36, 37, 41, 42, 43, 44, 51, 52, 53, 54].
+These ids are missing [53, 54] !
+```
+This error reports that motors 53 and 54 are unreachable, and [this schema](https://www.flickr.com/photos/poppy-project/26470272513/) shows they are the last two end motors of right arm. Most probably the motors are disconnected or their ID is incorrect and must be corrected with `poppy-configure`. Fix the hardware issue and reboot.
