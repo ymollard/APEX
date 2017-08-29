@@ -70,6 +70,7 @@ add_service_files(
   ExecuteTorsoTrajectory.srv
   Perceive.srv
   Record.srv
+  RecordScene.srv
   SetTorsoCompliant.srv
   SetFocus.srv
   SetIteration.srv

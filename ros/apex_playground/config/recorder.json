@@ -1,0 +1,12 @@
+{
+  "cameras":
+    [
+      {
+        "name": "scene",
+        "device" : 0,
+        "resolution" : [640, 360]
+      }
+    ],
+  "rate": 15,
+  "duration": 5
+}

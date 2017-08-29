@@ -1,0 +1,9 @@
+# Start recording the scene
+
+# Those are used for file path
+string method
+uint32 task
+uint32 trial
+uint32 iteration
+---
+
