@@ -3,16 +3,20 @@
 import rospy
 import argparse
 import sys
+from apex_playground.srv import AddWork, AddWorkRequest
 
 rospy.init_node('stop_worker')
 
 parser = argparse.ArgumentParser(description="Abort the current task being run by the worker")
 parser.add_argument("--blacklist", action="store_true", help="Abort but also blacklist the worker")
-parser.add_argument("--worker", type=int, help="ID of the worker to be stopped, among [1, 6]")
+parser.add_argument("--redistribute", action="store_true", help="Create a new task to redistribute the aborted trial on a different worker, if any")
+parser.add_argument("--worker", required=True, type=int, help="ID of the worker to be stopped")
 args = parser.parse_args()
 
-if args.worker not in range(1, 7):
-    raise ValueError("Please provide a worker ID among [1, 6]")
+worker_known = rospy.get_param('/apex_{}'.format(args.worker), None) is not None
+
+if not worker_known:
+    rospy.logerr("Worker {} is not currently active".format(args.worker))
 
 if args.blacklist:
     disabled_workers = rospy.get_param("/experiment/disabled_workers", [])
@@ -34,3 +38,15 @@ for task in range(len(experiment)):
                 experiment[task]['progress'][trial]['status'] = 'aborted'
                 rospy.set_param("/work", experiment)
                 rospy.loginfo("Sucessfully requested abortion of the current task of worker {}".format(args.worker))
+
+                if args.redistribute:
+                    num_iterations = experiment[task]['num_iterations']
+                    method = experiment[task]['method']
+                    
+                    rospy.wait_for_service('/work/add')
+                    add_work = rospy.ServiceProxy('/work/add', AddWork)
+                    result = add_work(AddWorkRequest(method=method, num_iterations=num_iterations, num_trials=1))
+                    if result.task > 0:
+                        rospy.loginfo("Sucessfully redistributed 1 trial of {} {} iterations as task {}".format(method, num_iterations, result.task))
+            else:
+                rospy.logwarn("The current work of worker {} is in '{}' status and can't be aborted".format(args.worker, status))
