@@ -77,7 +77,7 @@ Visual tracking of the ball and arena have hardcoded threshold. Depending on the
 Enable debugging the vision of pateform N by setting ROS parameter `/apex_N/environment/debug` to `true`, then use `draw_image.py` to display it. For instance, for platform 1:
 ```
 rosparam set /apex_1/environment/debug false
-python APEX/scripts/other/draw_image.py /apex_1/environment/image
+rosrun apex_playground draw_image.py /apex_1/environment/image
 ```
 The visualization should clearly show the detected border of the arena (default: approx. sky blue) as well as the detected border of the ball (default: approx. yellow). If borders are invisible or too broad, please adjust lower and upper boundaries of the `hue, saturation, value`-formatted color [for the ball](https://github.com/ymollard/APEX/blob/master/ros/apex_playground/config/environment.json#L5-L6), and [for the arena](https://github.com/ymollard/APEX/blob/master/ros/apex_playground/config/environment.json#L9-L10). Actual color of the object to detect must be withing the boundaries.
 
