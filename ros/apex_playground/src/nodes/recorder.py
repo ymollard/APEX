@@ -100,16 +100,16 @@ class CameraRecorder(object):
                                                int(self.camera.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)))
 
             self.read()  # First frame is longer to acquire
-            ## Estimate max fps
-            #t0 = rospy.Time.now()
-            #for frame in range(10):
-            #    self.read()
-            #duration = rospy.Time.now() - t0
-            #max_fps = int(10./duration.to_sec())
-            #fps = min(max_fps, self.rate_hz)
-            #self.camera.set(cv2.cv.CV_CAP_PROP_FPS, fps)
-
-            rospy.logwarn("Opening camera size {} {}fps".format(self.writer_params['frameSize'], self.writer_params['fps']))
+            # Estimate max fps
+            t0 = rospy.Time.now()
+            for frame in range(30):
+                self.read()
+            duration = rospy.Time.now() - t0
+            max_fps = int(30./duration.to_sec())
+            fps = min(max_fps, 24)
+            # self.camera.set(cv2.cv.CV_CAP_PROP_FPS, fps)
+            self.writer_params['fps'] = fps
+            rospy.logwarn("Opening camera size {} {}fps".format(self.writer_params['frameSize'], fps))
 
     def close(self):
         # cleanup the camera and close any open windows
