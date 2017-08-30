@@ -3,7 +3,7 @@
 from apex_playground.srv import RecordScene, RecordSceneResponse
 from rospkg import RosPack
 from os.path import join
-from threading import RLock
+from threading import RLock, Thread
 import json
 import cv2
 import os
@@ -11,11 +11,13 @@ import rospy
 
 
 class CameraRecorder(object):
-    def __init__(self, parameters, rate):
+    def __init__(self, parameters, duration, rate):
         self.name = parameters['name']
+        self.duration = duration
         self.params = parameters
         self.camera = None
         self.rate_hz = rate
+        self.rate = rospy.Rate(self.rate_hz)
         self.codec, self.extension = "FMP4", ".avi"
         # self.codec, self.extension = "X264", ".mp4"  # Old ffmpeg versions complain
         self.writer_params = {'filename': '', 'fourcc': cv2.cv.CV_FOURCC(*self.codec),
@@ -30,30 +32,46 @@ class CameraRecorder(object):
         return success, image
 
     def record(self, experiment_name, task, condition, trial, iteration, folder="/media/usb/"):
-        if self.camera.isOpened():
-            self.read()  # Waste a frame
-            folder_trial = os.path.join(folder, experiment_name, "task_" + str(task), "condition_" + str(condition), "trial_" + str(trial), self.name)
+        # Async record
+        # TODO Action server
+        thread = Thread(target=self._blocking_record, args=[experiment_name, task, condition, trial, iteration, folder])
+        thread.daemon = True
+        thread.start()
 
-            if not os.path.isdir(folder_trial):
-                os.makedirs(folder_trial)
+    def _blocking_record(self, experiment_name, task, condition, trial, iteration, folder):
+        with self.lock:
+            if self.camera is not None and self.camera.isOpened():
+                self.read()  # Waste a frame
+                folder_trial = os.path.join(folder, experiment_name, "task_" + str(task), "condition_" + str(condition), "trial_" + str(trial), self.name)
 
-            self.writer_params['filename'] = os.path.join(folder_trial, "iteration_" + str(iteration) + self.extension)
-            self.writer = cv2.VideoWriter(**self.writer_params)
-            rospy.loginfo("Recording {}".format(self.writer_params['filename']))
-            return True
-        return False
+                if not os.path.isdir(folder_trial):
+                    os.makedirs(folder_trial)
 
-    def write(self):
+                self.writer_params['filename'] = os.path.join(folder_trial, "iteration_" + str(iteration) + self.extension)
+                self.writer = cv2.VideoWriter(**self.writer_params)
+                rospy.loginfo("Recording camera '{}'...".format(self.name))
+
+            t0 = rospy.Time.now()
+            try:
+                while not rospy.is_shutdown():
+                    now = rospy.Time.now()
+                    if now < t0 + rospy.Duration(self.duration):
+                        self._write()
+                        self.rate.sleep()
+                    else:
+                        rospy.loginfo("Recorded camera '{}' in {}".format(self.name, self.writer_params['filename']))
+                        break
+            finally:
+                if self.writer is not None:
+                    self.writer.release()
+                    self.writer = None
+
+    def _write(self):
         success, image = self.read()
         if success:
             self.writer.write(image)
             return True
         return False
-
-    def save(self):
-        if self.writer is not None:
-            self.writer.release()
-            self.writer = None
 
     def draw(self, frame):
         #rgbs = cv2.split(frame)
@@ -108,12 +126,10 @@ class Recorder(object):
         self.cameras = []
 
         for camera in self.params['cameras']:
-            self.cameras.append(CameraRecorder(camera, self.params['rate']))
+            self.cameras.append(CameraRecorder(camera, self.params['duration'], self.params['rate']))
 
         for camera in self.cameras:
             camera.open()
-
-        self.rate = rospy.Rate(self.params["rate"])
 
     def run(self):
         rospy.Service('recorder/record', RecordScene, self.cb_record)
@@ -126,27 +142,11 @@ class Recorder(object):
     def cb_record(self, request):
         debug = rospy.get_param('environment/debug', False)
         experiment_name = rospy.get_param('/experiment/name')
-        t0 = rospy.Time.now()
 
         while not rospy.is_shutdown():
             for camera in self.cameras:
-                success = camera.record(experiment_name, request.task, request.method, request.trial, request.iteration)
-                if success:
-                    try:
-                        while not rospy.is_shutdown():
-                            now = rospy.Time.now()
-                            if now < t0 + rospy.Duration(self.params['duration']):
-                                camera.write()
-                                self.rate.sleep()
-                            else:
-                                break
-                    finally:
-                        camera.save()
-                    rospy.loginfo("Recorder successfully saved camera {}".format(camera.name))
-                else:
-                    rospy.logerr("Cannot record camera")
-                    return RecordSceneResponse(recording_success=False)
-            return RecordSceneResponse(recording_success=True, recording_duration=self.params['duration'])
+                camera.record(experiment_name, request.task, request.method, request.trial, request.iteration)
+            return RecordSceneResponse(recording_duration=self.params['duration'])
 
 
         #if debug:
