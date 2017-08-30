@@ -3,7 +3,7 @@ import rospy
 import json
 from os.path import join
 from rospkg import RosPack
-from apex_playground.controller import Perception, Learning, Torso, Ergo, WorkManager
+from apex_playground.controller import Perception, Learning, Torso, Ergo, WorkManager, Recorder
 from trajectory_msgs.msg import JointTrajectory
 from re import search
 
@@ -25,6 +25,7 @@ class Controller(object):
         self.ergo = Ergo()
         self.learning = Learning()
         self.perception = Perception()
+        self.recorder = Recorder()
         rospy.loginfo('Controller fully started!')
 
     def run(self):
@@ -41,7 +42,7 @@ class Controller(object):
             try:
                 rospy.set_param('experiment/current/iteration', iteration)
                 if not rospy.is_shutdown():
-                    self.execute_iteration(iteration, work.trial, work.num_iterations)
+                    self.execute_iteration(work.task, work.method, iteration, work.trial, work.num_iterations)
             finally:
                 abort = self.work.update(work.task, work.trial, iteration).abort
                 if abort:
@@ -49,16 +50,19 @@ class Controller(object):
                     return
         rospy.loginfo("Work successfully terminated, closing...")
 
-    def execute_iteration(self, iteration, trial, num_iterations):
-        rospy.logwarn("Controller starts iteration {}/{} trial {}".format(iteration+1, num_iterations, trial))
+    def execute_iteration(self, task, method, iteration, trial, num_iterations):
+        rospy.logwarn("Controller starts iteration {} {}/{} trial {}".format(method, iteration+1, num_iterations, trial))
+
         if self.perception.help_pressed():
             rospy.sleep(1.5)  # Wait for the robot to fully stop
+            self.recorder.record(task, method, trial, iteration)
             recording = self.perception.record(human_demo=True, nb_points=self.params['nb_points'])
             self.torso.set_torque_max(self.torso_params['torques']['reset'])
             self.torso.reset(slow=True)
         else:
             trajectory = self.learning.produce().torso_trajectory
             self.torso.set_torque_max(self.torso_params['torques']['motion'])
+            self.recorder.record(task, method, trial, iteration)
             self.torso.execute_trajectory(trajectory)  # TODO: blocking, non-blocking, action server?
             recording = self.perception.record(human_demo=False, nb_points=self.params['nb_points'])
             recording.demo.torso_demonstration = JointTrajectory()
