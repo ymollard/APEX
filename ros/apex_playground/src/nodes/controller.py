@@ -33,6 +33,7 @@ class Controller(object):
         if not work.work_available:
             return
 
+        rospy.set_param('experiment/current/task', work.task)
         rospy.set_param('experiment/current/trial', work.trial)
         rospy.set_param('experiment/current/method', work.method)
 

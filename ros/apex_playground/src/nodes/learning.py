@@ -40,6 +40,7 @@ class LearningNode(object):
         self.main_experiment = True
         self.condition = ""
         self.trial = ""
+        self.task = ""
 
         # Serving these services
         self.service_name_perceive = "learning/perceive"
@@ -65,6 +66,7 @@ class LearningNode(object):
     def produce_init_learner(self):
         condition = rospy.get_param('experiment/current/method')
         trial = rospy.get_param('experiment/current/trial')
+        task = rospy.get_param('experiment/current/task')
         iteration = rospy.get_param('experiment/current/iteration')
         experiment_name = rospy.get_param('/experiment/name')
 
@@ -90,6 +92,7 @@ class LearningNode(object):
             rospy.loginfo("Learner loaded with condition {}!".format(condition))
             self.condition = condition
             self.trial = trial
+            self.task = task
 
     def cb_get_interests(self, request):
         interests_array = self.learning.get_normalized_interests_evolution()
@@ -138,7 +141,7 @@ class LearningNode(object):
             if into_past:
                 pass
                 #if self.main_experiment:
-                #    self.learning.save(experiment_name, self.trial)
+                #    self.learning.save(experiment_name, self.task, self.trial)
                 #self.main_experiment = False
                 #rospy.loginfo("Saving file before time travel")
             else:
@@ -185,9 +188,9 @@ class LearningNode(object):
             rospy.logwarn("Applying time travel to iteration {}".format(set_iteration))
             #self.learning.restart_from_files(experiment_name, set_iteration)
 
-        # And savethe current iteration
+        # And save the current iteration
         experiment_name = rospy.get_param('/experiment/name')
-        self.learning.save(experiment_name, self.trial)
+        self.learning.save(experiment_name, self.task, self.trial)
 
         return PerceiveResponse()
 
