@@ -6,4 +6,5 @@ uint32 task
 uint32 trial
 uint32 iteration
 ---
-
+float32 recording_duration
+bool recording_success
