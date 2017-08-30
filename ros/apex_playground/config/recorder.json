@@ -7,6 +7,6 @@
         "resolution" : [640, 360]
       }
     ],
-  "rate": 24,
+  "max_rate": 24,
   "duration": 5
 }

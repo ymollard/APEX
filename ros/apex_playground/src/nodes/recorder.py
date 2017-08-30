@@ -11,17 +11,16 @@ import rospy
 
 
 class CameraRecorder(object):
-    def __init__(self, parameters, duration, rate):
+    def __init__(self, parameters, duration, max_rate_hz):
         self.name = parameters['name']
         self.duration = duration
         self.params = parameters
         self.camera = None
-        self.rate_hz = rate
-        self.rate = rospy.Rate(self.rate_hz)
+        self.rate = rospy.Rate(max_rate_hz)
         self.codec, self.extension = "FMP4", ".avi"
         # self.codec, self.extension = "X264", ".mp4"  # Old ffmpeg versions complain
         self.writer_params = {'filename': '', 'fourcc': cv2.cv.CV_FOURCC(*self.codec),
-                              'fps': rate, 'isColor': True}
+                              'fps': max_rate_hz, 'isColor': True}
         self.writer = None
         self.lock = RLock()
 
@@ -106,7 +105,7 @@ class CameraRecorder(object):
                 self.read()
             duration = rospy.Time.now() - t0
             max_fps = int(30./duration.to_sec())
-            fps = min(max_fps, 24)
+            fps = min(max_fps, self.writer_params['fps'])
             # self.camera.set(cv2.cv.CV_CAP_PROP_FPS, fps)
             self.writer_params['fps'] = fps
             rospy.logwarn("Opening camera size {} {}fps".format(self.writer_params['frameSize'], fps))
@@ -126,7 +125,7 @@ class Recorder(object):
         self.cameras = []
 
         for camera in self.params['cameras']:
-            self.cameras.append(CameraRecorder(camera, self.params['duration'], self.params['rate']))
+            self.cameras.append(CameraRecorder(camera, self.params['duration'], self.params['max_rate']))
 
         for camera in self.cameras:
             camera.open()
