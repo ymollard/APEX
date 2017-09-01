@@ -93,6 +93,11 @@ sudo su -c "echo \"enable_uart=1\" >> /boot/config.txt"
 sudo su -c "echo \"dtoverlay=pi3-miniuart-bt\" >> /boot/config.txt" 
 # If serial issues: sudo raspi-config F6 Serial > Would you like a serial console = NO
 
+# Enable raspicam
+echo "start_x=1" | sudo tee --append /boot/config.txt
+echo "gpu_mem=128" | sudo tee --append /boot/config.txt
+echo "bcm2835-v4l2" | sudo tee -a /etc/modules
+
 # APEX playground files and deps
 sudo apt-get install python-opencv python-pyaudio -y
 sudo pip install inputs flask flask_cors explauto
