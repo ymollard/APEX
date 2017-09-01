@@ -13,9 +13,11 @@ import rospy
 
 
 class CameraBuffer(Thread):
-    def __init__(self, device, width, height):
+    def __init__(self, device, width, height, max_rate):
         super(CameraBuffer, self).__init__()
         self.setDaemon(True)
+        self._rate = rospy.Rate(max_rate)
+        self._error = False
         self._device = device
         self._width = width
         self._height = height
@@ -26,13 +28,16 @@ class CameraBuffer(Thread):
     def frame(self):
         return self._image
 
-    def _read(self, max_attempts=999999):
-        if self._camera is None or not self._camera.isOpened():
-            if max_attempts > 0:
-                rospy.sleep(0.1)
-                self._open()
-                return self._read(max_attempts-1)
-            rospy.logerr("Reached maximum camera reconnection attempts, abandoning!")
+    def _read(self, max_attempts=600):
+        if not self._error:
+            if self._camera is None or not self._camera.isOpened():
+                if max_attempts > 0:
+                    rospy.sleep(0.1)
+                    self._open()
+                    return self._read(max_attempts-1)
+                rospy.logerr("Reached maximum camera reconnection attempts, abandoning!")
+                self._error = True
+            rospy.sleep(0.1)
             return False, None
 
         success, image = self._camera.read()
@@ -44,8 +49,8 @@ class CameraBuffer(Thread):
         self._camera.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, self._width)
         self.actual_reso = (int(self._camera.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)),
                             int(self._camera.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)))
-        self._read()  # First frame is longer to acquire
-        rospy.logwarn("Opening camera {} size {}".format(self._device, self.actual_reso))
+        self._camera.read()  # First frame is longer to acquire
+        rospy.logwarn("Opened camera {} size {}".format(self._device, self.actual_reso))
 
     def _close(self):
         # cleanup the camera and close any open windows
@@ -57,6 +62,7 @@ class CameraBuffer(Thread):
             success, image = self._read()
             if success:
                 self._image = image
+            self._rate.sleep()
         self._close()
 
 
@@ -88,7 +94,7 @@ class CameraRecorder(Thread):
 
         self.image_pub = rospy.Publisher('cameras/' + self.camera_name, Float32MultiArray, queue_size=1)
 
-        self.camera = CameraBuffer(self.params['device'], self.params['resolution'][0], self.params['resolution'][1])
+        self.camera = CameraBuffer(self.params['device'], self.params['resolution'][0], self.params['resolution'][1], rate_hz)
         self.camera.start()
 
     def run(self):
