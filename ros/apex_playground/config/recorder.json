@@ -5,6 +5,11 @@
         "name": "scene",
         "device" : 0,
         "resolution" : [640, 360]
+      },
+      {
+        "name": "head",
+        "device" : 1,
+        "resolution" : [600, 450]
       }
     ],
   "max_rate": 24,
