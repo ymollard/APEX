@@ -12,18 +12,66 @@ import os
 import rospy
 
 
+class CameraBuffer(Thread):
+    def __init__(self, device, width, height):
+        super(CameraBuffer, self).__init__()
+        self.setDaemon(True)
+        self._device = device
+        self._width = width
+        self._height = height
+        self._image = None
+        self._camera = None
+
+    @property
+    def frame(self):
+        return self._image
+
+    def _read(self, max_attempts=999999):
+        if self._camera is None or not self._camera.isOpened():
+            if max_attempts > 0:
+                rospy.sleep(0.1)
+                self._open()
+                return self._read(max_attempts-1)
+            rospy.logerr("Reached maximum camera reconnection attempts, abandoning!")
+            return False, None
+
+        success, image = self._camera.read()
+        return success, image
+
+    def _open(self):
+        self._camera = cv2.VideoCapture(self._device)
+        self._camera.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, self._height)
+        self._camera.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, self._width)
+        self.actual_reso = (int(self._camera.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)),
+                            int(self._camera.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)))
+        self._read()  # First frame is longer to acquire
+        rospy.logwarn("Opening camera {} size {}".format(self._device, self.actual_reso))
+
+    def _close(self):
+        # cleanup the camera and close any open windows
+        self._camera.release()
+
+    def run(self):
+        self._open()
+        while not rospy.is_shutdown():
+            success, image = self._read()
+            if success:
+                self._image = image
+        self._close()
+
+
 class CameraRecorder(Thread):
-    def __init__(self, parameters, duration, max_rate_hz):
+    def __init__(self, parameters, duration, rate_hz):
         super(CameraRecorder, self).__init__()
-        self.name = parameters['name']
+        self.setDaemon(True)
+        self.camera_name = parameters['name']
         self.duration = duration
         self.params = parameters
-        self.camera = None
-        self.rate = rospy.Rate(max_rate_hz)
+        self.rate = rospy.Rate(rate_hz)
         self.codec, self.extension = "FMP4", ".avi"
         # self.codec, self.extension = "X264", ".mp4"  # Old ffmpeg versions complain
         self.writer_params = {'filename': '', 'fourcc': cv2.cv.CV_FOURCC(*self.codec),
-                              'fps': max_rate_hz, 'isColor': True}
+                              'fps': rate_hz, 'isColor': True}
         self.writer = None
         self.lock = RLock()
         self.stamps_lock = RLock()
@@ -38,64 +86,54 @@ class CameraRecorder(Thread):
         self.iteration = ""
         self.folder = ""
 
-        self.image_pub = rospy.Publisher('cameras/' + self.name, Float32MultiArray, queue_size=1)
+        self.image_pub = rospy.Publisher('cameras/' + self.camera_name, Float32MultiArray, queue_size=1)
 
-    def _read(self):
-        if not self.camera or not self.camera.isOpened():
-            return False, None
-        success, image = self.camera.read()
-        return success, image
-
-    @property
-    def avg_fps(self):
-        with self.stamps_lock:
-            return len(self.stamps)/(self.stamps[-1] - self.stamps[0]) if len(self.stamps) > 1 else 0
+        self.camera = CameraBuffer(self.params['device'], self.params['resolution'][0], self.params['resolution'][1])
+        self.camera.start()
 
     def run(self):
         while not rospy.is_shutdown():
             debug = rospy.get_param('environment/debug', False)
 
-            if self.camera is None or not self.camera.isOpened():
-                self._open()
-
-            success, frame = self._read()
             now = rospy.Time.now()
 
-            if success:
-                with self.stamps_lock:
-                    self.stamps.append(now.to_sec())
+            with self.stamps_lock:
+                self.stamps.append(now.to_sec())
 
-                if debug:
-                    image = Float32MultiArray()
-                    for dim in range(len(frame.shape)):
-                        image.layout.dim.append(MultiArrayDimension(size=frame.shape[dim], label=str(frame.dtype)))
-                    length = reduce(int.__mul__, frame.shape)
-                    image.data = list(frame.reshape(length))
-                    self.image_pub.publish(image)
+            frame = self.camera.frame
 
-                if self.recording:
-                    if self.writer is None:
-                        folder_trial = os.path.join(self.folder, self.experiment_name, "task_" + str(self.task),
-                                                    "condition_" + str(self.condition), "trial_" + str(self.trial), self.name)
+            if debug:
+                image = Float32MultiArray()
+                for dim in range(len(frame.shape)):
+                    image.layout.dim.append(MultiArrayDimension(size=frame.shape[dim], label=str(frame.dtype)))
+                length = reduce(int.__mul__, frame.shape)
+                image.data = list(frame.reshape(length))
+                self.image_pub.publish(image)
 
-                        if not os.path.isdir(folder_trial):
-                            os.makedirs(folder_trial)
+            if self.recording:
+                if self.writer is None:
+                    folder_trial = os.path.join(self.folder, self.experiment_name, "task_" + str(self.task),
+                                                "condition_" + str(self.condition), "trial_" + str(self.trial), self.camera_name)
 
-                        self.writer_params['fps'] = int(self.avg_fps)
-                        self.writer_params['filename'] = os.path.join(folder_trial, "iteration_" + str(self.iteration) + self.extension)
-                        self.writer = cv2.VideoWriter(**self.writer_params)
-                        self.t0 = rospy.Time.now()
-                        rospy.loginfo("Recording camera '{}' at {}fps...".format(self.name, self.writer_params['fps']))
-                    elif now < self.t0 + rospy.Duration(self.duration):
-                        self.writer.write(frame)
-                    else:
-                        rospy.loginfo("Recorded camera '{}' in {}".format(self.name, self.writer_params['filename']))
-                        self.writer.release()
-                        self.recording = False
-                        self.writer = None
-        self._close()
+                    if not os.path.isdir(folder_trial):
+                        os.makedirs(folder_trial)
+
+                    self.writer_params['filename'] = os.path.join(folder_trial, "iteration_" + str(self.iteration) + self.extension)
+                    self.writer = cv2.VideoWriter(**self.writer_params)
+                    self.t0 = rospy.Time.now()
+                    rospy.loginfo("Recording camera '{}' at {}fps...".format(self.camera_name, self.writer_params['fps']))
+                elif now < self.t0 + rospy.Duration(self.duration):
+                    self.writer.write(frame)
+                else:
+                    rospy.loginfo("Recorded camera '{}' in {}".format(self.camera_name, self.writer_params['filename']))
+                    self.writer.release()
+                    self.recording = False
+                    self.writer = None
+            self.rate.sleep()
 
     def record(self, experiment_name, task, condition, trial, iteration, folder="/media/usb/"):
+        self.writer_params['frameSize'] = self.camera.actual_reso
+
         if not self.recording:
             self.experiment_name = experiment_name
             self.task = task
@@ -122,22 +160,6 @@ class CameraRecorder(Thread):
         cv2.imshow(self.params['name'], frame)
         cv2.waitKey(1)
 
-    def _open(self):
-        width, height = self.params['resolution']
-        self.camera = cv2.VideoCapture(self.params['device'])
-        self.camera.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, height)
-        self.camera.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, width)
-        self.writer_params['frameSize'] = (int(self.camera.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)),
-                                           int(self.camera.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)))
-
-        self._read()  # First frame is longer to acquire
-        rospy.logwarn("Opening camera {} size {}".format(self.name, self.writer_params['frameSize']))
-
-    def _close(self):
-        # cleanup the camera and close any open windows
-        self.camera.release()
-        cv2.destroyAllWindows()
-
 
 class Recorder(object):
     def __init__(self):
@@ -154,14 +176,14 @@ class Recorder(object):
     def run(self):
         rospy.Service('recorder/record', RecordScene, self.cb_record)
         rospy.spin()
+        cv2.destroyAllWindows()
 
     def cb_record(self, request):
-        experiment_name = rospy.get_param('/experiment/name')
+        experiment_name = rospy.get_param('/experiment/name', "experiment")
 
-        while not rospy.is_shutdown():
-            for camera in self.cameras:
-                camera.record(experiment_name, request.task, request.method, request.trial, request.iteration)
-            return RecordSceneResponse(recording_duration=self.params['duration'])
+        for camera in self.cameras:
+            camera.record(experiment_name, request.task, request.method, request.trial, request.iteration)
+        return RecordSceneResponse(recording_duration=self.params['duration'])
 
 if __name__ == '__main__':
     rospy.init_node('recorder')
