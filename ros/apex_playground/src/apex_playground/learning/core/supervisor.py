@@ -142,29 +142,24 @@ class Supervisor(object):
     def get_last_focus(self): return self.mid_to_space(self.mid_control) if self.mid_control else ""
     
     def save_iteration(self, i):
-        m = self.m
-        s = {}
         interests = {}
         for mid in self.modules.keys():
-            s[mid] = self.modules[mid].get_s(self.ms)
-            interests[mid] = self.interests_evolution[mid][i]
-        return {"m":m,
-                "s":s,
+            interests[mid] = np.float16(self.interests_evolution[mid][i])
+        return {"ms":np.array(self.ms, dtype=np.float16)[range(164) + range(304, 344)],
                 "chosen_module":self.chosen_modules[i],
                 "goal":self.goals[i],
                 "interests": interests}
 
     def forward_iteration(self, data_iteration):
-        m = data_iteration["m"]
-        s = data_iteration["s"]
+        ms = np.zeros(344)
+        ms[range(164) + range(304, 344)] = data_iteration["ms"]        
+        m = self.get_m(ms)
         mid = data_iteration["chosen_module"]
         sg = data_iteration["goal"]
         interests = data_iteration["interests"]
                 
-
-
         for mid in self.modules.keys():
-            smid = s[mid]
+            smid = self.modules[mid].get_s(ms)
             
             if mid == "mod4":
                 if min(abs(smid[0] - smid[-2]), 2 - abs(smid[0] - smid[-2])) > 0.02:
@@ -177,7 +172,7 @@ class Supervisor(object):
 
         if sg is not None:
             self.modules[mid].s = sg
-            self.modules[mid].update_im(m, s[mid])
+            self.modules[mid].update_im(m, self.modules[mid].get_s(ms))
         for mid in self.modules.keys():
             self.interests_evolution[mid].append(interests[mid])
         
