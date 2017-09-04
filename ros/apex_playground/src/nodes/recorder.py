@@ -108,7 +108,7 @@ class CameraRecorder(Thread):
 
             frame = self.camera.frame
 
-            if debug:
+            if debug and frame is not None:
                 image = Float32MultiArray()
                 for dim in range(len(frame.shape)):
                     image.layout.dim.append(MultiArrayDimension(size=frame.shape[dim], label=str(frame.dtype)))
@@ -117,7 +117,7 @@ class CameraRecorder(Thread):
                 self.image_pub.publish(image)
 
             if self.recording:
-                if self.writer is None:
+                if self.writer is None and frame is not None:
                     folder_trial = os.path.join(self.folder, self.experiment_name, "task_" + str(self.task),
                                                 "condition_" + str(self.condition), "trial_" + str(self.trial), self.camera_name)
 
@@ -128,9 +128,10 @@ class CameraRecorder(Thread):
                     self.writer = cv2.VideoWriter(**self.writer_params)
                     self.t0 = rospy.Time.now()
                     rospy.loginfo("Recording camera '{}' at {}fps...".format(self.camera_name, self.writer_params['fps']))
-                elif now < self.t0 + rospy.Duration(self.duration):
                     self.writer.write(frame)
-                else:
+                elif now < self.t0 + rospy.Duration(self.duration) and frame is not None:
+                    self.writer.write(frame)
+                elif self.writer is not None:
                     rospy.loginfo("Recorded camera '{}' in {}".format(self.camera_name, self.writer_params['filename']))
                     self.writer.release()
                     self.recording = False
