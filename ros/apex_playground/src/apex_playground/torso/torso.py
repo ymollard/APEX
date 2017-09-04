@@ -33,7 +33,7 @@ class Torso(object):
              "bust_y": 0,
              "bust_x": 0,
              "head_z": 0,
-             "head_y": -0,
+             "head_y": 8,
              "l_shoulder_y": 0,
              "l_shoulder_x": 0,
              "l_arm_z": 20,
