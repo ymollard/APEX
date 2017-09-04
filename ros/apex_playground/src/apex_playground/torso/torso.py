@@ -30,10 +30,10 @@ class Torso(object):
 
     def go_to_start(self, duration=5):
         d = {"abs_z": 0,
-             "bust_y": 0,
+             "bust_y": 34,
              "bust_x": 0,
              "head_z": 0,
-             "head_y": -0,
+             "head_y": 0,
              "l_shoulder_y": 0,
              "l_shoulder_x": 0,
              "l_arm_z": 20,
