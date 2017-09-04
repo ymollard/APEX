@@ -29,19 +29,21 @@ class CameraBuffer(Thread):
         return self._image
 
     def _read(self, max_attempts=600):
-        if not self._error:
-            if self._camera is None or not self._camera.isOpened():
+        got_image = False
+        if self._camera is not None and self._camera.isOpened():
+            got_image, image = self._camera.read()
+
+        if not got_image:
+            if not self._error:
                 if max_attempts > 0:
                     rospy.sleep(0.1)
                     self._open()
                     return self._read(max_attempts-1)
                 rospy.logerr("Reached maximum camera reconnection attempts, abandoning!")
                 self._error = True
-            rospy.sleep(0.1)
+                return False, None
             return False, None
-
-        success, image = self._camera.read()
-        return success, image
+        return True, image
 
     def _open(self):
         self._camera = cv2.VideoCapture(self._device)
@@ -195,4 +197,3 @@ class Recorder(object):
 if __name__ == '__main__':
     rospy.init_node('recorder')
     Recorder().run()
-
