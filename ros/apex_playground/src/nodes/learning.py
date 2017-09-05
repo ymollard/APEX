@@ -84,7 +84,7 @@ class LearningNode(object):
 
                 if iteration > 0:
                     rospy.loginfo("Learning node restarts {} from iteration {} trial {}".format(experiment_name, iteration, trial))
-                    self.learning.restart_from_files(experiment_name, trial, iteration)
+                    self.learning.restart_from_files(experiment_name, task, trial, iteration)
                 else:
                     rospy.loginfo("Learning node starts {} from scratch trial {}".format(experiment_name, trial))
                     self.learning.start()
