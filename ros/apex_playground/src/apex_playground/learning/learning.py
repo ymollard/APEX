@@ -133,9 +133,9 @@ class Learning(object):
         else:
             raise NotImplementedError
     
-    def restart_from_files(self, experiment_name, trial, iteration, folder="/media/usb/"):
+    def restart_from_files(self, experiment_name, task, trial, iteration, folder="/media/usb/"):
         self.start()
-        folder_trial = os.path.join(folder, experiment_name, "condition_" + str(self.condition), "trial_" + str(trial))
+        folder_trial = os.path.join(folder, experiment_name, "task_" + str(task), "condition_" + str(self.condition), "trial_" + str(trial))
         for it in range(iteration):
             filename = "iteration_" + str(it) + ".pickle"
             data = self.get_data_from_file(os.path.join(folder_trial, filename))
