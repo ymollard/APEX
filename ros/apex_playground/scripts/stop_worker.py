@@ -48,5 +48,3 @@ for task in range(len(experiment)):
                     result = add_work(AddWorkRequest(method=method, num_iterations=num_iterations, num_trials=1))
                     if result.task > 0:
                         rospy.loginfo("Sucessfully redistributed 1 trial of {} {} iterations as task {}".format(method, num_iterations, result.task))
-            else:
-                rospy.logwarn("The current work of worker {} is in '{}' status and can't be aborted".format(args.worker, status))
