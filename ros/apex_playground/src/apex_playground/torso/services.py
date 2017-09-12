@@ -16,12 +16,14 @@ class TorsoServices(object):
             self.set_compliant_srv[group]['proxy'] = rospy.ServiceProxy(name, SetCompliant)
 
         self.idle_srv = {}
+        self.demo_mode = rospy.get_param('demo_mode')
         for group in ['left_arm', 'right_arm', 'head']:
             self.idle_srv[group] = {}
             name = '{}/{}/set_idle_motion'.format(robot_name, group)
             self.idle_srv[group]['name'] = name
-            rospy.loginfo("{} is waiting for service {}...".format(robot_name, name))
-            rospy.wait_for_service(name)
+            if self.demo_mode:
+                rospy.loginfo("{} is waiting for service {}...".format(robot_name, name))
+                rospy.wait_for_service(name)
             self.idle_srv[group]['proxy'] = rospy.ServiceProxy(name, SetIdleMotion)
 
         self.execute_srv_name = '{}/execute'.format(robot_name)
@@ -59,10 +61,12 @@ class TorsoServices(object):
                                             duration=rospy.Duration(duration)))
 
     def start_idle_motion(self, group='head'):
-        self.idle_srv[group]['proxy'](SetIdleMotionRequest(command=SetIdleMotionRequest.COMMAND_START))
+        if self.demo_mode:
+            self.idle_srv[group]['proxy'](SetIdleMotionRequest(command=SetIdleMotionRequest.COMMAND_START))
 
     def stop_idle_motion(self, group='head'):
-        self.idle_srv[group]['proxy'](SetIdleMotionRequest(command=SetIdleMotionRequest.COMMAND_STOP))
+        if self.demo_mode:
+            self.idle_srv[group]['proxy'](SetIdleMotionRequest(command=SetIdleMotionRequest.COMMAND_STOP))
 
     def execute(self, motion, duration):
         """

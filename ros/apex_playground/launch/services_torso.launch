@@ -9,6 +9,7 @@
   <group ns="$(arg namespace)">
 
       <param name="demo_mode" value="$(arg demo_mode)" />
+      <param name="poppy_torso/start_idle_motions" value="$(arg demo_mode)"/>
 
       <include file="$(find poppy_torso_controllers)/launch/controllers.launch">
           <arg name="simulated" value="false"/>
