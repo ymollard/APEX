@@ -49,9 +49,8 @@ class CameraBuffer(Thread):
         self._camera = cv2.VideoCapture(self._device)
         self._camera.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, self._height)
         self._camera.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, self._width)
-        self.actual_reso = (int(self._camera.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)),
-                            int(self._camera.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)))
-        self._camera.read()  # First frame is longer to acquire
+        s, i = self._camera.read()  # First frame is longer to acquire
+        self.actual_reso = (i.shape[1], i.shape[0]) if s else (0, 0)
         rospy.logwarn("Opened camera {} size {}".format(self._device, self.actual_reso))
 
     def _close(self):
