@@ -24,6 +24,7 @@
       <!-- Simulation -->
       <node name="clock" pkg="apex_playground_sim" type="vrep_clock_publisher.py" output="$(arg output)" respawn="true"/>
       <node name="environment" pkg="apex_playground_sim" type="vrep_environment_publisher.py" output="$(arg output)" required="true"/>
+      <node name="recorder" pkg="apex_playground_sim" type="vrep_recorder.py" output="$(arg output)" respawn="true"/>
 
       <param name="perception/debug" value="$(arg debug)" />
       <param name="experiment/name" value="$(arg name)" />
