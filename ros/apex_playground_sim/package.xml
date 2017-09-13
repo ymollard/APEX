@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package>
+  <name>apex_playground_sim</name>
+  <version>0.0.0</version>
+  <description>Simulated version of the APEX experimental setups using Poppy robots</description>
+
+  <maintainer email="yoan.mollard@inria.fr">Yoan Mollard</maintainer>
+  <license>GPLv3</license>
+
+  <build_depend>apex_playground</build_depend> -->
+  <run_depend>apex_playground</run_depend> -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+  </export>
+</package>
