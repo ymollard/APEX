@@ -1,6 +1,7 @@
 # APEX_Playground package
 
-This directory is a ROS package. Documentation is poor yet. If you're looking for a simulation, please checkout [this repository](https://github.com/sebastien-forestier/NIPS2017/tree/apex_sim) instead.
+This directory is a ROS package aiming at using real Poppy robots for the APEX experiment.
+If you're looking for a simulation, please checkout [the simulation package](../apex_playground_sim).
 
 ## Setting up hardware: Quickstart
 The experimental setup assumes you have at least:
