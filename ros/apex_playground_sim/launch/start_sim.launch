@@ -11,7 +11,7 @@
   <arg name="environment_vrep_port" default="19997"/>
   <arg name="ui_port" default="5000"/>
 
-  <include file="$(find apex_playground)/launch/services_sim.launch" >
+  <include file="$(find apex_playground_sim)/launch/services_sim.launch" >
     <arg name="torso_vrep_port" value="$(arg torso_vrep_port)"/>
     <arg name="ergo_vrep_port" value="$(arg ergo_vrep_port)"/>
     <arg name="clock_vrep_port" value="$(arg clock_vrep_port)"/>

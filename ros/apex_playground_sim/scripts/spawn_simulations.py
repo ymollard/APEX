@@ -65,16 +65,20 @@ class SimulationSpawner(object):
                 with open(self.vrep_con_path, 'w') as f:
                     f.write(get_vrep_api_file(vrep_clock_port, vrep_env_port, vrep_torso_port, vrep_ergo_port))
 
-                scene = join(self.rospack.get_path('apex_playground'), 'simulation', 'apex_playground.ttt')
+                scene = join(self.rospack.get_path('apex_playground_sim'), 'simulation', 'models', 'apex_playground.ttt')
                 process_str = '{} {}{}'.format(self.vrep_bin_path, '-h ' if self.headless else '', scene)
                 print(colored(process_str, 'yellow'))
+
+                if not isfile(scene):
+                    raise IOError("Scene file {} does not exist".format(scene))
+
                 process = Popen(process_str.split(' '))
                 self.children.append(process)
 
                 time.sleep(5)  # Let time to V-Rep to load the scene
 
                 name = 'instance_{}'.format(n)
-                process_str = 'roslaunch apex_playground start_sim.launch namespace:={} ' \
+                process_str = 'roslaunch apex_playground_sim start_sim.launch namespace:={} ' \
                               'start_manager:=false ' \
                               'clock_vrep_port:={} environment_vrep_port:={} torso_vrep_port:={} ' \
                               'ergo_vrep_port:={} ui_port:={}'.format(name, vrep_clock_port,
