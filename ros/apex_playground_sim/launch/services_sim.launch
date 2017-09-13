@@ -7,6 +7,7 @@
   <arg name="name" default="experiment"/> <!-- Name of the experiment -->
   <arg name="namespace" default="apex"/> <!-- Isolate the data into a namespace -->
   <arg name="ui_port" default="5000"/> <!-- Binding port of the Web user interface -->
+  <arg name="demo_mode" default="false"/> <!-- Whether demo mode is activated, e.g. nice motions for vulgarisation and aesthetics -->
 
   <arg name="torso_vrep_port" default="19999"/>
   <arg name="ergo_vrep_port" default="19998"/>
@@ -17,21 +18,23 @@
       <param name="ui_port" value="$(arg ui_port)" />
       <param name="vrep/clock_port" value="$(arg clock_vrep_port)" />
       <param name="vrep/environment_port" value="$(arg environment_vrep_port)" />
+      <param name="demo_mode" value="$(arg demo_mode)" />
+      <param name="poppy_torso/start_idle_motions" value="$(arg demo_mode)"/>
 
       <!-- Simulation -->
-      <node name="clock" pkg="apex_playground" type="vrep_clock_publisher.py" output="$(arg output)" respawn="true"/>
-      <node name="environment" pkg="apex_playground" type="vrep_environment_publisher.py" output="$(arg output)" required="true"/>
-      <node name="ergo" pkg="apex_playground" type="ergo.py" output="$(arg output)" respawn="true"/>
+      <node name="clock" pkg="apex_playground_sim" type="vrep_clock_publisher.py" output="$(arg output)" respawn="true"/>
+      <node name="environment" pkg="apex_playground_sim" type="vrep_environment_publisher.py" output="$(arg output)" required="true"/>
 
       <param name="perception/debug" value="$(arg debug)" />
       <param name="experiment/name" value="$(arg name)" />
 
+      <node name="ergo" pkg="apex_playground" type="ergo.py" output="$(arg output)" respawn="true"/>
       <node name="perception" pkg="apex_playground" type="perception.py" output="$(arg output)"/>
       <node name="torso" pkg="apex_playground" type="torso.py" output="$(arg output)" respawn="true"/>
       <node name="learning" pkg="apex_playground" type="learning.py" output="$(arg output)" required="true"/>
       <node name="user" pkg="apex_playground" type="user.py" output="$(arg output)" respawn="true"/>
 
-      <include file="$(find apex_playground)/launch/controllers.launch">
+      <include file="$(find apex_playground_sim)/launch/controllers.launch">
           <arg name="torso_vrep_port" value="$(arg torso_vrep_port)"/>
           <arg name="ergo_vrep_port" value="$(arg ergo_vrep_port)"/>
           <arg name="simulated" value="true"/>
