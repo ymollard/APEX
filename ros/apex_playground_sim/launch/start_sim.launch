@@ -2,7 +2,8 @@
 <launch>
   <arg name="output" default="screen"/> <!-- Set output="log" to mute the screen output -->
   <arg name="debug" default="True"/> <!-- Enable debugging information and pictures -->
-  <arg name="namespace" default="apex"/> <!-- Unique name of the experiment -->
+  <arg name="namespace" default="apex"/> <!-- Root namespace of ROS services/params and result directory -->
+  <arg name="name" default="experiment"/> <!-- Unique name of the experiment -->
   <arg name="start_manager" default="true"/>  <!-- True if we must also start a work manager listening on ROS or on port 33589 -->
 
   <arg name="torso_vrep_port" default="19999"/>
@@ -10,6 +11,8 @@
   <arg name="clock_vrep_port" default="29997"/>
   <arg name="environment_vrep_port" default="19997"/>
   <arg name="ui_port" default="5000"/>
+
+  <param name="/experiment/name" value="$(arg name)" />
 
   <include file="$(find apex_playground_sim)/launch/services_sim.launch" >
     <arg name="torso_vrep_port" value="$(arg torso_vrep_port)"/>
