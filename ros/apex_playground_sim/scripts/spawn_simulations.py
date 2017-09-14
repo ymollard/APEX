@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import time
-from signal import SIGINT
+from signal import SIGINT, signal
 from rospkg import RosPack
 from subprocess import Popen
 from os.path import isfile, join, realpath
@@ -20,7 +20,6 @@ portIndex{0}_syncSimTrigger   = true
     remote_api_str = "\n".join([open_port(port_id + 1, port) for port_id, port in enumerate(ports)])
     return remote_api_str
 
-
 class SimulationSpawner(object):
     """
     This script spawns the request number of simulated APEX experiments in different V-REP instances
@@ -38,12 +37,18 @@ class SimulationSpawner(object):
         self.initial_vrep_port = 46400
         self.headless = headless
         self.children = []
+        self.running = False
         self.work_manager_started = False
 
+    def signal_handler(self, signal, frame):
+        self.running = False
+
     def run(self):
+        self.running = True
         copy2(self.vrep_con_path, self.vrep_con_path_bak)
         try:
             for n in range(self.num_instances):
+                if not self.running: return
                 print(colored("### Launching simulated instance {}/{}".format(n+1, self.num_instances), 'blue'))
                 ros_master_port = self.initial_ros_master_port + n
                 ros_master_uri = 'http://localhost:{}'.format(ros_master_port)
@@ -77,7 +82,7 @@ class SimulationSpawner(object):
 
                 time.sleep(5)  # Let time to V-Rep to load the scene
 
-                name = 'instance_{}'.format(n)
+                name = 'apex_{}'.format(n)
                 process_str = 'roslaunch apex_playground_sim start_sim.launch namespace:={} ' \
                               'start_manager:=false ' \
                               'clock_vrep_port:={} environment_vrep_port:={} torso_vrep_port:={} ' \
@@ -89,7 +94,7 @@ class SimulationSpawner(object):
                 process = Popen(process_str.split(' '), env=environ)
                 self.children.append(process)
 
-                if not self.work_manager_started:
+                if self.running and not self.work_manager_started:
                     # Start the Work Manager
                     print(colored("### Launching the work manager on ROS master {}".format(environ['ROS_MASTER_URI']), 'blue'))
                     process_str = 'rosrun apex_playground work_manager.py --comm-outside-ros'
@@ -98,7 +103,7 @@ class SimulationSpawner(object):
                     self.children.append(process)
                     self.work_manager_started = True
 
-            while True:
+            while self.running:
                 #terminated_processes = [p for p in self.children if p.poll() is not None]
                 #if len(terminated_processes) >= self.num_instances/2:
                 #    break
@@ -146,4 +151,6 @@ if __name__ == '__main__':
     if args.number not in range(1, 100):
         raise ValueError("Set argument -n as the number of instances to start")
 
-    SimulationSpawner(args.number, vrep_bin_path, vrep_con_path, args.headless).run()
+    s = SimulationSpawner(args.number, vrep_bin_path, vrep_con_path, args.headless)
+    signal(SIGINT, s.signal_handler)
+    s.run()
