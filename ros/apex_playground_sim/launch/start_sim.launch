@@ -27,7 +27,7 @@
   </include>
 
   <group ns="$(arg namespace)">
-    <node if="$(arg start_manager)" name="manager" pkg="apex_playground" type="task_manager.py" output="$(arg output)" required="true"/>
+    <node if="$(arg start_manager)" name="manager" pkg="apex_playground" type="work_manager.py" output="$(arg output)" required="true"/>
     <node name="controller" pkg="apex_playground" type="controller.py" output="$(arg output)" required="true"/>
   </group>
 </launch>
