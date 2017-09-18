@@ -13,6 +13,7 @@
   <arg name="ui_port" default="5000"/>
 
   <param name="/experiment/name" value="$(arg name)" />
+  <param name="/experiment/results_path" value="$(find apex_playground_sim)/results/" />
 
   <include file="$(find apex_playground_sim)/launch/services_sim.launch" >
     <arg name="torso_vrep_port" value="$(arg torso_vrep_port)"/>

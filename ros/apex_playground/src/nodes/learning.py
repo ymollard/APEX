@@ -141,7 +141,7 @@ class LearningNode(object):
             if into_past:
                 pass
                 #if self.main_experiment:
-                #    self.learning.save(experiment_name, self.task, self.trial)
+                #    self.learning.save(experiment_name, self.task, self.trial, result_path)
                 #self.main_experiment = False
                 #rospy.loginfo("Saving file before time travel")
             else:
@@ -190,7 +190,8 @@ class LearningNode(object):
 
         # And save the current iteration
         experiment_name = rospy.get_param('/experiment/name')
-        self.learning.save(experiment_name, self.task, self.trial)
+        path = rospy.get_param('/experiment/results_path', '/media/usb/')
+        self.learning.save(experiment_name, self.task, self.trial, path)
 
         return PerceiveResponse()
 
