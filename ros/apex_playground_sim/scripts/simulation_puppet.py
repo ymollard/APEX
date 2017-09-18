@@ -50,9 +50,9 @@ class TorsoPuppet(object):
             rospy.sleep(0.5)
 
     def start(self):
-        rospy.set_param('demo_mode', False)
         self.simulated_torso = TorsoServices("poppy_torso")
         self.real_torso = PoppyTorso()
+        self.running = True
         try:
             Thread(target=self.puppet).start()
             for m in self.real_torso.motors:
@@ -61,6 +61,7 @@ class TorsoPuppet(object):
             self.go_to_start()
             self.run()
         finally:
+            self.running = False
             if self.real_torso is not None:
                 self.real_torso.close()
 
@@ -71,7 +72,6 @@ class TorsoPuppet(object):
             rospy.sleep(0.05)
 
     def run(self):
-        self.running = True
         while not rospy.is_shutdown() and self.running:
             text = raw_input("Do you want to set the real robot compliant? "
                              "(left arm, right arm, both arms, not compliant, go to start pose, quit) [L/R/B/N/S/Q] ").lower()
