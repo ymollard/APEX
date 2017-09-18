@@ -16,7 +16,7 @@ class TorsoServices(object):
             self.set_compliant_srv[group]['proxy'] = rospy.ServiceProxy(name, SetCompliant)
 
         self.idle_srv = {}
-        self.demo_mode = rospy.get_param('demo_mode')
+        self.demo_mode = rospy.get_param('demo_mode', False)
         for group in ['left_arm', 'right_arm', 'head']:
             self.idle_srv[group] = {}
             name = '{}/{}/set_idle_motion'.format(robot_name, group)
