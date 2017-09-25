@@ -18,11 +18,11 @@
 
       <node name="perception" pkg="apex_playground" type="perception.py" output="$(arg output)" respawn="true"/>
       <node name="torso" pkg="apex_playground" type="torso.py" output="$(arg output)" respawn="true"/>
-      <node name="learning" pkg="apex_playground" type="learning.py" output="$(arg output)" respawn="true"/>
+      <node name="learning" pkg="apex_playground" type="learning.py" output="$(arg output)" required="true"/>
       <node name="user" pkg="apex_playground" type="user.py" output="$(arg output)" respawn="true"/>
       <node name="sound" pkg="apex_playground" type="sound.py" output="$(arg output)" respawn="true"/>
       <node name="recorder" pkg="apex_playground" type="recorder.py" output="$(arg output)" respawn="true"/>
-      <node name="controller" pkg="apex_playground" type="controller.py" output="$(arg output)" respawn="true"/>
+      <node name="controller" pkg="apex_playground" type="controller.py" output="$(arg output)" required="true"/>
 
   </group>
 </launch>
