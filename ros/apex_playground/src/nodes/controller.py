@@ -37,13 +37,15 @@ class Controller(object):
         rospy.set_param('experiment/current/trial', work.trial)
         rospy.set_param('experiment/current/method', work.method)
 
-        for iteration in range(work.iteration, work.num_iterations):
+        iteration = work.iteration
+        while iteration < work.num_iterations and not rospy.is_shutdown():
             if iteration % self.params["ergo_reset"] == 0:
                 self.ergo.reset()
             try:
                 rospy.set_param('experiment/current/iteration', iteration)
-                if not rospy.is_shutdown():
-                    self.execute_iteration(work.task, work.method, iteration, work.trial, work.num_iterations)
+                success = self.execute_iteration(work.task, work.method, iteration, work.trial, work.num_iterations)
+                if success:
+                    iteration += 1
             finally:
                 abort = self.work.update(work.task, work.trial, iteration).abort
                 if abort:
@@ -60,6 +62,7 @@ class Controller(object):
             recording = self.perception.record(human_demo=True, nb_points=self.params['nb_points'])
             self.torso.set_torque_max(self.torso_params['torques']['reset'])
             self.torso.reset(slow=True)
+            return True
         else:
             trajectory = self.learning.produce().torso_trajectory
             self.torso.set_torque_max(self.torso_params['torques']['motion'])
@@ -69,7 +72,8 @@ class Controller(object):
             recording.demo.torso_demonstration = JointTrajectory()
             self.torso.set_torque_max(80)
             self.torso.reset(slow=False)
-        success = self.learning.perceive(recording.demo)  # TODO non-blocking
+            return self.learning.perceive(recording.demo)
+
 
 if __name__ == '__main__':
     rospy.init_node("controller")
