@@ -84,7 +84,7 @@ class WorkManager(object):
                             return dict(abort=True)
                         elif known_status == 'taken':
                             inconsistent = False
-                            experiment[task]['progress'][trial]['iteration'] = iteration
+                            experiment[task]['progress'][trial]['iteration'] = iteration + 1
                             if self.is_completed(task, trial, experiment):
                                 experiment[task]['progress'][trial]['status'] = 'complete'
                                 rospy.loginfo("{} trial {} completed by worker {}".format(experiment[task]['method'], trial, worker))
