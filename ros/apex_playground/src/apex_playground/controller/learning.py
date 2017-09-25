@@ -14,7 +14,7 @@ class Learning(object):
 
     def perceive(self, demonstration):
         call = self.services['perceive']['call']
-        return call(PerceiveRequest(demo=demonstration))
+        return call(PerceiveRequest(demo=demonstration)).success
 
     def produce(self, space_to_explore=0):
         call = self.services['produce']['call']

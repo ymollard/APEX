@@ -190,9 +190,9 @@ class LearningNode(object):
 
         # And save the current iteration
         experiment_name = rospy.get_param('/experiment/name')
-        self.learning.save(experiment_name, self.task, self.trial)
+        success = self.learning.save(experiment_name, self.task, self.trial)
 
-        return PerceiveResponse()
+        return PerceiveResponse(success=success)
 
     def cb_produce(self, request):
         with self.lock_iteration:

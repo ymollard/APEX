@@ -69,7 +69,7 @@ class Controller(object):
             recording.demo.torso_demonstration = JointTrajectory()
             self.torso.set_torque_max(80)
             self.torso.reset(slow=False)
-        self.learning.perceive(recording.demo)  # TODO non-blocking
+        success = self.learning.perceive(recording.demo)  # TODO non-blocking
 
 if __name__ == '__main__':
     rospy.init_node("controller")

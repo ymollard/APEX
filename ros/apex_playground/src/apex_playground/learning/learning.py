@@ -81,9 +81,12 @@ class Learning(object):
                 pickle.dump(self.agent.save_iteration(iteration), f)
                 
             # Check saved file
-            with open(os.path.join(folder_trial, filename), 'r') as f:
-                saved_data = pickle.load(f)
-            return (len(saved_data["ms"]) == 204) and (saved_data["goal"] is None or len(saved_data["goal"]) == len(self.agent.modules[saved_data["chosen_module"]].s_space))
+            try:
+                with open(os.path.join(folder_trial, filename), 'r') as f:
+                    saved_data = pickle.load(f)
+                return (len(saved_data["ms"]) == 204) and (saved_data["goal"] is None or len(saved_data["goal"]) == len(self.agent.modules[saved_data["chosen_module"]].s_space))
+            except:
+                return False
         else:
             return False
             
