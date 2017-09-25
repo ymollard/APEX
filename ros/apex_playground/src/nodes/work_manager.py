@@ -21,6 +21,7 @@ class WorkManager(object):
             experiment = self.check(json.load(f))
         rospy.set_param('/work', experiment)
         self.lock_experiment = RLock()
+        self.failing_workers = {}  # association {num_worker: remaining attempts before blacklist}
 
     @staticmethod
     def is_completed(task, trial, experiment):
@@ -73,6 +74,9 @@ class WorkManager(object):
             else:
                 known_status = experiment[task]['progress'][trial]['status']
                 known_worker = experiment[task]['progress'][trial]['worker']
+                known_iteration = experiment[task]['progress'][trial]['iteration']
+
+                
                 if self.num_workers > 0:
                     if known_worker == worker or known_worker < 0:
                         if known_status == 'aborted':
@@ -87,6 +91,18 @@ class WorkManager(object):
                             else:
                                 pass  # This is a regular update
                                 rospy.loginfo("Regular update: iteration {}/{} from worker {}".format(iteration+1, experiment[task]['num_iterations'], worker))
+                        if iteration != known_iteration:
+                            rospy.logwarn("Got iteration {} while expecting {} from worker {}".format(iteration, known_iteration, known_worker))
+                            if known_worker in self.failing_workers:
+                                self.failing_workers[known_worker] -= 1
+                                if self.failing_workers[known_worker] == 0:
+                                    rospy.logerr("Autoblacklisting worker {}".format(known_worker))
+                                    return dict(abort=True)
+                                    blacklisted = rospy.get_param("/experiment/disabled_workers", [])
+                                    blacklisted.append(known_worker)
+                                    rospy.set_param("/experiment/disabled_workers", blacklisted)
+                            else:
+                                self.failing_workers[known_worker] = 5
                     if inconsistent:
                         rospy.logerr("Inconsistent data: Worker ID {} has returned task {} trial {} "
                                      "which is known {} by worker {}".format(worker, task, trial, known_status, known_worker))
