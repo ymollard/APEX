@@ -20,7 +20,7 @@ tar_and_copy() {
         scp pi@apex-$id-torso.local:/tmp/$experiment.tar $local_file
         echo -e "unziping..."
         tar -xf $local_file
-        echo -e "\e[32mapex-$id DONE!\e[39"
+        echo -e "\e[32mapex-$id DONE!\e[39m"
     fi
 }
 
