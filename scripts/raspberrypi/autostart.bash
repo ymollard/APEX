@@ -2,12 +2,16 @@
 
 ros_master="ros.local"
 
-#hostname="apex-1-ergo"
 hostname=`hostname`
 platform_name=`echo $hostname | cut -d '-' -f 1`
 platform_id=`echo $hostname | cut -d '-' -f 2`
 platform_type=`echo $hostname | cut -d '-' -f 3`
 ns=$platform_name"_"$platform_id
+
+# Cleanup journal files flooding the card
+sudo rm -f /var/log/daemon.log*
+sudo rm -f /var/log/syslog*
+sudo rm -rf /root/.ros
 
 if [ -f /home/pi/ros_ws/devel_isolated/setup.bash ]; then
  source /home/pi/ros_ws/devel_isolated/setup.bash
