@@ -49,8 +49,8 @@ class Controller(object):
                 if abort:
                     rospy.logwarn("Work manager requested abortion, closing...")
                     return
-                if success:
-                    iteration += 1
+            if success:
+                iteration += 1
         rospy.loginfo("Work successfully terminated, closing...")
 
     def execute_iteration(self, task, method, iteration, trial, num_iterations):
