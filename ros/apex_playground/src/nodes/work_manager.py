@@ -65,7 +65,7 @@ class WorkManager(object):
                 #rospy.logwarn("Worker {} requested work but it is blacklisted".format(worker))
         return dict(work_available=False)
 
-    def _cb_update_work(self, task, trial, worker, iteration):
+    def _cb_update_work(self, task, trial, worker, iteration, success):
         inconsistent = True
         with self.lock_experiment:
             experiment = rospy.get_param('/work')
@@ -84,13 +84,17 @@ class WorkManager(object):
                             return dict(abort=True)
                         elif known_status == 'taken':
                             inconsistent = False
-                            experiment[task]['progress'][trial]['iteration'] = iteration + 1
                             if self.is_completed(task, trial, experiment):
                                 experiment[task]['progress'][trial]['status'] = 'complete'
                                 rospy.loginfo("{} trial {} completed by worker {}".format(experiment[task]['method'], trial, worker))
                             else:
-                                pass  # This is a regular update
-                                rospy.loginfo("Regular update: iteration {}/{} from worker {}".format(iteration+1, experiment[task]['num_iterations'], worker))
+                                # This is a regular update
+                                if success:
+                                    experiment[task]['progress'][trial]['iteration'] = iteration + 1
+                                    if iteration % 100 == 0 and iteration > 0:
+                                        rospy.logerr("Regular update: iteration {}/{} from worker {}".format(iteration, experiment[task]['num_iterations'], worker))
+                                    else:
+                                        rospy.logerr("Iteration {}/{} failed on worker {}".format(iteration, experiment[task]['num_iterations'], worker))
                         if iteration != known_iteration:
                             rospy.logwarn("Got iteration {} while expecting {} from worker {}".format(iteration, known_iteration, known_worker))
                             if known_worker in self.failing_workers:
@@ -152,8 +156,8 @@ class WorkManager(object):
                 if type == 'get':
                     self.socket.send_json(self._cb_get_work(worker))
                 elif type == 'update':
-                    task, trial, iteration = request['task'], request['trial'], request['iteration']
-                    self.socket.send_json(self._cb_update_work(task, trial, worker, iteration))
+                    task, trial, iteration, success = request['task'], request['trial'], request['iteration'], request['success']
+                    self.socket.send_json(self._cb_update_work(task, trial, worker, iteration, success))
                 else:
                     rospy.logerr("The Work Manager can't handle this request type: '{}'".format(type))
             except (ValueError, KeyError):
@@ -175,7 +179,7 @@ class WorkManager(object):
 
         # Use ROS for work manager <-> controller comm
         rospy.Service('work/get', GetWork, lambda req: GetWorkResponse(**self._cb_get_work(req.worker)))
-        rospy.Service('work/update', UpdateWorkStatus, lambda req: UpdateWorkStatusResponse(**self._cb_update_work(req.task, req.trial, req.worker, req.iteration)))
+        rospy.Service('work/update', UpdateWorkStatus, lambda req: UpdateWorkStatusResponse(**self._cb_update_work(req.task, req.trial, req.worker, req.iteration, req.success)))
         rospy.Service('work/add', AddWork, self._cb_add_work)
 
         rospy.spin()

@@ -30,12 +30,12 @@ class WorkManager(object):
             call = self.services['get']['call']
             return call(GetWorkRequest(worker=self.worker_id))
 
-    def update(self, task, trial, iteration):
+    def update(self, task, trial, iteration, success):
         if self.outside_ros:
-            self.socket.send_json({"type": "update", "task": task, "trial": trial, "iteration": iteration, "worker": self.worker_id})
+            self.socket.send_json({"type": "update", "task": task, "trial": trial, "iteration": iteration, "worker": self.worker_id, "success": success})
             return UpdateWorkStatusResponse(**self.socket.recv_json())
         else:
             call = self.services['update']['call']
             return call(UpdateWorkStatusRequest(task=task, trial=trial, iteration=iteration,
-                                                worker=self.worker_id))
+                                                worker=self.worker_id, success=success))
 

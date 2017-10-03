@@ -70,9 +70,9 @@ class LearningNode(object):
         iteration = rospy.get_param('experiment/current/iteration')
         experiment_name = rospy.get_param('/experiment/name')
 
-        if condition != self.condition or trial != self.trial:
+        if condition != self.condition or trial != self.trial or self.task != task:
             with self.lock_iteration:
-                rospy.logwarn("Learner opens condition {} trial {}...".format(condition, trial+1))
+                rospy.logwarn("Learner opens condition {} trial {}...".format(condition, trial))
 
                 self.learning = Learning(self.translator.config,
                                          condition=condition,

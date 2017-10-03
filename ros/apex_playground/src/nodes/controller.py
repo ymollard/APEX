@@ -38,15 +38,19 @@ class Controller(object):
         rospy.set_param('experiment/current/method', work.method)
 
         iteration = work.iteration
+        success = False
         while iteration < work.num_iterations and not rospy.is_shutdown():
             if iteration % self.params["ergo_reset"] == 0:
                 self.ergo.reset()
             try:
                 rospy.set_param('experiment/current/iteration', iteration)
                 success = self.execute_iteration(work.task, work.method, iteration, work.trial, work.num_iterations)
+            #except IndexError, IOError:
+                #pass
+                # TODO: Rewind 1 iteration
             finally:
-                abort = self.work.update(work.task, work.trial, iteration).abort
-                if abort:
+                update = self.work.update(work.task, work.trial, iteration, success)
+                if update.abort:
                     rospy.logwarn("Work manager requested abortion, closing...")
                     return
             if success:
@@ -54,7 +58,7 @@ class Controller(object):
         rospy.loginfo("Work successfully terminated, closing...")
 
     def execute_iteration(self, task, method, iteration, trial, num_iterations):
-        rospy.logwarn("Controller starts iteration {} {}/{} trial {}".format(method, iteration+1, num_iterations, trial))
+        rospy.logwarn("Controller starts iteration {} {}/{} trial {}".format(method, iteration, num_iterations, trial))
 
         if self.perception.help_pressed():
             rospy.sleep(1.5)  # Wait for the robot to fully stop
