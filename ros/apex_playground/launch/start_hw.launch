@@ -3,5 +3,5 @@
   <arg name="name" default="apex"/> <!-- Name of the experiment -->
   <param name="/experiment/name" value="$(arg name)" />
 
-  <node name="manager" pkg="apex_playground" type="work_manager.py" required="true"/>
+  <node name="manager" pkg="apex_playground" type="work_manager.py" required="true" output="screen"/>
 </launch>
