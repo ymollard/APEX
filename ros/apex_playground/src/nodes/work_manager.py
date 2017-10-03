@@ -93,8 +93,8 @@ class WorkManager(object):
                                     experiment[task]['progress'][trial]['iteration'] = iteration + 1
                                     if iteration % 100 == 0 and iteration > 0:
                                         rospy.logerr("Regular update: iteration {}/{} from worker {}".format(iteration, experiment[task]['num_iterations'], worker))
-                                    else:
-                                        rospy.logerr("Iteration {}/{} failed on worker {}".format(iteration, experiment[task]['num_iterations'], worker))
+                                else:
+                                    rospy.logerr("Iteration {}/{} failed on worker {}".format(iteration, experiment[task]['num_iterations'], worker))
                         if iteration != known_iteration:
                             rospy.logwarn("Got iteration {} while expecting {} from worker {}".format(iteration, known_iteration, known_worker))
                             if known_worker in self.failing_workers:
