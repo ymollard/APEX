@@ -86,15 +86,28 @@ class WorkManager(object):
                             inconsistent = False
                             if self.is_completed(task, trial, experiment):
                                 experiment[task]['progress'][trial]['status'] = 'complete'
-                                rospy.loginfo("{} trial {} completed by worker {}".format(experiment[task]['method'], trial, worker))
+                                rospy.logwarn("{} trial {} completed by worker {}".format(experiment[task]['method'], trial, worker))
                             else:
                                 # This is a regular update
                                 if success:
                                     experiment[task]['progress'][trial]['iteration'] = iteration + 1
                                     if iteration % 100 == 0 and iteration > 0:
-                                        rospy.logerr("Regular update: iteration {}/{} from worker {}".format(iteration, experiment[task]['num_iterations'], worker))
+                                        rospy.loginfo("Regular update: iteration {}/{} from worker {}".format(iteration, experiment[task]['num_iterations'], worker))
                                 else:
+                                    # Iteration failed
                                     rospy.logerr("Iteration {}/{} failed on worker {}".format(iteration, experiment[task]['num_iterations'], worker))
+                                    if iteration > 0:
+                                        # Try to recover if iteration is not 0
+                                        new_iteration = iteration - 1
+                                        experiment[task]['progress'][trial]['iteration'] = new_iteration
+                                        rospy.logerr("rewinding worker {} to iteration {}".format(worker, new_iteration))
+                                    else:
+                                        # If we rewind up to iteration 0, we might have a hardware issue, abandon
+                                        rospy.logerr("Autoblacklisting worker {}".format(worker))
+                                        return dict(abort=True)
+                                        blacklisted = rospy.get_param("/experiment/disabled_workers", [])
+                                        blacklisted.append(worker)
+                                        rospy.set_param("/experiment/disabled_workers", blacklisted)
                         if iteration != known_iteration:
                             rospy.logwarn("Got iteration {} while expecting {} from worker {}".format(iteration, known_iteration, known_worker))
                             if known_worker in self.failing_workers:

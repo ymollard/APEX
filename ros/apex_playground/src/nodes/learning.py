@@ -64,13 +64,23 @@ class LearningNode(object):
         self.get_state = rospy.ServiceProxy(self.service_name_get_perception, GetSensorialState)
 
     def produce_init_learner(self):
+        """
+        This method checks if we are going on with the next iteration or if any change requires to open a new Learning()
+        A new Learning() is required in the following cases:
+          * The Learning node has just been started up
+          * The current iteration is going backward
+          * The learning method (AMB, RMB, ...) has changed
+          * The task ID has changed
+          * The trial ID has changed
+        If we are not in any of these cases, learning is still sync'ed with controller and WM, we can go on with the previous in-memory Learning()
+        """
         condition = rospy.get_param('experiment/current/method')
         trial = rospy.get_param('experiment/current/trial')
         task = rospy.get_param('experiment/current/task')
         iteration = rospy.get_param('experiment/current/iteration')
         experiment_name = rospy.get_param('/experiment/name')
 
-        if condition != self.condition or trial != self.trial or self.task != task:
+        if condition != self.condition or trial != self.trial or self.task != task or iteration < self.learning.get_iterations():
             with self.lock_iteration:
                 rospy.logwarn("Learner opens condition {} trial {}...".format(condition, trial))
 
