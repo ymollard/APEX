@@ -23,7 +23,7 @@ class Perception(object):
             self.params = json.load(f)
 
     def _cb_button_pressed(self, msg, topic):
-        if msg.data and rospy.Time.now() - self.last_press > rospy.Duration(self.params['duration_between_presses']):
+        if msg.data and rospy.Time.now() - self.last_press[topic] > rospy.Duration(self.params['duration_between_presses']):
             rospy.logwarn("Button {} pressed...".format(topic))
             self.button_pressed[topic] = True
             self.last_press[topic] = rospy.Time.now()
