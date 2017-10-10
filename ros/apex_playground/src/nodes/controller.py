@@ -60,7 +60,13 @@ class Controller(object):
     def execute_iteration(self, task, method, iteration, trial, num_iterations):
         rospy.logwarn("Controller starts iteration {} {}/{} trial {}".format(method, iteration, num_iterations, trial))
 
-        if self.perception.help_pressed():
+        if self.perception.has_been_pressed('ergo/buttons/pause'):
+            while not rospy.is_shutdown() and not self.perception.has_been_pressed('ergo/buttons/pause'):
+                rospy.logwarn("Controller is paused, pressed pause button to resume...")
+                rospy.sleep(1)
+        
+        # After resuming, we keep the same iteration
+        if self.perception.has_been_pressed('ergo/buttons/help'):
             rospy.sleep(1.5)  # Wait for the robot to fully stop
             self.recorder.record(task, method, trial, iteration)
             recording = self.perception.record(human_demo=True, nb_points=self.params['nb_points'])
