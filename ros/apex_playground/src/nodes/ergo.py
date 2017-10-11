@@ -34,7 +34,7 @@ class Ergo(object):
         rospy.loginfo("Controllers connected!")
 
         self.state_pub = rospy.Publisher('ergo/state', CircularState, queue_size=1)
-        self.button_pub = rospy.Publisher('ergo/buttons/help', Bool, queue_size=1)
+        self.button_pub = rospy.Publisher('sensors/buttons/help', Bool, queue_size=1)
 
         self.goals = []
         self.goal = 0.

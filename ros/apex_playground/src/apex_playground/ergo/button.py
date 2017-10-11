@@ -12,6 +12,7 @@ class Button(object):
         self.params = params
         if gpio_available:
             GPIO.setmode(GPIO.BCM)
+            GPIO.setwarnings(False)
             GPIO.setup(self.params['pause_button_pin'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.params['pause_led_pin'], GPIO.OUT)
         else:
