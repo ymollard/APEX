@@ -49,6 +49,7 @@ class Controller(object):
                 #pass
                 # TODO: Rewind 1 iteration
             finally:
+                self.perception.switch_led('button_leds/pause', False)
                 update = self.work.update(work.task, work.trial, iteration, success)
                 if update.abort:
                     rospy.logwarn("Work manager requested abortion, closing...")
@@ -60,13 +61,16 @@ class Controller(object):
     def execute_iteration(self, task, method, iteration, trial, num_iterations):
         rospy.logwarn("Controller starts iteration {} {}/{} trial {}".format(method, iteration, num_iterations, trial))
 
-        if self.perception.has_been_pressed('ergo/buttons/pause'):
-            while not rospy.is_shutdown() and not self.perception.has_been_pressed('ergo/buttons/pause'):
+        if self.perception.has_been_pressed('buttons/pause'):
+            while not rospy.is_shutdown() and not self.perception.has_been_pressed('buttons/pause'):
+                self.perception.switch_led('button_leds/pause')
                 rospy.logwarn("Controller is paused, pressed pause button to resume...")
-                rospy.sleep(1)
-        
+                rospy.sleep(0.5)
+
+        self.perception.switch_led('button_leds/pause', True)
+       
         # After resuming, we keep the same iteration
-        if self.perception.has_been_pressed('ergo/buttons/help'):
+        if self.perception.has_been_pressed('buttons/help'):
             rospy.sleep(1.5)  # Wait for the robot to fully stop
             self.recorder.record(task, method, trial, iteration)
             recording = self.perception.record(human_demo=True, nb_points=self.params['nb_points'])

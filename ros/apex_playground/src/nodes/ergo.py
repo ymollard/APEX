@@ -3,7 +3,7 @@
 import rospy
 import rosnode
 import json
-from sensor_msgs.msg import Joy
+from std_msgs.msg import Bool
 from apex_playground.srv import *
 from apex_playground.msg import *
 from poppy_msgs.srv import ReachTarget, ReachTargetRequest, SetCompliant, SetCompliantRequest
@@ -21,6 +21,7 @@ class Ergo(object):
             self.params = json.load(f)
         self.button = Button(self.params)
         self.rate = rospy.Rate(self.params['publish_rate'])
+        self.button.switch_led(False)
 
         # Service callers
         self.robot_reach_srv_name = '{}/reach'.format(self.params['robot_name'])
@@ -43,6 +44,7 @@ class Ergo(object):
         self.js = JointState()
         rospy.Subscriber('sensors/joystick/{}'.format(self.params["control_joystick_id"]), Joy, self.cb_joy)
         rospy.Subscriber('{}/joint_state'.format(self.params['robot_name']), JointState, self.cb_js)
+        rospy.Subscriber('sensors/button_leds/pause', Bool, self.cb_bt_led)
 
         self.t = rospy.Time.now()
         self.srv_reset = None
@@ -50,6 +52,9 @@ class Ergo(object):
         self.standby = False
         self.last_activity = rospy.Time.now()
         self.delta_t = rospy.Time.now()
+
+    def cb_bt_led(self, msg):
+        self.button.switch_led(msg.data)
 
     def cb_js(self, msg):
         self.js = msg
