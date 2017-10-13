@@ -32,13 +32,18 @@ class SimulationSpawner(object):
         self.vrep_con_path_bak = vrep_con_path + '.bak'
         self.vrep_bin_path = vrep_binary_path
         self.num_instances = num_instances
-        self.initial_ros_master_port = 11311
+        self.headless = headless
+        self.running_instances = []  # stores True if the corresponding ROS+Vrep instance is running
+        self.children = []  # All children processes
+        self.ros_children = []  # Only ROS children processes
+        self.vrep_children = []  # Only simulator processes
+        self.running = False
+
+        # PORTS
+        # Warning: Only the work manager runs on ROS master 11311
+        self.initial_ros_master_port = 11400
         self.initial_ui_port = 5000
         self.initial_vrep_port = 46400
-        self.headless = headless
-        self.children = []
-        self.running = False
-        self.work_manager_started = False
 
     def signal_handler(self, signal, frame):
         self.running = False
@@ -46,6 +51,18 @@ class SimulationSpawner(object):
     def run(self):
         self.running = True
         copy2(self.vrep_con_path, self.vrep_con_path_bak)
+
+        # Start the Work Manager
+        print(colored("### Launching the work manager on ROS master {}".format(environ['ROS_MASTER_URI']), 'blue'))
+        process_str = 'roscore'
+        print(colored(process_str, 'yellow'))
+        process = Popen(process_str.split(' '))
+        self.children.append(process)
+        process_str = 'rosrun apex_playground work_manager.py --comm-outside-ros'
+        print(colored(process_str, 'yellow'))
+        process = Popen(process_str.split(' '))
+        self.children.append(process)
+
         try:
             for n in range(self.num_instances):
                 if not self.running: return
@@ -79,8 +96,9 @@ class SimulationSpawner(object):
 
                 process = Popen(process_str.split(' '))
                 self.children.append(process)
+                self.vrep_children.append(process)
 
-                time.sleep(5)  # Let time to V-Rep to load the scene
+                time.sleep(10)  # Let time to V-Rep to load the scene
 
                 name = 'apex_{}'.format(n)
                 process_str = 'roslaunch apex_playground_sim start_sim.launch namespace:={} ' \
@@ -93,32 +111,35 @@ class SimulationSpawner(object):
                 print(colored(process_str, 'yellow'))
                 process = Popen(process_str.split(' '), env=environ)
                 self.children.append(process)
-
-                if self.running and not self.work_manager_started:
-                    # Start the Work Manager
-                    print(colored("### Launching the work manager on ROS master {}".format(environ['ROS_MASTER_URI']), 'blue'))
-                    process_str = 'rosrun apex_playground work_manager.py --comm-outside-ros'
-                    print(colored(process_str, 'yellow'))
-                    process = Popen(process_str.split(' '))
-                    self.children.append(process)
-                    self.work_manager_started = True
+                self.ros_children.append(process)
+                self.running_instances.append(True)
 
             while self.running:
-                #terminated_processes = [p for p in self.children if p.poll() is not None]
-                #if len(terminated_processes) >= self.num_instances/2:
-                #    break
+                print(colored("Instances running? {}".format(self.running_instances), 'blue'))
+                for i, p in enumerate(self.ros_children):
+                    if self.running_instances[i] and p.poll() is not None:
+                        # if ROS process has closed or crashed, close the corresponding simulation instance
+                        print(colored("ROS process {} has terminated, closing simulator...".format(i), 'red'))
+                        self.running_instances[i] = False
+                        self.vrep_children[i].terminate()
+                if len([running for running in self.running_instances if running]) == 0:
+                    break
                 time.sleep(2)
 
         finally:
             for p in self.children:
-                p.send_signal(SIGINT)
+                try:
+                    p.send_signal(SIGINT)
+                except OSError:
+                    pass
 
             copy2(self.vrep_con_path_bak, self.vrep_con_path)
             #remove(self.vrep_con_path_bak)
 
-            for p in self.children:
-                print(colored('Waiting process to close...', 'red'))
-                p.wait()
+            for i, p in enumerate(self.children):
+                if p.poll() is not None:
+                    print(colored('Waiting process {} to close...'.format(i), 'red'))
+                    p.wait()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Launch V-REP, ROS master and ROS nodes to simulate N apex setups in parallel.")
