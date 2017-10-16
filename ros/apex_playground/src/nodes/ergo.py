@@ -88,7 +88,8 @@ class Ergo(object):
             self.extended = False
 
     def is_controller_running(self):
-        return len([node for node in rosnode.get_node_names() if 'controller' in node]) > 0
+        rospy.logerr("{}".format([node for node in rosnode.get_node_names() if rospy.get_namespace() + 'controller' in node]))
+        return len([node for node in rosnode.get_node_names() if rospy.get_namespace() + 'controller' in node]) > 0
 
     def go_or_resume_standby(self):
         recent_activity = rospy.Time.now() - self.last_activity < rospy.Duration(self.params['auto_standby_duration'])
