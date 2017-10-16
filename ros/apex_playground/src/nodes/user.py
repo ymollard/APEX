@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import json
 import rospy
+import os
 from os.path import join
 from flask import Flask
 from flask import request
@@ -13,11 +14,10 @@ from threading import Thread
 from copy import copy
 from scipy.interpolate import interp1d
 
-
 class UserNode(object):
     def __init__(self):
         self.rospack = RosPack()
-        self.port = rospy.get_param('ui_port', 5000)
+        self.port = rospy.get_param('ui_port', 80 if os.getuid() == 0 else 5000)
         self.web_app_root = join(self.rospack.get_path('apex_playground'), 'webapp', 'static')
         self.app = Flask(__name__, static_url_path='', static_folder=self.web_app_root)
         self.cors = CORS(self.app, resources={r'/api/*': {'origins': '*'}})
