@@ -4,6 +4,7 @@ import json
 from os.path import join
 from rospkg import RosPack
 from apex_playground.controller import Perception, Learning, Torso, Ergo, WorkManager, Recorder
+from apex_playground.srv import Assess, AssessResponse
 from trajectory_msgs.msg import JointTrajectory
 from re import search
 
@@ -26,6 +27,12 @@ class Controller(object):
         self.learning = Learning()
         self.perception = Perception()
         self.recorder = Recorder()
+        self.demonstrate = ""  # Skill (Target space for Produce) or empty string if not running assessment
+
+        # Served services
+        self.service_name_demonstrate = "controller/assess"
+        rospy.Service(self.service_name_demonstrate, Assess, self.cb_assess)
+        
         rospy.loginfo('Controller fully started!')
 
     def run(self):
@@ -44,7 +51,18 @@ class Controller(object):
                 self.ergo.reset()
             try:
                 rospy.set_param('experiment/current/iteration', iteration)
-                success = self.execute_iteration(work.task, work.method, iteration, work.trial, work.num_iterations)
+                if self.perception.has_been_pressed('buttons/pause') or self.demonstrate != "":
+                    # If assessment requested but not already in pause, entering pause mode anyway
+                    while not rospy.is_shutdown() and not self.perception.has_been_pressed('buttons/pause'):
+                        if self.demonstrate != "":
+                            # Assessment has been asked by user, space is self.demonstrate
+                            success = self.execute_iteration(work.task, work.method, iteration, work.trial, work.num_iterations)
+                            self.demonstrate = ""
+                        self.perception.switch_led('button_leds/pause')
+                        rospy.logwarn("Controller is paused, pressed pause button to resume...")
+                        rospy.sleep(0.5)
+                else:
+                    success = self.execute_iteration(work.task, work.method, iteration, work.trial, work.num_iterations)
             #except IndexError, IOError:
                 #pass
                 # TODO: Rewind 1 iteration
@@ -60,14 +78,7 @@ class Controller(object):
 
     def execute_iteration(self, task, method, iteration, trial, num_iterations):
         rospy.logwarn("Controller starts iteration {} {}/{} trial {}".format(method, iteration, num_iterations, trial))
-        rospy.wait_for_service('ergo/reset') # Ensures Ergo keeps working or wait till it reboots
-
-        if self.perception.has_been_pressed('buttons/pause'):
-            while not rospy.is_shutdown() and not self.perception.has_been_pressed('buttons/pause'):
-                self.perception.switch_led('button_leds/pause')
-                rospy.logwarn("Controller is paused, pressed pause button to resume...")
-                rospy.sleep(0.5)
-
+        rospy.wait_for_service('ergo/reset')  # Ensures Ergo keeps working or wait till it reboots
         self.perception.switch_led('button_leds/pause', True)
        
         # After resuming, we keep the same iteration
@@ -79,7 +90,7 @@ class Controller(object):
             self.torso.reset(slow=True)
             return True
         else:
-            trajectory = self.learning.produce().torso_trajectory
+            trajectory = self.learning.produce(skill_to_demonstrate=self.demonstrate).torso_trajectory
             self.torso.set_torque_max(self.torso_params['torques']['motion'])
             self.recorder.record(task, method, trial, iteration)
             self.torso.execute_trajectory(trajectory)  # TODO: blocking, non-blocking, action server?
@@ -88,6 +99,10 @@ class Controller(object):
             self.torso.set_torque_max(80)
             self.torso.reset(slow=False)
             return self.learning.perceive(recording.demo)
+
+    def cb_assess(self, request):
+        self.demonstrate = request.goal
+        return AssessResponse()
 
 
 if __name__ == '__main__':

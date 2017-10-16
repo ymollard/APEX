@@ -8,7 +8,7 @@ class UserServices(object):
     def __init__(self):
         self.services = {'set_iteration': {'name': 'learning/set_iteration', 'type': SetIteration},
                          'set_focus': {'name': 'learning/set_interest', 'type': SetFocus},
-                         'assess': {'name': 'learning/assess', 'type': Assess},
+                         'assess': {'name': 'controller/assess', 'type': Assess},
                          'get_interests': {'name': 'learning/get_interests', 'type': GetInterests}}
 
         rospy.Subscriber('learning/current_focus', String, self._cb_focus)

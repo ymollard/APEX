@@ -29,7 +29,6 @@ class LearningNode(object):
         self.ready_for_interaction = True
         self.focus = None
         self.set_iteration = -1
-        self.demonstrate = None
 
         # Saved experiment files
         self.dir = join(self.rospack.get_path('apex_playground'), 'logs')
@@ -47,7 +46,6 @@ class LearningNode(object):
         self.service_name_produce = "learning/produce"
         self.service_name_set_interest = "learning/set_interest"
         self.service_name_set_iteration = "learning/set_iteration"
-        self.service_name_demonstrate = "learning/assess"
         self.service_name_interests = "learning/get_interests"
 
         # Publishing these topics
@@ -118,7 +116,6 @@ class LearningNode(object):
         rospy.Service(self.service_name_produce, Produce, self.cb_produce)
         rospy.Service(self.service_name_set_interest, SetFocus, self.cb_set_focus)
         rospy.Service(self.service_name_set_iteration, SetIteration, self.cb_set_iteration)
-        rospy.Service(self.service_name_demonstrate, Assess, self.cb_assess)
         rospy.Service(self.service_name_interests, GetInterests, self.cb_get_interests)
         rospy.loginfo("Learning is up!")
 
@@ -165,12 +162,6 @@ class LearningNode(object):
             self.ready_for_interaction = False
         return SetFocusResponse()
 
-    def cb_assess(self, request):
-        with self.lock_iteration:
-            self.demonstrate = request.goal
-            self.ready_for_interaction = False
-        return AssessResponse()
-
     def cb_perceive(self, request):
         s = self.translator.sensory_trajectory_msg_to_list(request.demo.sensorial_demonstration)
         if request.demo.type_demo == Demonstration.TYPE_DEMO_ARM:
@@ -209,15 +200,13 @@ class LearningNode(object):
         with self.lock_iteration:
             # Check if we need a new learner
             self.produce_init_learner()
-
             focus = copy(self.focus)
-            demonstrate = copy(self.demonstrate)
-            self.demonstrate = None
 
         rospy.loginfo("Learning node is requesting the current state")
         state = self.get_state(GetSensorialStateRequest()).state
 
-        if demonstrate is None:
+        demonstrate = request.skill_to_demonstrate
+        if demonstrate == "":
             rospy.loginfo("Learning node is producing...")
             w = self.learning.produce(self.translator.get_context(state), focus)
         else:

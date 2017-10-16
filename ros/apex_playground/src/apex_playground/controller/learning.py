@@ -16,6 +16,6 @@ class Learning(object):
         call = self.services['perceive']['call']
         return call(PerceiveRequest(demo=demonstration)).success
 
-    def produce(self, space_to_explore=0):
+    def produce(self, skill_to_demonstrate=""):
         call = self.services['produce']['call']
-        return call(ProduceRequest(space_to_explore=space_to_explore))
+        return call(ProduceRequest(skill_to_demonstrate=skill_to_demonstrate))
