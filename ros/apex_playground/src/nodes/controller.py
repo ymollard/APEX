@@ -60,6 +60,7 @@ class Controller(object):
 
     def execute_iteration(self, task, method, iteration, trial, num_iterations):
         rospy.logwarn("Controller starts iteration {} {}/{} trial {}".format(method, iteration, num_iterations, trial))
+        rospy.wait_for_service('ergo/reset') # Ensures Ergo keeps working or wait till it reboots
 
         if self.perception.has_been_pressed('buttons/pause'):
             while not rospy.is_shutdown() and not self.perception.has_been_pressed('buttons/pause'):
