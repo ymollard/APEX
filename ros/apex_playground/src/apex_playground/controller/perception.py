@@ -19,7 +19,7 @@ class Perception(object):
         self.button_leds_topics = ['button_leds/help', 'button_leds/pause']
         self.buttons_topics = ['buttons/help', 'buttons/pause']
         self.subscribers = [rospy.Subscriber('/'.join([self.prefix, topic]), Bool, lambda msg: self._cb_button_pressed(msg, topic)) for topic in self.buttons_topics]
-        self.publishers = {topic: rospy.Publisher('/'.join([self.prefix, topic]), Bool) for topic in self.button_leds_topics}
+        self.publishers = {topic: rospy.Publisher('/'.join([self.prefix, topic]), Bool, queue_size=1) for topic in self.button_leds_topics}
         self.button_leds_status = {topic: False for topic in self.button_leds_topics}
         self.button_pressed = {topic: False for topic in self.buttons_topics}
         self.last_press = {topic: rospy.Time(0) for topic in self.buttons_topics}
