@@ -23,7 +23,8 @@ class Button(object):
             self.led_on = not self.led_on
         elif value in [True, False]:
             self.led_on = value
-        GPIO.output(self.params['pause_led_pin'], self.led_on)
+        if gpio_available:
+            GPIO.output(self.params['pause_led_pin'], self.led_on)
 
     @property
     def pressed(self):
