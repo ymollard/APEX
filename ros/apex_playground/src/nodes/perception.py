@@ -3,13 +3,13 @@
 import rospy
 import json
 import numpy as np
-from os.path import join
-from os import system
+from os.path import join, isdir
+from os import system, makedirs
 from rospkg.rospack import RosPack
 from apex_playground.srv import *
 from apex_playground.msg import SensorialState, Demonstration
 from apex_playground.perception.services import PerceptionServices
-from apex_playground.tools import joints
+from apex_playground.tools import joints, sensorial
 
 
 class Perception(object):
@@ -46,7 +46,7 @@ class Perception(object):
                                joystick_1=self.topics.joy1,
                                joystick_2=self.topics.joy2,
                                hand=self.topics.torso_l_eef)
-        return state
+        return state     
 
     def wait_for_human_interaction(self, arm_threshold=1, joystick_threshold=0.15):
         rospy.loginfo("We are waiting for human interaction...")
@@ -80,6 +80,21 @@ class Perception(object):
         response = RecordResponse()
         # TODO eventually keep trace of the last XX points to start recording prior to the start signal
 
+        folder = rospy.get_param('/experiment/results_path', '/media/usb/')
+        condition = rospy.get_param('experiment/current/method')
+        trial = rospy.get_param('experiment/current/trial')
+        task = rospy.get_param('experiment/current/task')
+        iteration = rospy.get_param('experiment/current/iteration')
+        experiment_name = rospy.get_param('/experiment/name')
+        folder_trial = join(folder, experiment_name, "task_" + str(task), "condition_" + str(condition), "trial_" + str(trial))
+        folder_traj = join(folder_trial, 'trajectories')
+        
+        if not isdir(folder_traj):
+            makedirs(folder_traj)
+        
+        sensorial_points = []
+        motor_points = []
+        
         try:
             is_joystick_demo = False
             if request.human_demo.data:
@@ -92,10 +107,18 @@ class Perception(object):
             for point in range(request.nb_points.data):
                 if rospy.is_shutdown():
                     break
+                sensorial_point = self.get()
+                motor_point = self.topics.torso_l_j
+ 
                 if point % self.params["divider_nb_points_sensory"] == 0:
-                    response.demo.sensorial_demonstration.points.append(self.get())
+                    response.demo.sensorial_demonstration.points.append(sensorial_point)
                 if not is_joystick_demo:
-                    response.demo.torso_demonstration.points.append(joints.state_to_jtp(self.topics.torso_l_j))
+                    response.demo.torso_demonstration.points.append(joints.state_to_jtp(motor_point))
+                
+                # Saving trajectories for file dumping
+                sensorial_points.append(sensorial_point)
+                motor_points.append(motor_point)
+ 
                 self.rate.sleep()
 
             if not is_joystick_demo:
@@ -103,13 +126,27 @@ class Perception(object):
 
             if is_joystick_demo:
                 response.demo.type_demo = Demonstration.TYPE_DEMO_JOYSTICK
+                type = "demo_joy"
             elif request.human_demo.data:
                 response.demo.type_demo = Demonstration.TYPE_DEMO_ARM
+                type = "demo_arm"
             else:
                 response.demo.type_demo = Demonstration.TYPE_DEMO_NORMAL
+                type = "normal"
+
+            trajectories = [{"motor": joints.ros_to_list(motor_points[point]),
+                             "sensorial": sensorial.ros_to_dict(sensorial_points[point]),
+                             "type": type} for point in range(request.nb_points.data)]
+
+            with open(join(folder_traj, "iteration_{}.json".format(iteration)), 'w') as f:
+                json.dump(trajectories, f)
 
         except rospy.exceptions.ROSInterruptException:
             rospy.logwarn("recording aborted!")
+        except IOError:
+            # TODO: total or partial iteration failure?
+            raise
+            rospy.logerr("I/O error when dumping trajectories")
         else:
             rospy.loginfo("Recorded!")
 
