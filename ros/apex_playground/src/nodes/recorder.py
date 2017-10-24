@@ -68,12 +68,14 @@ class CameraBuffer(Thread):
 
 
 class CameraRecorder(Thread):
-    def __init__(self, parameters, duration, rate_hz):
+    def __init__(self, parameters, duration, rate_hz, video_on):
         super(CameraRecorder, self).__init__()
         self.setDaemon(True)
+        self.video_on = video_on
         self.camera_name = parameters['name']
         self.duration = duration
         self.params = parameters
+        self.max_rate = rate_hz
         self.rate = rospy.Rate(rate_hz)
         self.codec, self.extension = "FMP4", ".avi"
         # self.codec, self.extension = "X264", ".mp4"  # Old ffmpeg versions complain
@@ -84,7 +86,7 @@ class CameraRecorder(Thread):
         self.stamps_lock = RLock()
         self.stamps = deque(maxlen=30)
         self.recording = False
-        self.t0 = rospy.Time(0)
+        self.image_counter = 0
 
         self.experiment_name = ""
         self.task = ""
@@ -117,26 +119,35 @@ class CameraRecorder(Thread):
                 image.data = list(frame.reshape(length))
                 self.image_pub.publish(image)
 
-            if self.recording:
-                if self.writer is None and frame is not None:
-                    folder_trial = os.path.join(self.folder, self.experiment_name, "task_" + str(self.task),
+            num_images = self.duration*self.max_rate  # Theoretical number of images
+            if self.recording and frame is not None:
+                if self.image_counter == 0:
+                    folder_trial = os.path.join(self.folder, self.experiment_name, "task_" + str(self.task),  # AVI movies inside
                                                 "condition_" + str(self.condition), "trial_" + str(self.trial), self.camera_name)
 
                     if not os.path.isdir(folder_trial):
                         os.makedirs(folder_trial)
 
                     self.writer_params['filename'] = os.path.join(folder_trial, "iteration_" + str(self.iteration) + self.extension)
-                    self.writer = cv2.VideoWriter(**self.writer_params)
-                    self.t0 = rospy.Time.now()
+                    jpeg_path = os.path.join(folder_trial, "iteration_" + str(self.iteration) + self.extension)
                     rospy.loginfo("Recording camera '{}' at {}fps...".format(self.camera_name, self.writer_params['fps']))
-                    self.writer.write(frame)
-                elif now < self.t0 + rospy.Duration(self.duration) and frame is not None:
-                    self.writer.write(frame)
-                elif self.writer is not None:
-                    rospy.loginfo("Recorded camera '{}' in {}".format(self.camera_name, self.writer_params['filename']))
-                    self.writer.release()
+                    if self.video_on:
+                        self.writer = cv2.VideoWriter(**self.writer_params)
+                        self.writer.write(frame)
+                    cv2.imwrite(os.path.join(self.folder_iteration, "{}.jpg".format(self.image_counter)), frame)
+                    self.image_counter += 1
+                elif self.image_counter < num_images:
+                    if self.video_on:
+                        self.writer.write(frame)
+                    cv2.imwrite(os.path.join(self.folder_iteration, "{}.jpg".format(self.image_counter)), frame)
+                    self.image_counter += 1
+                else:
+                    if self.writer is not None and self.video_on:
+                        self.writer.release()
+                        self.writer = None
                     self.recording = False
-                    self.writer = None
+                    self.image_counter = 0
+                    rospy.loginfo("Recorded camera '{}'".format(self.camera_name))
             self.rate.sleep()
 
     def record(self, experiment_name, task, condition, trial, iteration, folder="/media/usb/"):
@@ -178,7 +189,7 @@ class Recorder(object):
         self.cameras = []
 
         for camera in self.params['cameras']:
-            self.cameras.append(CameraRecorder(camera, self.params['duration'], self.params['max_rate']))
+            self.cameras.append(CameraRecorder(camera, self.params['duration'], self.params['max_rate'], self.params['video']))
             self.cameras[-1].start()
 
     def run(self):

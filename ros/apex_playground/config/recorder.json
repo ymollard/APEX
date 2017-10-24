@@ -12,6 +12,7 @@
         "resolution" : [432, 240]
       }
     ],
-  "max_rate": 10,
-  "duration": 5
+  "max_rate": 2,
+  "duration": 5,
+  "video": false
 }
