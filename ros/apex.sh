@@ -1,6 +1,6 @@
 #!/bin/bash
 
-master_hostname="ros.local"
+master_hostname="apex-controller.local"
 hostname=`hostname`
 
 env_vars="export ROS_MASTER_URI=\"http://${master_hostname}:11311\" 

@@ -11,21 +11,21 @@ The experimental setup assumes you have at least:
  - N Poppy Ergo junior robots, each with the following USB devices connected:
    - 2 Ultrastik joysticks numbered ID 1 and ID 2
    - 1 Webcam watching the scene
- - A central controller named `ros.local`
+ - A central controller named `apex-controller.local`
  - These define N instances connected on network switches
 
 ### Setting up the controller
-On the controller clone [these repos](https://github.com/ymollard/APEX/blob/master/scripts/raspberrypi/apexify.bash#L101-L104) and compile your ROS workspace. If the controller is not named `ros.local`, update [this line](https://github.com/ymollard/APEX/blob/master/scripts/raspberrypi/apexify.bash#L63-L63).
+On the controller clone [these repos](https://github.com/ymollard/APEX/blob/master/scripts/raspberrypi/apexify.bash#L101-L104) and compile your ROS workspace. If the controller is not named `apex-controller.local`, update [this line](https://github.com/ymollard/APEX/blob/master/scripts/raspberrypi/apexify.bash#L63-L63).
 
 ### Setting up Poppy robots
 Poppy robots are sold with a pre-flashed microSD card, please setup a fresh Raspbian, connect a USB stick (formatted as a swap partition) to provide temporary swap during compiling and compile APEX software using [this script](https://github.com/ymollard/APEX/blob/master/scripts/raspberrypi/apexify.bash). After flashing rename both cards to hostnames `apex-1-torso` and `apex-1-ergo`. The same software runs on both Poppys, only the hostname will differentiate their behaviour. Proceed all N instances by increasing the instance ID in the hostname.
 
 ## First startup
-If you compiled and installed all software successfully, robots will loop until they find connect to the ROS master at startup. just start a `roscore` on `ros.local` and all robots should go in starting position.
+If you compiled and installed all software successfully, robots will loop until they find connect to the ROS master at startup. just start a `roscore` on `apex-controller.local` and all robots should go in starting position.
 
 `rosnode list` on the controller must tell which nodes are running on each instances. If a node is missing for one or several instances, it might be due to a missing expected USB device or software error (see Troubleshooting below). Here we provide an example output with 2 instances running, which means 2 Ergo Jr + 2 Torsos:
 ```
-[http://ros.local:11311] $ rosnode list
+[http://apex-controller.local:11311] $ rosnode list
 /apex_1/controller
 /apex_1/environment
 /apex_1/ergo

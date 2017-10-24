@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-ros_master="ros.local"
+ros_master="apex-controller.local"
 
 hostname=`hostname`
 platform_name=`echo $hostname | cut -d '-' -f 1`
