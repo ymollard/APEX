@@ -15,7 +15,23 @@ The experimental setup assumes you have at least:
  - These define N instances connected on network switches
 
 ### Setting up the controller
-On the controller clone [these repos](https://github.com/ymollard/APEX/blob/master/scripts/raspberrypi/apexify.bash#L101-L104) and compile your ROS workspace. If the controller is not named `apex-controller.local`, update [this line](https://github.com/ymollard/APEX/blob/master/scripts/raspberrypi/apexify.bash#L63-L63).
+On the controller clone the repositories below and compile your ROS workspace as is:
+```
+sudo apt install python-pip
+sudo pip install inputs flask flask_cors explauto termcolor
+cd ~/catkin_ws/src
+git clone https://github.com/ymollard/APEX.git
+git clone https://github.com/ymollard/poppy_torso_controllers.git
+git clone https://github.com/ymollard/poppy_ergo_jr_controllers.git
+git clone https://github.com/ymollard/poppy_msgs.git
+ln -s APEX/scripts/workstation_tools/apex.sh .
+cd ..  && catkin_make
+./apex.sh   # Will define `apex-controller.local` as the ROS master
+```
+
+If the hostname of the controller is different from `apex-controller.local`, you have to update:
+ * **The Raspberry Pis** by editing either [this line](https://github.com/ymollard/APEX/blob/master/scripts/raspberrypi/apexify.bash#L63-L63) before flashing SD cards for robots or [this line](https://github.com/ymollard/APEX/blob/master/scripts/raspberrypi/autostart.bash#L3) instead directly on the Pis.
+ * **The workstation** by editing [this line](https://github.com/ymollard/APEX/blob/master/scripts/workstation_tools/apex.sh#L5) setting up ROS environment variables
 
 ### Setting up Poppy robots
 Poppy robots are sold with a pre-flashed microSD card, please setup a fresh Raspbian, connect a USB stick (formatted as a swap partition) to provide temporary swap during compiling and compile APEX software using [this script](https://github.com/ymollard/APEX/blob/master/scripts/raspberrypi/apexify.bash). After flashing rename both cards to hostnames `apex-1-torso` and `apex-1-ergo`. The same software runs on both Poppys, only the hostname will differentiate their behaviour. Proceed all N instances by increasing the instance ID in the hostname.
