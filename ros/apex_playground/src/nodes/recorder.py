@@ -124,9 +124,10 @@ class CameraRecorder(Thread):
                 if self.image_counter == 0:
                     folder_trial = os.path.join(self.folder, self.experiment_name, "task_" + str(self.task),  # AVI movies inside
                                                 "condition_" + str(self.condition), "trial_" + str(self.trial), self.camera_name)
+                    self.folder_iteration = os.path.join(folder_trial, 'iteration_{}'.format(self.iteration))
 
-                    if not os.path.isdir(folder_trial):
-                        os.makedirs(folder_trial)
+                    if not os.path.isdir(self.folder_iteration):
+                        os.makedirs(self.folder_iteration)
 
                     self.writer_params['filename'] = os.path.join(folder_trial, "iteration_" + str(self.iteration) + self.extension)
                     jpeg_path = os.path.join(folder_trial, "iteration_" + str(self.iteration) + self.extension)
