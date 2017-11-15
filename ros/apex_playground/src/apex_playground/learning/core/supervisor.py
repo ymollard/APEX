@@ -154,7 +154,7 @@ class Supervisor(object):
         ms = np.zeros(344)
         ms[range(164) + range(304, 344)] = data_iteration["ms"]        
         m = self.get_m(ms)
-        mid = data_iteration["chosen_module"]
+        chosen_mid = data_iteration["chosen_module"]
         sg = data_iteration["goal"]
         interests = data_iteration["interests"]
                 
@@ -171,13 +171,13 @@ class Supervisor(object):
                 self.modules[mid].update_sm(m, smid)
 
         if sg is not None:
-            self.modules[mid].s = sg
-            self.modules[mid].update_im(m, self.modules[mid].get_s(ms))
+            self.modules[chosen_mid].s = sg
+            self.modules[chosen_mid].update_im(m, self.modules[chosen_mid].get_s(ms))
         for mid in self.modules.keys():
             self.interests_evolution[mid].append(interests[mid])
         
         self.goals.append(sg)
-        self.chosen_modules.append(mid)
+        self.chosen_modules.append(chosen_mid)
 
         self.t += 1
     
