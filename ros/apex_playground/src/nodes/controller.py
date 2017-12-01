@@ -54,15 +54,20 @@ class Controller(object):
                 if self.perception.has_been_pressed('buttons/pause') or self.demonstrate != "":
                     # If assessment requested but not already in pause, entering pause mode anyway
                     while not rospy.is_shutdown() and not self.perception.has_been_pressed('buttons/pause'):
+                        rospy.set_param('experiment/current/iteration', iteration)  # Update iteration even in pause/assess mode
                         if self.demonstrate != "":
                             # Assessment has been asked by user, space is self.demonstrate
                             success = self.execute_iteration(work.task, work.method, iteration, work.trial, work.num_iterations)
+                            if success:
+                                iteration += 1
                             self.demonstrate = ""
                         self.perception.switch_led('button_leds/pause')
                         rospy.logwarn("Controller is paused, pressed pause button to resume...")
                         rospy.sleep(0.5)
                 else:
                     success = self.execute_iteration(work.task, work.method, iteration, work.trial, work.num_iterations)
+                    if success:
+                        iteration += 1
             #except IndexError, IOError:
                 #pass
                 # TODO: Rewind 1 iteration
@@ -72,8 +77,6 @@ class Controller(object):
                 if update.abort:
                     rospy.logwarn("Work manager requested abortion, closing...")
                     return
-            if success:
-                iteration += 1
         rospy.loginfo("Work successfully terminated, closing...")
 
     def execute_iteration(self, task, method, iteration, trial, num_iterations):
