@@ -85,7 +85,7 @@ sudo systemctl start apex
 ## Troubleshooting
 ### Read the systemd logs from remote
 Connect in SSH to the faulty raspberry pi. The command hereunder will guide you to catch the reason of failure: 
-`sudo journalctl -u apex -n 50`
+`sudo journalctl -u apex -n 50` Or this one to see APEX logs in real time `sudo journalctl -u apex -f` (almost real time, because there's a buffer). 
 
 A working Torso robot must loop on `Controller fully started!` till it gets work. A working Ergo Jr robot must say it started robot servoing (and moving joysticks should work).
 
