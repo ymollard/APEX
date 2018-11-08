@@ -26,7 +26,7 @@ class Controller(object):
         self.ergo = Ergo()
         self.learning = Learning()
         self.perception = Perception()
-        self.recorder = Recorder()
+        # self.recorder = Recorder()
         self.demonstrate = ""  # Skill (Target space for Produce) or empty string if not running assessment
 
         # Served services
@@ -86,7 +86,7 @@ class Controller(object):
         # After resuming, we keep the same iteration
         if self.perception.has_been_pressed('buttons/help'):
             rospy.sleep(1.5)  # Wait for the robot to fully stop
-            self.recorder.record(task, method, trial, iteration)
+            # self.recorder.record(task, method, trial, iteration)
             self.perception.switch_led('button_leds/pause', True)
             recording = self.perception.record(human_demo=True, nb_points=self.params['nb_points'])
             self.torso.set_torque_max(self.torso_params['torques']['reset'])
@@ -95,7 +95,7 @@ class Controller(object):
         else:
             trajectory = self.learning.produce(skill_to_demonstrate=self.demonstrate).torso_trajectory
             self.torso.set_torque_max(self.torso_params['torques']['motion'])
-            self.recorder.record(task, method, trial, iteration) 
+            # self.recorder.record(task, method, trial, iteration) 
             self.perception.switch_led('button_leds/pause', True)
             self.torso.execute_trajectory(trajectory)  # TODO: blocking, non-blocking, action server?
             recording = self.perception.record(human_demo=False, nb_points=self.params['nb_points'])
