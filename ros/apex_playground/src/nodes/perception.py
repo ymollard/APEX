@@ -80,7 +80,7 @@ class Perception(object):
         response = RecordResponse()
         # TODO eventually keep trace of the last XX points to start recording prior to the start signal
 
-        folder = rospy.get_param('/experiment/results_path', '/media/usb/')
+        folder = rospy.get_param('/experiment/results_path', '/home/pi/apex_results/')
         condition = rospy.get_param('experiment/current/method')
         trial = rospy.get_param('experiment/current/trial')
         task = rospy.get_param('experiment/current/task')

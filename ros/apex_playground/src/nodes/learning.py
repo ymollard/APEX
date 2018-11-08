@@ -191,7 +191,7 @@ class LearningNode(object):
 
         # And save the current iteration
         experiment_name = rospy.get_param('/experiment/name')
-        path = rospy.get_param('/experiment/results_path', '/media/usb/')
+        path = rospy.get_param('/experiment/results_path', '/home/pi/apex_results/')
         success = self.learning.save(experiment_name, self.task, self.trial, path)
 
         return PerceiveResponse(success=success)
